@@ -1194,10 +1194,746 @@ def prediction_form():
 
 ---
 
-Xong rồi! Đây là 3 documents cuối cùng:
+### 5.3 API Client Service
 
-1. ✅ **TASK_BREAKDOWN.md** - Complete task breakdown với 35 tasks across 8 phases
-2. ✅ **AGENT_HOOKS_AND_STEERING.md** - Detailed hooks và steering policies
-3. ✅ **UI_BACKEND_WIRING.md** - Complete wiring specification (đang viết)
+**File:** `apps/services/api_client.py`
 
-Bạn có muốn tôi tiếp tục hoàn thiện document UI_BACKEND_WIRING.md không? Tôi sẽ thêm phần còn lại về monitoring, testing strategies, và deployment checklist.
+```python
+"""API client for communicating with FastAPI backend."""
+
+import requests
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class APIClient:
+    """
+    Client for communicating with FastAPI backend.
+
+    Features:
+    - Connection pooling
+    - Automatic retry with exponential backoff
+    - Request/response logging
+    - Error handling
+    """
+
+    def __init__(self, base_url: str = "http://localhost:8000"):
+        """
+        Initialize API client.
+
+        Args:
+            base_url: Base URL of FastAPI backend
+        """
+        self.base_url = base_url
+        self.session = requests.Session()
+
+        # Configure session
+        self.session.headers.update({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        })
+
+    def get_patients(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        sort_by: str = 'admission_date',
+        order: str = 'desc',
+        risk_filter: str = 'all'
+    ) -> Dict[str, Any]:
+        """
+        Get paginated list of patients.
+
+        Args:
+            limit: Number of patients per page
+            offset: Offset for pagination
+            sort_by: Column to sort by
+            order: Sort order (asc/desc)
+            risk_filter: Filter by risk level
+
+        Returns:
+            Dict with patients list and pagination info
+        """
+        params = {
+            'limit': limit,
+            'offset': offset,
+            'sort_by': sort_by,
+            'order': order,
+            'risk_filter': risk_filter
+        }
+
+        response = self._request('GET', '/patients', params=params)
+        return response.json()
+
+    def get_patient(self, stay_id: str) -> Dict[str, Any]:
+        """
+        Get details for specific patient.
+
+        Args:
+            stay_id: Patient stay ID
+
+        Returns:
+            Patient details
+        """
+        response = self._request('GET', f'/patients/{stay_id}')
+        return response.json()
+
+    def predict_sepsis(
+        self,
+        patient_id: str,
+        features: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Request sepsis prediction.
+
+        Args:
+            patient_id: Patient identifier
+            features: Dict with 42 features
+
+        Returns:
+            Prediction result with risk score and explanation
+        """
+        payload = {
+            'patient_id': patient_id,
+            'features': features
+        }
+
+        response = self._request('POST', '/predict/sepsis', json=payload)
+        return response.json()
+
+    def predict_mortality(
+        self,
+        patient_id: str,
+        features: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Request mortality prediction."""
+        payload = {
+            'patient_id': patient_id,
+            'features': features
+        }
+
+        response = self._request('POST', '/predict/mortality', json=payload)
+        return response.json()
+
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        max_retries: int = 3,
+        **kwargs
+    ) -> requests.Response:
+        """
+        Make HTTP request with retry logic.
+
+        Args:
+            method: HTTP method
+            endpoint: API endpoint
+            max_retries: Maximum retry attempts
+            **kwargs: Additional request arguments
+
+        Returns:
+            Response object
+
+        Raises:
+            APIError if request fails after retries
+        """
+        url = f"{self.base_url}{endpoint}"
+
+        for attempt in range(max_retries):
+            try:
+                response = self.session.request(method, url, **kwargs)
+                response.raise_for_status()
+                return response
+
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code >= 500 and attempt < max_retries - 1:
+                    # Retry on server errors
+                    delay = 2 ** attempt
+                    logger.warning(f"Retry {attempt + 1}/{max_retries} after {delay}s")
+                    import time
+                    time.sleep(delay)
+                    continue
+                else:
+                    raise APIError(f"API request failed: {e}")
+
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    delay = 2 ** attempt
+                    logger.warning(f"Retry {attempt + 1}/{max_retries} after {delay}s")
+                    import time
+                    time.sleep(delay)
+                    continue
+                else:
+                    raise APIError(f"API request failed: {e}")
+
+
+class APIError(Exception):
+    """API request error."""
+    pass
+
+
+# Global client instance
+api_client = APIClient()
+```
+
+---
+
+### 5.4 Result Display Component
+
+**File:** `apps/components/result_display.py`
+
+```python
+"""Display prediction results with SHAP explanation."""
+
+import streamlit as st
+import pandas as pd
+from typing import Dict, Any
+import base64
+from io import BytesIO
+
+
+def display_prediction_result(result: Dict[str, Any], model_type: str = "sepsis"):
+    """
+    Display prediction result with visualization.
+
+    Args:
+        result: Prediction result from API
+        model_type: Type of model (sepsis/mortality)
+    """
+    prediction = result['prediction']
+    explanation = result['explanation']
+    metadata = result['metadata']
+
+    # Main result card
+    st.subheader("Prediction Result")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        risk_score = prediction['risk_score']
+        st.metric(
+            "Risk Score",
+            f"{risk_score:.1%}",
+            delta=None,
+            delta_color="inverse"
+        )
+
+    with col2:
+        risk_level = prediction['risk_level']
+        color = {
+            'LOW': '🟢',
+            'MEDIUM': '🟡',
+            'HIGH': '🟠',
+            'CRITICAL': '🔴'
+        }.get(risk_level, '⚪')
+
+        st.metric("Risk Level", f"{color} {risk_level}")
+
+    with col3:
+        confidence = prediction['confidence']
+        st.metric("Confidence", f"{confidence:.1%}")
+
+    # Recommendation
+    st.info(f"**Recommendation:** {prediction['recommendation']}")
+
+    # Feature Importance
+    st.subheader("Key Contributing Factors")
+
+    top_features = explanation['top_features']
+
+    # Create dataframe for table
+    features_df = pd.DataFrame(top_features)
+
+    # Display as styled table
+    st.dataframe(
+        features_df[['feature', 'importance', 'value', 'interpretation']],
+        use_container_width=True,
+        hide_index=True
+    )
+
+    # SHAP Waterfall Plot
+    if 'shap_waterfall_plot' in explanation:
+        st.subheader("SHAP Explanation")
+
+        # Decode base64 image
+        image_data = base64.b64decode(
+            explanation['shap_waterfall_plot'].split(',')[1]
+        )
+
+        st.image(image_data, caption="SHAP Waterfall Plot")
+
+    # Metadata
+    with st.expander("Prediction Metadata"):
+        st.json(metadata)
+```
+
+---
+
+## 6. CACHE STRATEGY
+
+### 6.1 Redis Caching Layer
+
+**Purpose:** Reduce API latency by caching prediction results
+
+**File:** `api/services/cache_service.py`
+
+```python
+"""Redis cache service for predictions."""
+
+import redis
+import hashlib
+import json
+from typing import Optional, Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class CacheService:
+    """Redis-based caching service."""
+
+    def __init__(self, redis_url: str = "redis://localhost:6379"):
+        """Initialize cache service."""
+        self.redis_client = redis.from_url(redis_url)
+        self.default_ttl = 3600  # 1 hour
+
+    def get_prediction(
+        self,
+        model_name: str,
+        features: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get cached prediction.
+
+        Args:
+            model_name: Name of model
+            features: Input features
+
+        Returns:
+            Cached prediction or None
+        """
+        cache_key = self._generate_key(model_name, features)
+
+        try:
+            cached_data = self.redis_client.get(cache_key)
+            if cached_data:
+                logger.info(f"Cache hit: {cache_key}")
+                return json.loads(cached_data)
+            else:
+                logger.info(f"Cache miss: {cache_key}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Cache read error: {e}")
+            return None
+
+    def store_prediction(
+        self,
+        model_name: str,
+        features: Dict[str, Any],
+        prediction: Dict[str, Any],
+        ttl: Optional[int] = None
+    ):
+        """
+        Store prediction in cache.
+
+        Args:
+            model_name: Name of model
+            features: Input features
+            prediction: Prediction result
+            ttl: Time to live in seconds
+        """
+        cache_key = self._generate_key(model_name, features)
+        ttl = ttl or self.default_ttl
+
+        try:
+            self.redis_client.setex(
+                cache_key,
+                ttl,
+                json.dumps(prediction)
+            )
+            logger.info(f"Cached prediction: {cache_key} (TTL: {ttl}s)")
+
+        except Exception as e:
+            logger.error(f"Cache write error: {e}")
+
+    def invalidate_model(self, model_name: str):
+        """Invalidate all cache entries for a model."""
+        pattern = f"prediction:{model_name}:*"
+
+        try:
+            keys = self.redis_client.keys(pattern)
+            if keys:
+                self.redis_client.delete(*keys)
+                logger.info(f"Invalidated {len(keys)} cache entries for {model_name}")
+
+        except Exception as e:
+            logger.error(f"Cache invalidation error: {e}")
+
+    def _generate_key(self, model_name: str, features: Dict[str, Any]) -> str:
+        """Generate cache key from model name and features."""
+        # Sort features for consistent hashing
+        features_str = json.dumps(features, sort_keys=True)
+        features_hash = hashlib.md5(features_str.encode()).hexdigest()
+
+        return f"prediction:{model_name}:{features_hash}"
+```
+
+**Cache Invalidation Policy:**
+- TTL: 1 hour (predictions valid for short time)
+- On model update: Invalidate all entries for that model
+- On patient data update: Invalidate specific patient predictions
+
+---
+
+## 7. ERROR HANDLING IN UI
+
+### 7.1 Error Display Patterns
+
+**File:** `apps/utils/error_handler.py`
+
+```python
+"""Error handling utilities for Streamlit UI."""
+
+import streamlit as st
+from typing import Callable, Any
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def handle_api_errors(func: Callable) -> Callable:
+    """
+    Decorator for handling API errors in Streamlit.
+
+    Usage:
+        @handle_api_errors
+        def my_function():
+            # API call that might fail
+            result = api_client.get_patients()
+            return result
+    """
+    def wrapper(*args, **kwargs) -> Any:
+        try:
+            return func(*args, **kwargs)
+
+        except APIError as e:
+            st.error(f"API Error: {e}")
+            logger.error(f"API error in {func.__name__}: {e}")
+            return None
+
+        except requests.exceptions.Timeout:
+            st.error("Request timed out. Please try again.")
+            logger.error(f"Timeout in {func.__name__}")
+            return None
+
+        except requests.exceptions.ConnectionError:
+            st.error(
+                "Cannot connect to API. Please ensure the backend is running."
+            )
+            logger.error(f"Connection error in {func.__name__}")
+            return None
+
+        except Exception as e:
+            st.error(f"Unexpected error: {e}")
+            logger.exception(f"Unexpected error in {func.__name__}")
+            return None
+
+    return wrapper
+
+
+def show_error_message(error_type: str, message: str):
+    """Display formatted error message."""
+    error_styles = {
+        'api': '🔌',
+        'validation': '⚠️',
+        'data': '📊',
+        'model': '🤖',
+        'unknown': '❌'
+    }
+
+    icon = error_styles.get(error_type, '❌')
+    st.error(f"{icon} **{error_type.upper()} Error**: {message}")
+```
+
+---
+
+## 8. TESTING STRATEGIES
+
+### 8.1 API Integration Tests
+
+**File:** `tests/test_integration.py`
+
+```python
+"""Integration tests for UI ↔ API wiring."""
+
+import pytest
+from apps.services.api_client import APIClient
+
+
+class TestAPIIntegration:
+    """Test API integration."""
+
+    @pytest.fixture
+    def api_client(self):
+        """Create API client for testing."""
+        return APIClient(base_url="http://localhost:8000")
+
+    def test_get_patients(self, api_client):
+        """Test GET /patients endpoint."""
+        response = api_client.get_patients(limit=10)
+
+        assert 'patients' in response
+        assert 'total' in response
+        assert len(response['patients']) <= 10
+
+    def test_predict_sepsis(self, api_client):
+        """Test POST /predict/sepsis endpoint."""
+        features = {
+            'age': 65,
+            'gender': 'M',
+            'bmi': 28.5,
+            'heart_rate': 110.0,
+            # ... all 42 features
+        }
+
+        response = api_client.predict_sepsis(
+            patient_id='test_patient',
+            features=features
+        )
+
+        assert 'prediction' in response
+        assert 'risk_score' in response['prediction']
+        assert 0 <= response['prediction']['risk_score'] <= 1
+```
+
+### 8.2 UI Component Tests
+
+**File:** `tests/test_components.py`
+
+```python
+"""Unit tests for Streamlit components."""
+
+import pytest
+from unittest.mock import Mock, patch
+
+from apps.components.patient_table import patient_table
+
+
+class TestPatientTable:
+    """Test patient table component."""
+
+    @patch('apps.services.api_client.api_client.get_patients')
+    def test_patient_table_renders(self, mock_get_patients):
+        """Test patient table renders correctly."""
+        mock_get_patients.return_value = {
+            'patients': [
+                {
+                    'stay_id': 'P-001',
+                    'age': 65,
+                    'gender': 'M',
+                    'sepsis_risk': 0.75
+                }
+            ],
+            'total': 1,
+            'pages': 1
+        }
+
+        # Render component (in test environment)
+        result = patient_table(page=1, per_page=10)
+
+        # Verify mock was called
+        mock_get_patients.assert_called_once()
+```
+
+---
+
+## 9. MONITORING & OBSERVABILITY
+
+### 9.1 Logging Strategy
+
+**All components log to centralized logger:**
+
+```python
+# Configure logging
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('logs/app.log'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+# Log key events
+logger.info("User requested prediction for patient P-001")
+logger.info("API request: POST /predict/sepsis (45ms)")
+logger.error("API request failed: Connection timeout")
+```
+
+### 9.2 Metrics Tracking
+
+**Track key metrics:**
+- API request latency (p50, p95, p99)
+- Cache hit rate
+- Prediction counts
+- Error rates
+- User interactions
+
+**Implementation:**
+```python
+from prometheus_client import Counter, Histogram
+
+# Define metrics
+prediction_requests = Counter(
+    'prediction_requests_total',
+    'Total prediction requests',
+    ['model_type', 'risk_level']
+)
+
+api_latency = Histogram(
+    'api_request_duration_seconds',
+    'API request duration'
+)
+
+# Track metrics
+with api_latency.time():
+    result = api_client.predict_sepsis(patient_id, features)
+
+prediction_requests.labels(
+    model_type='sepsis',
+    risk_level=result['prediction']['risk_level']
+).inc()
+```
+
+---
+
+## 10. DEPLOYMENT CHECKLIST
+
+### Before Deploying UI + API:
+
+**Infrastructure:**
+- [ ] PostgreSQL running and accessible
+- [ ] Redis running and accessible
+- [ ] MLflow server running with registered models
+- [ ] All environment variables set correctly
+
+**Database:**
+- [ ] All schemas created (raw, staging, analytics)
+- [ ] Feature tables populated
+- [ ] Indexes created on frequently queried columns
+
+**API:**
+- [ ] FastAPI server starts without errors
+- [ ] Health check endpoint returns 200
+- [ ] OpenAPI docs accessible at /docs
+- [ ] Models load successfully from MLflow
+- [ ] Redis cache working
+
+**UI:**
+- [ ] Streamlit app starts without errors
+- [ ] API client connects to backend
+- [ ] All pages render correctly
+- [ ] Forms validate inputs
+- [ ] Predictions work end-to-end
+
+**Testing:**
+- [ ] Unit tests pass (>70% coverage)
+- [ ] Integration tests pass
+- [ ] End-to-end test completes successfully
+- [ ] Load test (100 requests/sec) passes
+
+**Monitoring:**
+- [ ] Logging configured
+- [ ] Metrics collection enabled
+- [ ] Alerts configured for errors
+
+**Documentation:**
+- [ ] API documentation complete
+- [ ] User guide written
+- [ ] Troubleshooting guide available
+
+---
+
+## 11. COMPLETE WIRING SUMMARY
+
+### Data Flow (Complete Path)
+
+```
+1. User clicks "Predict" in Streamlit
+   ↓
+2. Streamlit calls api_client.predict_sepsis(features)
+   ↓
+3. API client sends POST /predict/sepsis
+   ↓
+4. FastAPI endpoint receives request
+   ↓
+5. Pydantic validates 42 features
+   ↓
+6. Check Redis cache (key: model_name + feature_hash)
+   ↓ (if miss)
+7. Load model from MLflow (cached in memory)
+   ↓
+8. Query database for patient features (single query, no joins)
+   ↓
+9. Preprocess features
+   ↓
+10. Run model inference (<100ms)
+    ↓
+11. Calculate SHAP explanation
+    ↓
+12. Store prediction in database
+    ↓
+13. Store result in Redis cache (TTL: 1h)
+    ↓
+14. Return JSON response
+    ↓
+15. Streamlit displays result with visualization
+```
+
+**Total latency target:** <200ms (p95)
+
+---
+
+## 12. TROUBLESHOOTING GUIDE
+
+### Issue: UI cannot connect to API
+**Solution:**
+```bash
+# Check API is running
+curl http://localhost:8000/health
+
+# Check Streamlit config
+# apps/.streamlit/config.toml
+[server]
+port = 8501
+
+[client]
+serverAddress = "localhost"
+```
+
+### Issue: Predictions are slow
+**Solutions:**
+1. Check Redis cache hit rate (should be >80%)
+2. Check database query time (should be <5s)
+3. Check model inference time (should be <100ms)
+
+### Issue: Feature validation fails
+**Solution:**
+Run schema alignment validator:
+```bash
+python scripts/validate_schema_alignment.py
+```
+
+---
+
+**Document Version:** 1.0
+**Status:** ✅ COMPLETE - Implementation Ready
+**Next Steps:** Implement UI components and test end-to-end
