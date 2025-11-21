@@ -1,0 +1,4 @@
+# Model artifacts directory
+# Place trained models here:
+# - sepsis_model_v1.pkl
+# - mortality_model_v1.pkl
