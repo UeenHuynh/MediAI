@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import logging
 
-from api.core.config import settings
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 

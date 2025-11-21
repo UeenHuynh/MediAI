@@ -3,6 +3,10 @@
 from typing import Dict, Any, List
 import os
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 from agents.roles.data_engineer import (
     DataIngestionAgent,

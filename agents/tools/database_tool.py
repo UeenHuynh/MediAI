@@ -4,6 +4,7 @@ import psycopg2
 import pandas as pd
 from typing import Dict, Any, List
 import logging
+from sqlalchemy import create_engine
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class DatabaseTool:
         """
         self.connection_string = connection_string
         self.conn = None
+        self.engine = None
 
     def connect(self):
         """Establish database connection."""
@@ -86,11 +88,14 @@ class DatabaseTool:
             table_name: Target table (schema.table)
             if_exists: 'append' or 'replace'
         """
-        self.connect()
+        # Use SQLAlchemy engine for pandas to_sql()
+        if not self.engine:
+            self.engine = create_engine(self.connection_string)
+
         df.to_sql(
             name=table_name.split('.')[1],  # table name without schema
             schema=table_name.split('.')[0],  # schema name
-            con=self.conn,
+            con=self.engine,
             if_exists=if_exists,
             index=False,
             method='multi'

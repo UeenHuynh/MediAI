@@ -10,9 +10,9 @@ from contextlib import asynccontextmanager
 import time
 import logging
 
-from api.core.config import settings
-from api.routers import predictions, health
-from api.core.database import init_db
+from core.config import settings
+from routers import predictions, health
+from core.database import init_db
 
 # Configure logging
 logging.basicConfig(

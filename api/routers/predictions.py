@@ -6,14 +6,14 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 import logging
 
-from api.models.schemas import (
+from models.schemas import (
     SepsisPredictionRequest,
     SepsisPredictionResponse,
     MortalityPredictionRequest,
     MortalityPredictionResponse
 )
-from api.services.prediction_service import PredictionService
-from api.core.database import get_db
+from services.prediction_service import PredictionService
+from core.database import get_db
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

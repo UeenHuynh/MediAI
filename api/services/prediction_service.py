@@ -12,8 +12,8 @@ import json
 from datetime import datetime
 import pandas as pd
 
-from api.core.config import settings
-from api.models.schemas import (
+from core.config import settings
+from models.schemas import (
     SepsisPredictionRequest,
     SepsisPredictionResponse,
     MortalityPredictionRequest,

@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import redis
 
-from api.core.database import get_db, test_connection
-from api.core.config import settings
+from core.database import get_db, test_connection
+from core.config import settings
 
 router = APIRouter()
 
