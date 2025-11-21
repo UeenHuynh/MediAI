@@ -167,8 +167,7 @@ def generate_lab_values(icustays_df):
                 })
 
     labevents = pd.DataFrame(all_labs)
-    labevents['chartevents_id'] = range(len(chartevents) + 1,
-                                         len(chartevents) + len(labevents) + 1)
+    labevents['chartevents_id'] = range(1, len(labevents) + 1)
 
     return labevents
 
@@ -207,6 +206,8 @@ def main():
     # Combine chartevents
     chartevents = pd.concat([chartevents_vitals, chartevents_labs], ignore_index=True)
     chartevents = chartevents.sort_values(['stay_id', 'charttime'])
+    # Reassign unique IDs after combining
+    chartevents['chartevents_id'] = range(1, len(chartevents) + 1)
 
     # Save to CSV
     print("\nSaving data to CSV...")
