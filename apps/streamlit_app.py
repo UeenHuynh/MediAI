@@ -374,8 +374,8 @@ def main():
 
     # Check authentication
     if not st.session_state.authenticated:
-        # Import auth page
-        from views import auth
+        # Import auth component
+        from components import auth
         auth.show_auth_page()
         return
 
@@ -431,19 +431,19 @@ def main():
 
     # Route to pages
     if page == "🏠 Dashboard":
-        from views import dashboard
+        from components import dashboard
         dashboard.show_dashboard()
     elif page == "🔬 Predict Sepsis":
-        from views import predict_sepsis
+        from components import predict_sepsis
         predict_sepsis.show_sepsis_prediction()
     elif page == "💔 Predict Mortality":
-        from views import predict_mortality
+        from components import predict_mortality
         predict_mortality.show_mortality_prediction()
     elif page == "📊 Model Performance":
-        from views import model_performance
+        from components import model_performance
         model_performance.show_model_performance()
     elif page == "⚙️ Settings":
-        from views import settings
+        from components import settings
         settings.show_settings()
 
     # Footer
