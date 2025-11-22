@@ -7,7 +7,7 @@ Uses AES-256 encryption with Fernet (symmetric encryption)
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 import base64
 import os
@@ -43,7 +43,7 @@ class DataEncryption:
 
     def _generate_cipher(self) -> Fernet:
         """Generate Fernet cipher from password using PBKDF2"""
-        kdf = PBKDF2(
+        kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=self.salt,
