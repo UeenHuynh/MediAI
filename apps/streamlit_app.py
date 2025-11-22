@@ -10,8 +10,8 @@ import os
 from datetime import datetime
 
 # Import compliance utilities
-from _utils.encryption import DataEncryption
-from _utils.audit_logger import AuditLogger, AuditEventType
+from _utils._encryption import DataEncryption
+from _utils._audit_logger import AuditLogger, AuditEventType
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
