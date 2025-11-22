@@ -10,8 +10,8 @@ import os
 from datetime import datetime
 
 # Import compliance utilities
-from utils.encryption import DataEncryption
-from utils.audit_logger import AuditLogger, AuditEventType
+from _utils.encryption import DataEncryption
+from _utils.audit_logger import AuditLogger, AuditEventType
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -375,7 +375,7 @@ def main():
     # Check authentication
     if not st.session_state.authenticated:
         # Import auth component
-        from components import _auth as auth
+        from _components_backup import _auth as auth
         auth.show_auth_page()
         return
 
@@ -431,19 +431,19 @@ def main():
 
     # Route to pages
     if page == "🏠 Dashboard":
-        from components import _dashboard as dashboard
+        from _components_backup import _dashboard as dashboard
         dashboard.show_dashboard()
     elif page == "🔬 Predict Sepsis":
-        from components import _predict_sepsis as predict_sepsis
+        from _components_backup import _predict_sepsis as predict_sepsis
         predict_sepsis.show_sepsis_prediction()
     elif page == "💔 Predict Mortality":
-        from components import _predict_mortality as predict_mortality
+        from _components_backup import _predict_mortality as predict_mortality
         predict_mortality.show_mortality_prediction()
     elif page == "📊 Model Performance":
-        from components import _model_performance as model_performance
+        from _components_backup import _model_performance as model_performance
         model_performance.show_model_performance()
     elif page == "⚙️ Settings":
-        from components import _settings as settings
+        from _components_backup import _settings as settings
         settings.show_settings()
 
     # Footer
