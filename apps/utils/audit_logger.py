@@ -62,7 +62,14 @@ class AuditLogger:
             log_dir: Directory for audit logs (default: logs/audit/)
         """
         self.log_dir = Path(log_dir or os.getenv('AUDIT_LOG_DIR', 'logs/audit'))
-        self.log_dir.mkdir(parents=True, exist_ok=True)
+
+        # Try to create log directory, fallback to /tmp if permission denied
+        try:
+            self.log_dir.mkdir(parents=True, exist_ok=True)
+        except (PermissionError, OSError):
+            # Fallback to temp directory
+            self.log_dir = Path('/tmp/mediai_logs/audit')
+            self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Create dated log file
         self.log_file = self.log_dir / f"audit_{datetime.now().strftime('%Y%m%d')}.log"
@@ -71,20 +78,28 @@ class AuditLogger:
         self.logger = self._setup_logger()
 
     def _setup_logger(self) -> logging.Logger:
-        """Setup structured JSON logger"""
+        """Setup structured JSON logger with fallback to console"""
         logger = logging.getLogger('mediai.audit')
         logger.setLevel(logging.INFO)
         logger.handlers.clear()  # Remove existing handlers
 
-        # File handler for audit logs
-        file_handler = logging.FileHandler(self.log_file)
-        file_handler.setLevel(logging.INFO)
-
         # JSON formatter
         formatter = logging.Formatter('%(message)s')
-        file_handler.setFormatter(formatter)
 
-        logger.addHandler(file_handler)
+        # Try to create file handler, fallback to console if permission denied
+        try:
+            file_handler = logging.FileHandler(self.log_file)
+            file_handler.setLevel(logging.INFO)
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        except (PermissionError, OSError) as e:
+            # Fallback to console logging if file creation fails
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.INFO)
+            console_handler.setFormatter(formatter)
+            logger.addHandler(console_handler)
+            logger.warning(f"Could not create audit log file {self.log_file}: {e}. Using console logging.")
+
         logger.propagate = False
 
         return logger
