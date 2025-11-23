@@ -17,17 +17,44 @@ st.set_page_config(
     initial_sidebar_state="collapsed"  # Start with sidebar collapsed
 )
 
-# Custom CSS to hide the default Streamlit navigation and style the app
+# Custom CSS to COMPLETELY hide the default Streamlit navigation and style the app
 st.markdown("""
     <style>
-        /* Hide the default Streamlit sidebar navigation */
+        /* AGGRESSIVELY Hide ALL default Streamlit sidebar navigation elements */
         [data-testid="stSidebarNav"] {
-            display: none;
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+
+        /* Hide navigation links */
+        [data-testid="stSidebarNav"] ul {
+            display: none !important;
+        }
+
+        /* Hide any navigation list items */
+        [data-testid="stSidebarNav"] li {
+            display: none !important;
+        }
+
+        /* Hide page links */
+        section[data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+
+        /* Alternative selectors for navigation */
+        div[data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+
+        .css-1544g2n {
+            display: none !important;
         }
 
         /* Hide the sidebar collapse button when not needed */
         [data-testid="collapsedControl"] {
-            display: none;
+            display: none !important;
         }
 
         /* Custom styling for the navigation menu */
@@ -99,21 +126,21 @@ with st.sidebar:
 
 # Main content area - load the selected page
 if st.session_state.current_page == "🏠 Dashboard":
-    from pages import dashboard
+    from views import dashboard
     dashboard.show()
 
 elif st.session_state.current_page == "🔬 Predict Sepsis":
-    from pages import predict_sepsis
+    from views import predict_sepsis
     predict_sepsis.show()
 
 elif st.session_state.current_page == "💔 Predict Mortality":
-    from pages import predict_mortality
+    from views import predict_mortality
     predict_mortality.show()
 
 elif st.session_state.current_page == "📊 Model Performance":
-    from pages import model_performance
+    from views import model_performance
     model_performance.show()
 
 elif st.session_state.current_page == "⚙️ Settings":
-    from pages import settings
+    from views import settings
     settings.show()

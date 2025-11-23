@@ -69,18 +69,20 @@ apps/
 ├── streamlit_app.py          # Main application entry point
 ├── .streamlit/
 │   └── config.toml            # Streamlit configuration
-├── pages/                     # Page modules
+├── views/                     # View modules (NOT pages/ to avoid Streamlit auto-detection)
 │   ├── __init__.py
-│   ├── dashboard.py           # Dashboard page
-│   ├── predict_sepsis.py      # Sepsis prediction page
-│   ├── predict_mortality.py   # Mortality prediction page
-│   ├── model_performance.py   # Model performance page
-│   └── settings.py            # Settings page
+│   ├── dashboard.py           # Dashboard view
+│   ├── predict_sepsis.py      # Sepsis prediction view
+│   ├── predict_mortality.py   # Mortality prediction view
+│   ├── model_performance.py   # Model performance view
+│   └── settings.py            # Settings view
 ├── components/                # Reusable UI components (future)
 ├── services/                  # API client services (future)
 ├── requirements.txt           # Python dependencies
 └── README.md                  # This file
 ```
+
+**Important:** The directory is named `views/` instead of `pages/` to prevent Streamlit from automatically creating default sidebar navigation. This ensures only our custom navigation menu is shown.
 
 ## Important Notes
 
@@ -113,21 +115,21 @@ When a user selects a different page from the navigation menu, the app uses `st.
 
 ## Development
 
-### Adding a New Page
+### Adding a New View/Page
 
-1. Create a new file in `pages/` (e.g., `new_page.py`)
+1. Create a new file in `views/` (e.g., `new_view.py`)
 2. Implement a `show()` function
-3. Add the page to the navigation menu in `streamlit_app.py`
-4. Import and call the page's `show()` function in the main app
+3. Add the view to the navigation menu in `streamlit_app.py`
+4. Import and call the view's `show()` function in the main app
 
 Example:
 
 ```python
-# pages/new_page.py
+# views/new_view.py
 import streamlit as st
 
 def show():
-    st.title("🆕 New Page")
+    st.title("🆕 New View")
     st.write("Content goes here...")
 ```
 
@@ -138,15 +140,15 @@ nav_options = [
     "🔬 Predict Sepsis",
     "💔 Predict Mortality",
     "📊 Model Performance",
-    "🆕 New Page",  # Add here
+    "🆕 New View",  # Add here
     "⚙️ Settings"
 ]
 
 # ...
 
-elif st.session_state.current_page == "🆕 New Page":
-    from pages import new_page
-    new_page.show()
+elif st.session_state.current_page == "🆕 New View":
+    from views import new_view
+    new_view.show()
 ```
 
 ## Troubleshooting
@@ -155,10 +157,15 @@ elif st.session_state.current_page == "🆕 New Page":
 
 If you still see the default Streamlit navigation:
 
-1. Clear your browser cache
-2. Hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
-3. Restart the Streamlit application
-4. Check that custom CSS is properly loaded
+1. **Verify directory structure:** Ensure views are in `views/` NOT `pages/`
+   - Streamlit auto-detects `pages/` directory and creates navigation
+   - Using `views/` prevents auto-detection
+2. **Clear browser cache:** Hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
+3. **Restart Streamlit:** Stop and restart the application completely
+4. **Check CSS:** Verify the custom CSS in `streamlit_app.py` is loaded
+5. **Inspect browser:** Use browser DevTools to check if `[data-testid="stSidebarNav"]` exists
+
+**IMPORTANT:** Never create a `pages/` directory with Python files, as Streamlit will automatically create sidebar navigation from it!
 
 ### Pages Not Loading
 
