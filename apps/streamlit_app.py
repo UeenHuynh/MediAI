@@ -27,40 +27,57 @@ st.set_page_config(
 # Custom CSS to COMPLETELY hide the default Streamlit navigation and style the app
 st.markdown("""
     <style>
-        /* AGGRESSIVELY Hide ALL default Streamlit sidebar navigation elements */
-        [data-testid="stSidebarNav"] {
+        /* NUCLEAR OPTION: Ultra-aggressive hiding of ALL default sidebar navigation */
+
+        /* Primary target: stSidebarNav */
+        [data-testid="stSidebarNav"],
+        section[data-testid="stSidebarNav"],
+        div[data-testid="stSidebarNav"],
+        nav[data-testid="stSidebarNav"] {
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
+            width: 0 !important;
             overflow: hidden !important;
+            opacity: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
         }
 
-        /* Hide navigation links */
-        [data-testid="stSidebarNav"] ul {
+        /* All children of stSidebarNav */
+        [data-testid="stSidebarNav"] *,
+        [data-testid="stSidebarNav"] ul,
+        [data-testid="stSidebarNav"] li,
+        [data-testid="stSidebarNav"] a {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        /* Common CSS classes used by Streamlit navigation */
+        .css-1544g2n,
+        .css-17lntkn,
+        .css-pkbazv,
+        .st-emotion-cache-1544g2n,
+        .st-emotion-cache-17lntkn {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        /* Hide any nav elements in sidebar that are not our custom one */
+        section[data-testid="stSidebar"] nav:not([id="custom-nav"]) {
             display: none !important;
         }
 
-        /* Hide any navigation list items */
-        [data-testid="stSidebarNav"] li {
-            display: none !important;
+        /* Hide navigation links/lists in sidebar (except our radio group) */
+        section[data-testid="stSidebar"] > div:first-child > div:first-child {
+            /* This might be the default nav container */
         }
 
-        /* Hide page links */
-        section[data-testid="stSidebarNav"] {
-            display: none !important;
-        }
-
-        /* Alternative selectors for navigation */
-        div[data-testid="stSidebarNav"] {
-            display: none !important;
-        }
-
-        .css-1544g2n {
-            display: none !important;
-        }
-
-        /* Hide the sidebar collapse button when not needed */
-        [data-testid="collapsedControl"] {
+        /* Pattern matching for navigation-like structures */
+        [class*="SidebarNav"],
+        [class*="sidebar-nav"],
+        [class*="nav-link"],
+        [data-testid*="Nav"]:not([data-testid*="Radio"]) {
             display: none !important;
         }
 
@@ -93,37 +110,101 @@ st.markdown("""
     </style>
 
     <script>
-        // JavaScript to forcefully remove sidebar navigation after page load
-        window.addEventListener('load', function() {
-            // Remove sidebar navigation using multiple selectors
+        // NUCLEAR OPTION: Ultra-aggressive sidebar navigation removal
+
+        // Function to remove all navigation elements
+        function removeSidebarNav() {
             const selectors = [
                 '[data-testid="stSidebarNav"]',
                 'section[data-testid="stSidebarNav"]',
                 'div[data-testid="stSidebarNav"]',
-                '.css-1544g2n'
+                '[class*="stSidebarNav"]',
+                '[class*="sidebar-nav"]',
+                '[class*="nav-link"]',
+                'nav[data-testid*="sidebar"]',
+                '.css-1544g2n',
+                '.css-17lntkn',
+                '.css-pkbazv',
+                // Add more potential selectors
+                'section[data-testid="stSidebar"] > div:first-child nav',
+                'section[data-testid="stSidebar"] nav'
             ];
 
+            let removed = false;
             selectors.forEach(selector => {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach(el => {
-                    if (el) {
-                        el.remove();
-                        el.style.display = 'none';
-                        el.style.visibility = 'hidden';
-                    }
-                });
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        if (el && el.parentElement) {
+                            // Check if this contains page navigation (not our custom nav)
+                            const text = el.textContent || '';
+                            // If it contains these exact texts, it's the default nav
+                            if (text.includes('auth') ||
+                                text.includes('dashboard') ||
+                                text.includes('model performance') ||
+                                text.includes('predict mortality') ||
+                                text.includes('predict sepsis') ||
+                                (text.includes('settings') && !text.includes('⚙️'))) {
+                                el.remove();
+                                removed = true;
+                                console.log('Removed default navigation:', selector);
+                            }
+                        }
+                    });
+                } catch(e) {
+                    // Ignore errors
+                }
+            });
+            return removed;
+        }
+
+        // Run immediately (don't wait for load)
+        removeSidebarNav();
+
+        // Run on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', removeSidebarNav);
+        } else {
+            removeSidebarNav();
+        }
+
+        // Run on window load
+        window.addEventListener('load', removeSidebarNav);
+
+        // Run periodically (every 50ms for first 5 seconds, then every 200ms)
+        let counter = 0;
+        const fastInterval = setInterval(function() {
+            removeSidebarNav();
+            counter++;
+            if (counter > 100) { // After 5 seconds (100 * 50ms)
+                clearInterval(fastInterval);
+                // Then check less frequently
+                setInterval(removeSidebarNav, 200);
+            }
+        }, 50);
+
+        // Use MutationObserver to watch for navigation being added
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    removeSidebarNav();
+                }
             });
         });
 
-        // Also run periodically in case Streamlit re-renders
-        setInterval(function() {
-            const navElements = document.querySelectorAll('[data-testid="stSidebarNav"]');
-            navElements.forEach(el => {
-                if (el) {
-                    el.remove();
-                }
-            });
+        // Observe the sidebar for changes
+        setTimeout(function() {
+            const sidebar = document.querySelector('[data-testid="stSidebar"]');
+            if (sidebar) {
+                observer.observe(sidebar, {
+                    childList: true,
+                    subtree: true
+                });
+                console.log('MutationObserver active on sidebar');
+            }
         }, 100);
+
+        console.log('NUCLEAR navigation removal active');
     </script>
 """, unsafe_allow_html=True)
 
