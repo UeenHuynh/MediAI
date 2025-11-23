@@ -24,6 +24,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"  # Keep sidebar expanded to show our custom nav
 )
 
+# Import HTML component for JavaScript injection
+import streamlit.components.v1 as components
+
 # Custom CSS to COMPLETELY hide the default Streamlit navigation and style the app
 st.markdown("""
     <style>
@@ -114,9 +117,13 @@ st.markdown("""
             padding-top: 2rem;
         }
     </style>
+""", unsafe_allow_html=True)
 
+# Inject JavaScript using components.html() - this WILL execute
+components.html("""
     <script>
         // NUCLEAR OPTION: Ultra-aggressive sidebar navigation removal
+        console.log('🚀 JavaScript injection started...');
 
         // Function to remove all navigation elements
         function removeSidebarNav() {
@@ -131,7 +138,7 @@ st.markdown("""
 
             exactSelectors.forEach(selector => {
                 try {
-                    const elements = document.querySelectorAll(selector);
+                    const elements = parent.document.querySelectorAll(selector);
                     if (elements.length > 0) {
                         console.log(`🎯 Found ${elements.length} elements with ${selector}`);
                         elements.forEach(el => {
@@ -164,7 +171,7 @@ st.markdown("""
 
             classSelectors.forEach(selector => {
                 try {
-                    const elements = document.querySelectorAll(selector);
+                    const elements = parent.document.querySelectorAll(selector);
                     elements.forEach(el => {
                         const text = el.textContent || '';
                         // Only remove if contains navigation text
@@ -192,14 +199,14 @@ st.markdown("""
         removeSidebarNav();
 
         // Run on DOM ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', removeSidebarNav);
+        if (parent.document.readyState === 'loading') {
+            parent.document.addEventListener('DOMContentLoaded', removeSidebarNav);
         } else {
             removeSidebarNav();
         }
 
         // Run on window load
-        window.addEventListener('load', removeSidebarNav);
+        parent.window.addEventListener('load', removeSidebarNav);
 
         // Run periodically (every 50ms for first 5 seconds, then every 200ms)
         let counter = 0;
@@ -224,7 +231,7 @@ st.markdown("""
 
         // Observe the sidebar for changes
         setTimeout(function() {
-            const sidebar = document.querySelector('[data-testid="stSidebar"]');
+            const sidebar = parent.document.querySelector('[data-testid="stSidebar"]');
             if (sidebar) {
                 observer.observe(sidebar, {
                     childList: true,
@@ -236,7 +243,7 @@ st.markdown("""
 
         console.log('NUCLEAR navigation removal active');
     </script>
-""", unsafe_allow_html=True)
+""", height=0)
 
 # Initialize session state for navigation
 if 'current_page' not in st.session_state:
