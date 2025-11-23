@@ -29,6 +29,9 @@ def load_table(conn, table_name, csv_file, schema='raw'):
     # Read CSV
     df = pd.read_csv(csv_file)
 
+    # Replace NaN/empty strings with None for proper NULL handling in PostgreSQL
+    df = df.where(pd.notnull(df), None)
+
     # Prepare data
     columns = ', '.join(df.columns)
     values = [tuple(x) for x in df.values]
