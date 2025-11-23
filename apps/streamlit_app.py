@@ -2,7 +2,7 @@
 MediAI Streamlit Application
 ICU Risk Prediction Platform with HIPAA/GDPR Compliance
 
-Multi-page app structure following UI.md specifications
+Using st.navigation() API for clean multi-page navigation
 """
 
 import streamlit as st
@@ -12,6 +12,9 @@ from datetime import datetime
 # Import compliance utilities
 from utils.encryption import DataEncryption
 from utils.audit_logger import AuditLogger, AuditEventType
+
+# Import page modules
+from pages import auth, dashboard, predict_sepsis, predict_mortality, model_performance, settings
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -60,7 +63,7 @@ st.set_page_config(
     }
 )
 
-# Custom CSS - Adapted from UI.md design
+# Custom CSS
 st.markdown("""
     <style>
     /* Global Styles */
@@ -76,68 +79,6 @@ st.markdown("""
         border-radius: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 1rem;
-    }
-
-    /* Header Styles */
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: white;
-        text-align: center;
-        padding: 2rem 0;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .page-header {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #667eea;
-        margin-bottom: 1rem;
-    }
-
-    /* Risk Level Colors */
-    .risk-low {
-        color: #10b981;
-        font-weight: bold;
-    }
-    .risk-medium {
-        color: #f59e0b;
-        font-weight: bold;
-    }
-    .risk-high {
-        color: #ef4444;
-        font-weight: bold;
-    }
-    .risk-critical {
-        color: #dc2626;
-        font-weight: bold;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
-    }
-
-    /* Metric Cards */
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .metric-value {
-        font-size: 2rem;
-        font-weight: bold;
-        margin: 0.5rem 0;
-    }
-
-    .metric-label {
-        font-size: 0.875rem;
-        opacity: 0.9;
     }
 
     /* Button Styles */
@@ -156,55 +97,13 @@ st.markdown("""
         box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
     }
 
-    /* Sidebar */
-    .css-1d391kg {
+    /* Sidebar dark theme */
+    section[data-testid="stSidebar"] {
         background-color: #1f2937;
     }
 
-    /* Compliance Badge */
-    .compliance-badge {
-        display: inline-block;
-        background-color: #10b981;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-right: 0.5rem;
-    }
-
-    /* Alert Styles */
-    .alert-success {
-        background-color: #d1fae5;
-        border-left: 4px solid #10b981;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-    }
-
-    .alert-warning {
-        background-color: #fef3c7;
-        border-left: 4px solid #f59e0b;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-    }
-
-    .alert-danger {
-        background-color: #fee2e2;
-        border-left: 4px solid #ef4444;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-    }
-
-    /* Patient Table */
-    .patient-row-critical {
-        background-color: #fee2e2 !important;
-    }
-
-    .patient-row-high {
-        background-color: #fed7aa !important;
+    section[data-testid="stSidebar"] > div:first-child {
+        background-color: #1f2937;
     }
 
     /* Footer */
@@ -220,8 +119,8 @@ st.markdown("""
 
 
 def show_compliance_modal():
-    """Show HIPAA/GDPR compliance notice (adapted from UI.md ComplianceModal)"""
-    st.markdown('<div class="main-header">🏥 MediAI - ICU Risk Prediction Platform</div>', unsafe_allow_html=True)
+    """Show HIPAA/GDPR compliance notice"""
+    st.markdown('<div style="font-size: 2.5rem; font-weight: bold; color: white; text-align: center; padding: 2rem 0; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">🏥 MediAI - ICU Risk Prediction Platform</div>', unsafe_allow_html=True)
 
     st.markdown("""
     <div class="card">
@@ -242,23 +141,12 @@ def show_compliance_modal():
 
             <h4>We protect your health information through:</h4>
             <ul>
-                <li><span class="compliance-badge">✓</span> AES-256 Encryption for all PHI</li>
-                <li><span class="compliance-badge">✓</span> Comprehensive Audit Logging</li>
-                <li><span class="compliance-badge">✓</span> Role-Based Access Controls</li>
-                <li><span class="compliance-badge">✓</span> Secure Data Transmission (TLS)</li>
-                <li><span class="compliance-badge">✓</span> 7-Year Retention Policy</li>
+                <li>✓ AES-256 Encryption for all PHI</li>
+                <li>✓ Comprehensive Audit Logging</li>
+                <li>✓ Role-Based Access Controls</li>
+                <li>✓ Secure Data Transmission (TLS)</li>
+                <li>✓ 7-Year Retention Policy</li>
             </ul>
-
-            <h4>Your Rights:</h4>
-            <ul>
-                <li>Right to access your health information</li>
-                <li>Right to request corrections</li>
-                <li>Right to accounting of disclosures</li>
-                <li>Right to request restrictions</li>
-                <li>Right to breach notification</li>
-            </ul>
-
-            <p><a href="/docs/HIPAA_COMPLIANCE.md" target="_blank">📄 Read Full HIPAA Policy</a></p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -270,67 +158,17 @@ def show_compliance_modal():
 
             <h4>We process your data with:</h4>
             <ul>
-                <li><span class="compliance-badge">✓</span> Explicit Consent</li>
-                <li><span class="compliance-badge">✓</span> Data Minimization</li>
-                <li><span class="compliance-badge">✓</span> Purpose Limitation</li>
-                <li><span class="compliance-badge">✓</span> Pseudonymization</li>
-                <li><span class="compliance-badge">✓</span> Security by Design</li>
+                <li>✓ Explicit Consent</li>
+                <li>✓ Data Minimization</li>
+                <li>✓ Purpose Limitation</li>
+                <li>✓ Pseudonymization</li>
+                <li>✓ Security by Design</li>
             </ul>
-
-            <h4>Your Rights:</h4>
-            <ul>
-                <li>Right to be informed</li>
-                <li>Right of access</li>
-                <li>Right to rectification</li>
-                <li>Right to erasure ("Right to be forgotten")</li>
-                <li>Right to data portability</li>
-                <li>Right to object</li>
-            </ul>
-
-            <p><a href="/docs/GDPR_COMPLIANCE.md" target="_blank">📄 Read Full GDPR Policy</a></p>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="card">
-        <h3 style="color: #667eea; text-align: center;">Important Information</h3>
-
-        <div class="alert-warning">
-            <strong>⚠️ Demo Platform Notice:</strong> This is a demonstration platform using
-            de-identified MIMIC-IV data. No real patient data is used. For production use with
-            real patient data, additional security controls and compliance audits are required.
-        </div>
-
-        <h4>How We Use Your Data:</h4>
-        <ul>
-            <li><strong>Purpose:</strong> ICU risk prediction for sepsis and mortality</li>
-            <li><strong>Legal Basis:</strong> Healthcare provision + Explicit consent</li>
-            <li><strong>Data Retention:</strong> 7 years (legal requirement)</li>
-            <li><strong>Data Sharing:</strong> Only with authorized healthcare providers</li>
-            <li><strong>Your Control:</strong> You can withdraw consent at any time</li>
-        </ul>
-
-        <h4>Technical Safeguards:</h4>
-        <ul>
-            <li>🔒 End-to-end encryption</li>
-            <li>📝 Complete audit trail</li>
-            <li>🔐 Secure authentication</li>
-            <li>🛡️ Regular security updates</li>
-            <li>💾 Encrypted backups</li>
-        </ul>
-
-        <h4>Contact Information:</h4>
-        <ul>
-            <li><strong>Data Protection Officer:</strong> dpo@mediai.example.com</li>
-            <li><strong>Privacy Inquiries:</strong> privacy@mediai.example.com</li>
-            <li><strong>Security Issues:</strong> security@mediai.example.com</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
     st.markdown("---")
 
-    # Consent checkboxes
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
@@ -355,7 +193,7 @@ def show_compliance_modal():
                 user_id=st.session_state.get('user_id', 'anonymous'),
                 patient_id=None,
                 consent_given=True,
-                ip_address='127.0.0.1'  # TODO: Get real IP
+                ip_address='127.0.0.1'
             )
 
             st.rerun()
@@ -365,7 +203,7 @@ def show_compliance_modal():
 
 
 def main():
-    """Main application router"""
+    """Main application with st.navigation() API"""
 
     # Check compliance acceptance
     if not st.session_state.compliance_accepted:
@@ -374,43 +212,51 @@ def main():
 
     # Check authentication
     if not st.session_state.authenticated:
-        # Import auth page
-        from pages import auth
         auth.show_auth_page()
         return
 
-    # Sidebar navigation
+    # Sidebar with user info, navigation, and compliance status
     with st.sidebar:
+        # Logo
         st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", use_column_width=True)
 
+        # User info
         st.markdown("### 👤 User")
         st.write(f"**{st.session_state.user_id}**")
 
         st.markdown("---")
 
-        st.markdown("### 🧭 Navigation")
+    # Define pages with st.Page
+    pages = [
+        st.Page(dashboard.show_dashboard, title="Dashboard", icon="🏠", url_path="dashboard"),
+        st.Page(predict_sepsis.show_sepsis_prediction, title="Sepsis Prediction", icon="🔬", url_path="sepsis"),
+        st.Page(predict_mortality.show_mortality_prediction, title="Mortality Prediction", icon="💔", url_path="mortality"),
+        st.Page(model_performance.show_model_performance, title="Model Performance", icon="📊", url_path="performance"),
+        st.Page(settings.show_settings, title="Settings", icon="⚙️", url_path="settings"),
+    ]
 
-        page = st.radio(
-            "Select Page",
-            ["🏠 Dashboard", "🔬 Predict Sepsis", "💔 Predict Mortality", "📊 Model Performance", "⚙️ Settings"],
-            label_visibility="collapsed"
-        )
+    # Create navigation
+    page = st.navigation(pages)
 
+    # Render selected page
+    page.run()
+
+    # Sidebar compliance and stats AFTER navigation
+    with st.sidebar:
         st.markdown("---")
 
         # Compliance status
-        st.markdown("### 🛡️ Compliance Status")
-        st.success("✅ HIPAA Compliant")
-        st.success("✅ GDPR Compliant")
-        st.info("🔒 Data Encrypted")
-        st.info("📝 Audit Logging Active")
+        st.markdown("### 🛡️ Compliance")
+        st.success("✅ HIPAA")
+        st.success("✅ GDPR")
+        st.info("🔒 Encrypted")
 
         st.markdown("---")
 
         # Quick stats
-        st.markdown("### 📈 System Status")
-        st.metric("API Status", "Online", "✅")
-        st.metric("Total Patients", "1,247")
+        st.markdown("### 📈 System")
+        st.metric("API", "Online", "✅")
+        st.metric("Patients", "1,247")
         st.metric("High Risk", "87", "-5")
 
         st.markdown("---")
@@ -429,33 +275,11 @@ def main():
             st.session_state.user_id = None
             st.rerun()
 
-    # Route to pages
-    if page == "🏠 Dashboard":
-        from pages import dashboard
-        dashboard.show_dashboard()
-    elif page == "🔬 Predict Sepsis":
-        from pages import predict_sepsis
-        predict_sepsis.show_sepsis_prediction()
-    elif page == "💔 Predict Mortality":
-        from pages import predict_mortality
-        predict_mortality.show_mortality_prediction()
-    elif page == "📊 Model Performance":
-        from pages import model_performance
-        model_performance.show_model_performance()
-    elif page == "⚙️ Settings":
-        from pages import settings
-        settings.show_settings()
-
     # Footer
     st.markdown("---")
     st.markdown("""
     <div class="footer">
         <p>🏥 MediAI v1.0.0 | HIPAA & GDPR Compliant | © 2025</p>
-        <p>
-            <a href="/docs/HIPAA_COMPLIANCE.md" target="_blank">HIPAA Policy</a> |
-            <a href="/docs/GDPR_COMPLIANCE.md" target="_blank">GDPR Policy</a> |
-            <a href="mailto:privacy@mediai.example.com">Contact Privacy Officer</a>
-        </p>
     </div>
     """, unsafe_allow_html=True)
 
