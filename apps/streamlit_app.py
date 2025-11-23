@@ -63,7 +63,7 @@ st.set_page_config(
     }
 )
 
-# Custom CSS
+# Custom CSS - Full styling from original design
 st.markdown("""
     <style>
     /* Global Styles */
@@ -79,6 +79,68 @@ st.markdown("""
         border-radius: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 1rem;
+    }
+
+    /* Header Styles */
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        padding: 2rem 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .page-header {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 1rem;
+    }
+
+    /* Risk Level Colors */
+    .risk-low {
+        color: #10b981;
+        font-weight: bold;
+    }
+    .risk-medium {
+        color: #f59e0b;
+        font-weight: bold;
+    }
+    .risk-high {
+        color: #ef4444;
+        font-weight: bold;
+    }
+    .risk-critical {
+        color: #dc2626;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    /* Metric Cards */
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+
+    .metric-label {
+        font-size: 0.875rem;
+        opacity: 0.9;
     }
 
     /* Button Styles */
@@ -104,6 +166,61 @@ st.markdown("""
 
     section[data-testid="stSidebar"] > div:first-child {
         background-color: #1f2937;
+    }
+
+    /* Sidebar text colors */
+    section[data-testid="stSidebar"] .element-container {
+        color: #e5e7eb;
+    }
+
+    section[data-testid="stSidebar"] h3 {
+        color: #f9fafb;
+    }
+
+    /* Compliance Badge */
+    .compliance-badge {
+        display: inline-block;
+        background-color: #10b981;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+
+    /* Alert Styles */
+    .alert-success {
+        background-color: #d1fae5;
+        border-left: 4px solid #10b981;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+
+    .alert-warning {
+        background-color: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+
+    .alert-danger {
+        background-color: #fee2e2;
+        border-left: 4px solid #ef4444;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+
+    /* Patient Table */
+    .patient-row-critical {
+        background-color: #fee2e2 !important;
+    }
+
+    .patient-row-high {
+        background-color: #fed7aa !important;
     }
 
     /* Footer */
@@ -218,7 +335,7 @@ def main():
     # Sidebar with user info, navigation, and compliance status
     with st.sidebar:
         # Logo
-        st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", use_column_width=True)
+        st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", use_container_width=True)
 
         # User info
         st.markdown("### 👤 User")
