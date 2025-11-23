@@ -120,67 +120,71 @@ st.markdown("""
 
         // Function to remove all navigation elements
         function removeSidebarNav() {
-            const selectors = [
+            let removed = 0;
+
+            // STRATEGY 1: Remove by exact data-testid (highest priority)
+            const exactSelectors = [
                 '[data-testid="stSidebarNav"]',
                 '[data-testid="stSidebarNavLink"]',
                 '[data-testid="stSidebarNavItems"]',
-                'section[data-testid="stSidebarNav"]',
-                'div[data-testid="stSidebarNav"]',
-                '[class*="stSidebarNav"]',
-                '[class*="sidebar-nav"]',
-                '[class*="nav-link"]',
-                'nav[data-testid*="sidebar"]',
-                '.css-1544g2n',
-                '.css-17lntkn',
-                '.css-pkbazv',
-                '.st-emotion-cache-79elbk',
-                '.eczjsme10',
-                'div.st-emotion-cache-79elbk',
-                'div.eczjsme10',
-                // Add more potential selectors
-                'section[data-testid="stSidebar"] > div:first-child nav',
-                'section[data-testid="stSidebar"] nav',
-                'section[data-testid="stSidebar"] ul',
-                '[class*="st-emotion-cache"]'
             ];
 
-            let removed = false;
-            selectors.forEach(selector => {
+            exactSelectors.forEach(selector => {
                 try {
                     const elements = document.querySelectorAll(selector);
-                    elements.forEach(el => {
-                        if (el && el.parentElement) {
-                            // Check if this contains page navigation (not our custom nav)
-                            const text = el.textContent || '';
-                            // If it contains these exact texts, it's the default nav
-                            if (text.includes('auth') ||
-                                text.includes('dashboard') ||
-                                text.includes('model performance') ||
-                                text.includes('predict mortality') ||
-                                text.includes('predict sepsis') ||
-                                (text.includes('settings') && !text.includes('⚙️'))) {
-
-                                // NUCLEAR: Apply inline styles FIRST
+                    if (elements.length > 0) {
+                        console.log(`🎯 Found ${elements.length} elements with ${selector}`);
+                        elements.forEach(el => {
+                            if (el) {
+                                // Apply inline styles FIRST
                                 el.style.display = 'none';
                                 el.style.visibility = 'hidden';
                                 el.style.opacity = '0';
-                                el.style.height = '0';
-                                el.style.width = '0';
-                                el.style.overflow = 'hidden';
                                 el.style.position = 'absolute';
                                 el.style.left = '-9999px';
 
-                                // Then remove from DOM
+                                // Then remove
                                 el.remove();
-                                removed = true;
-                                console.log('✅ Removed default navigation:', selector, el.className);
+                                removed++;
+                                console.log('✅ REMOVED:', selector, el.className);
                             }
-                        }
-                    });
+                        });
+                    }
                 } catch(e) {
-                    console.error('Error removing nav:', e);
+                    console.error('❌ Error with selector', selector, e);
                 }
             });
+
+            // STRATEGY 2: Remove by class patterns (if any remain)
+            const classSelectors = [
+                '.st-emotion-cache-79elbk',
+                '.eczjsme10',
+                '[class*="st-emotion-cache"]'
+            ];
+
+            classSelectors.forEach(selector => {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        const text = el.textContent || '';
+                        // Only remove if contains navigation text
+                        if (text.includes('auth') ||
+                            text.includes('dashboard') ||
+                            text.includes('model') ||
+                            text.includes('predict') ||
+                            text.includes('settings')) {
+                            el.style.display = 'none';
+                            el.remove();
+                            removed++;
+                            console.log('✅ REMOVED by class:', selector);
+                        }
+                    });
+                } catch(e) {}
+            });
+
+            if (removed > 0) {
+                console.log(`💥 Total removed: ${removed} elements`);
+            }
             return removed;
         }
 
