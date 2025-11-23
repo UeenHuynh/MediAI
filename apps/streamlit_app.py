@@ -379,85 +379,29 @@ def main():
         auth.show_auth_page()
         return
 
-    # Sidebar navigation
-    with st.sidebar:
-        st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", use_column_width=True)
+    # User is authenticated - redirect to Dashboard
+    st.success("✅ Authentication successful! Redirecting to Dashboard...")
+    st.info("👉 Use the sidebar navigation to access different pages")
 
-        st.markdown("### 👤 User")
-        st.write(f"**{st.session_state.user_id}**")
+    # Show welcome message
+    st.markdown(f"""
+    ## Welcome, {st.session_state.user_id}!
 
-        st.markdown("---")
+    You can now access all features of MediAI:
+    - 🏠 **Dashboard** - Monitor all patients and risk scores
+    - 🔬 **Sepsis Prediction** - 6-hour early warning for sepsis
+    - 💔 **Mortality Prediction** - ICU mortality risk assessment
+    - 📊 **Model Performance** - View ML model metrics
+    - ⚙️ **Settings** - Configure your preferences
 
-        st.markdown("### 🧭 Navigation")
+    ### 🔒 Your session is secure
+    - All data is encrypted with AES-256
+    - Complete audit trail is maintained
+    - HIPAA & GDPR compliant
+    """)
 
-        page = st.radio(
-            "Select Page",
-            ["🏠 Dashboard", "🔬 Predict Sepsis", "💔 Predict Mortality", "📊 Model Performance", "⚙️ Settings"],
-            label_visibility="collapsed"
-        )
-
-        st.markdown("---")
-
-        # Compliance status
-        st.markdown("### 🛡️ Compliance Status")
-        st.success("✅ HIPAA Compliant")
-        st.success("✅ GDPR Compliant")
-        st.info("🔒 Data Encrypted")
-        st.info("📝 Audit Logging Active")
-
-        st.markdown("---")
-
-        # Quick stats
-        st.markdown("### 📈 System Status")
-        st.metric("API Status", "Online", "✅")
-        st.metric("Total Patients", "1,247")
-        st.metric("High Risk", "87", "-5")
-
-        st.markdown("---")
-
-        if st.button("🚪 Logout", use_container_width=True):
-            # Log logout
-            audit = st.session_state.audit_logger
-            audit.log_event(
-                event_type=AuditEventType.LOGOUT,
-                user_id=st.session_state.user_id,
-                ip_address='127.0.0.1',
-                success=True
-            )
-
-            st.session_state.authenticated = False
-            st.session_state.user_id = None
-            st.rerun()
-
-    # Route to pages
-    if page == "🏠 Dashboard":
-        from pages import dashboard
-        dashboard.show_dashboard()
-    elif page == "🔬 Predict Sepsis":
-        from pages import predict_sepsis
-        predict_sepsis.show_sepsis_prediction()
-    elif page == "💔 Predict Mortality":
-        from pages import predict_mortality
-        predict_mortality.show_mortality_prediction()
-    elif page == "📊 Model Performance":
-        from pages import model_performance
-        model_performance.show_model_performance()
-    elif page == "⚙️ Settings":
-        from pages import settings
-        settings.show_settings()
-
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-    <div class="footer">
-        <p>🏥 MediAI v1.0.0 | HIPAA & GDPR Compliant | © 2025</p>
-        <p>
-            <a href="/docs/HIPAA_COMPLIANCE.md" target="_blank">HIPAA Policy</a> |
-            <a href="/docs/GDPR_COMPLIANCE.md" target="_blank">GDPR Policy</a> |
-            <a href="mailto:privacy@mediai.example.com">Contact Privacy Officer</a>
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Auto-redirect to Dashboard
+    st.page_link("pages/1_Dashboard.py", label="🏠 Go to Dashboard", icon="🏠")
 
 
 if __name__ == "__main__":

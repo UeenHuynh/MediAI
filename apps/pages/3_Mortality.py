@@ -4,6 +4,22 @@ Placeholder for mortality risk prediction (similar to sepsis)
 """
 
 import streamlit as st
+from components.sidebar_layout import render_custom_sidebar, check_authentication, check_compliance, render_footer
+
+# Page config
+st.set_page_config(
+    page_title="Mortality Prediction - MediAI",
+    page_icon="💔",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Check authentication and compliance
+check_compliance()
+check_authentication()
+
+# Render custom sidebar
+render_custom_sidebar(current_page="Mortality")
 
 
 def show_mortality_prediction():
@@ -103,3 +119,8 @@ def show_mortality_prediction():
     if st.button("🔬 Go to Sepsis Prediction (Demo)", use_container_width=True):
         st.session_state.current_page = "🔬 Predict Sepsis"
         st.rerun()
+
+
+# Run the mortality prediction page
+show_mortality_prediction()
+render_footer()

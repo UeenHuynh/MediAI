@@ -5,6 +5,22 @@ System configuration and user preferences
 
 import streamlit as st
 from utils.audit_logger import AuditEventType
+from components.sidebar_layout import render_custom_sidebar, check_authentication, check_compliance, render_footer
+
+# Page config
+st.set_page_config(
+    page_title="Settings - MediAI",
+    page_icon="⚙️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Check authentication and compliance
+check_compliance()
+check_authentication()
+
+# Render custom sidebar
+render_custom_sidebar(current_page="Settings")
 
 
 def show_settings():
@@ -471,3 +487,8 @@ def show_user_profile():
         if st.button("❌ Delete Account", use_container_width=True):
             st.error("⚠️ This action cannot be undone!")
             st.warning("Contact administrator to delete your account")
+
+
+# Run the settings page
+show_settings()
+render_footer()

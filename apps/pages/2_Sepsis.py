@@ -8,6 +8,22 @@ import requests
 import os
 from utils.audit_logger import AuditEventType
 from utils.encryption import DataEncryption
+from components.sidebar_layout import render_custom_sidebar, check_authentication, check_compliance, render_footer
+
+# Page config
+st.set_page_config(
+    page_title="Sepsis Prediction - MediAI",
+    page_icon="🔬",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Check authentication and compliance
+check_compliance()
+check_authentication()
+
+# Render custom sidebar
+render_custom_sidebar(current_page="Sepsis")
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
@@ -433,3 +449,8 @@ def show_mock_prediction(request_data: dict):
     }
 
     show_prediction_result(mock_result, "Sepsis")
+
+
+# Run the sepsis prediction page
+show_sepsis_prediction()
+render_footer()

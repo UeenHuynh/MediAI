@@ -1,0 +1,36 @@
+# Streamlit Configuration for MediAI
+# Compatible with Streamlit 1.51.0+
+
+[server]
+# Server configuration
+port = 8501
+headless = true
+enableCORS = true
+enableXsrfProtection = true
+
+# Max upload size (200MB for patient data files)
+maxUploadSize = 200
+
+[browser]
+# Don't gather usage stats
+gatherUsageStats = false
+
+[theme]
+# MediAI Custom Theme (Purple Gradient)
+primaryColor = "#667eea"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
+
+[client]
+# Show error details for debugging
+showErrorDetails = true
+
+[runner]
+# Fast rerun when files change
+fastReruns = true
+
+[logger]
+# Logging level
+level = "info"

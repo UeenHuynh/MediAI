@@ -8,6 +8,22 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 import numpy as np
+from components.sidebar_layout import render_custom_sidebar, check_authentication, check_compliance, render_footer
+
+# Page config
+st.set_page_config(
+    page_title="Model Performance - MediAI",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Check authentication and compliance
+check_compliance()
+check_authentication()
+
+# Render custom sidebar
+render_custom_sidebar(current_page="Performance")
 
 
 def show_model_performance():
@@ -309,3 +325,8 @@ def show_feature_importance(model_type: str):
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+
+# Run the model performance page
+show_model_performance()
+render_footer()

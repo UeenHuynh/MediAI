@@ -10,6 +10,22 @@ import plotly.express as px
 from datetime import datetime, timedelta
 import numpy as np
 from utils.audit_logger import AuditEventType
+from components.sidebar_layout import render_custom_sidebar, check_authentication, check_compliance, render_footer
+
+# Page config
+st.set_page_config(
+    page_title="Dashboard - MediAI",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Check authentication and compliance
+check_compliance()
+check_authentication()
+
+# Render custom sidebar
+render_custom_sidebar(current_page="Dashboard")
 
 
 # Mock patient data (adapted from UI.md MOCK_PATIENTS)
@@ -466,3 +482,8 @@ def show_risk_scatter(df: pd.DataFrame):
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+
+# Run the dashboard
+show_dashboard()
+render_footer()
