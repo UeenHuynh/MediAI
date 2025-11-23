@@ -24,13 +24,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"  # Keep sidebar expanded to show our custom nav
 )
 
-# Custom CSS to COMPLETELY hide the default Streamlit navigation and style the app
-# Using ONLY CSS - no JavaScript needed!
-st.markdown("""
-    <style>
-        /* NUCLEAR OPTION: CSS-ONLY solution - hide ALL navigation */
+# Load CSS from external file and inject it
+css_file_path = Path(__file__).parent / ".streamlit" / "hide_navigation.css"
+try:
+    with open(css_file_path, "r") as f:
+        navigation_css = f.read()
+except:
+    navigation_css = ""  # Fallback if file doesn't exist
 
-        /* Target ALL possible data-testid variations */
+# Inject CSS to hide navigation
+st.markdown(f"""
+    <style>
+        {navigation_css}
+
+        /* Additional inline CSS */
         [data-testid="stSidebarNav"],
         [data-testid="stSidebarNavLink"],
         [data-testid="stSidebarNavItems"],

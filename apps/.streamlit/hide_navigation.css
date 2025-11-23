@@ -1,0 +1,51 @@
+/* NUCLEAR CSS - Hide ALL Streamlit default navigation */
+
+/* Target ALL data-testid variations */
+[data-testid="stSidebarNav"],
+[data-testid="stSidebarNavLink"],
+[data-testid="stSidebarNavItems"],
+[data-testid="stSidebarNav"] *,
+[data-testid="stSidebarNavLink"] *,
+[data-testid="stSidebarNavItems"] * {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0px !important;
+    width: 0px !important;
+    max-height: 0px !important;
+    max-width: 0px !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -10000px !important;
+    top: -10000px !important;
+    z-index: -9999 !important;
+    pointer-events: none !important;
+}
+
+/* Specific emotion-cache classes */
+div.st-emotion-cache-79elbk,
+.st-emotion-cache-79elbk,
+div.eczjsme10,
+.eczjsme10,
+div.st-emotion-cache-79elbk *,
+.eczjsme10 * {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0px !important;
+    opacity: 0 !important;
+}
+
+/* All navigation variations */
+section[data-testid="stSidebarNav"],
+div[data-testid="stSidebarNav"],
+nav[data-testid="stSidebarNav"],
+section[data-testid="stSidebarNav"] *,
+div[data-testid="stSidebarNav"] *,
+nav[data-testid="stSidebarNav"] *,
+[class*="SidebarNav"],
+[class*="sidebar-nav"],
+[class*="nav-link"],
+[data-testid*="Nav"]:not([data-testid*="Radio"]) {
+    display: none !important;
+    visibility: hidden !important;
+}
