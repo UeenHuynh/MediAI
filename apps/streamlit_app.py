@@ -24,33 +24,51 @@ st.set_page_config(
     initial_sidebar_state="expanded"  # Keep sidebar expanded to show our custom nav
 )
 
-# Import HTML component for JavaScript injection
-import streamlit.components.v1 as components
-
 # Custom CSS to COMPLETELY hide the default Streamlit navigation and style the app
+# Using ONLY CSS - no JavaScript needed!
 st.markdown("""
     <style>
-        /* NUCLEAR OPTION: Ultra-aggressive hiding of ALL default sidebar navigation */
+        /* NUCLEAR OPTION: CSS-ONLY solution - hide ALL navigation */
 
-        /* Primary target: stSidebarNav AND stSidebarNavLink */
+        /* Target ALL possible data-testid variations */
         [data-testid="stSidebarNav"],
         [data-testid="stSidebarNavLink"],
         [data-testid="stSidebarNavItems"],
+        [data-testid="stSidebarNav"] *,
+        [data-testid="stSidebarNavLink"] *,
+        [data-testid="stSidebarNavItems"] *,
         section[data-testid="stSidebarNav"],
         div[data-testid="stSidebarNav"],
         nav[data-testid="stSidebarNav"],
-        div.st-emotion-cache-79elbk,
-        div.eczjsme10,
-        .st-emotion-cache-79elbk,
-        .eczjsme10 {
+        section[data-testid="stSidebarNav"] *,
+        div[data-testid="stSidebarNav"] *,
+        nav[data-testid="stSidebarNav"] * {
             display: none !important;
             visibility: hidden !important;
-            height: 0 !important;
-            width: 0 !important;
+            height: 0px !important;
+            width: 0px !important;
+            max-height: 0px !important;
+            max-width: 0px !important;
             overflow: hidden !important;
             opacity: 0 !important;
             position: absolute !important;
-            left: -9999px !important;
+            left: -10000px !important;
+            top: -10000px !important;
+            z-index: -9999 !important;
+            pointer-events: none !important;
+        }
+
+        /* Target specific emotion-cache classes from your screenshot */
+        div.st-emotion-cache-79elbk,
+        .st-emotion-cache-79elbk,
+        div.eczjsme10,
+        .eczjsme10,
+        div.st-emotion-cache-79elbk *,
+        .eczjsme10 * {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0px !important;
+            opacity: 0 !important;
         }
 
         /* All children of stSidebarNav */
@@ -118,132 +136,6 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
-
-# Inject JavaScript using components.html() - this WILL execute
-components.html("""
-    <script>
-        // NUCLEAR OPTION: Ultra-aggressive sidebar navigation removal
-        console.log('🚀 JavaScript injection started...');
-
-        // Function to remove all navigation elements
-        function removeSidebarNav() {
-            let removed = 0;
-
-            // STRATEGY 1: Remove by exact data-testid (highest priority)
-            const exactSelectors = [
-                '[data-testid="stSidebarNav"]',
-                '[data-testid="stSidebarNavLink"]',
-                '[data-testid="stSidebarNavItems"]',
-            ];
-
-            exactSelectors.forEach(selector => {
-                try {
-                    const elements = parent.document.querySelectorAll(selector);
-                    if (elements.length > 0) {
-                        console.log(`🎯 Found ${elements.length} elements with ${selector}`);
-                        elements.forEach(el => {
-                            if (el) {
-                                // Apply inline styles FIRST
-                                el.style.display = 'none';
-                                el.style.visibility = 'hidden';
-                                el.style.opacity = '0';
-                                el.style.position = 'absolute';
-                                el.style.left = '-9999px';
-
-                                // Then remove
-                                el.remove();
-                                removed++;
-                                console.log('✅ REMOVED:', selector, el.className);
-                            }
-                        });
-                    }
-                } catch(e) {
-                    console.error('❌ Error with selector', selector, e);
-                }
-            });
-
-            // STRATEGY 2: Remove by class patterns (if any remain)
-            const classSelectors = [
-                '.st-emotion-cache-79elbk',
-                '.eczjsme10',
-                '[class*="st-emotion-cache"]'
-            ];
-
-            classSelectors.forEach(selector => {
-                try {
-                    const elements = parent.document.querySelectorAll(selector);
-                    elements.forEach(el => {
-                        const text = el.textContent || '';
-                        // Only remove if contains navigation text
-                        if (text.includes('auth') ||
-                            text.includes('dashboard') ||
-                            text.includes('model') ||
-                            text.includes('predict') ||
-                            text.includes('settings')) {
-                            el.style.display = 'none';
-                            el.remove();
-                            removed++;
-                            console.log('✅ REMOVED by class:', selector);
-                        }
-                    });
-                } catch(e) {}
-            });
-
-            if (removed > 0) {
-                console.log(`💥 Total removed: ${removed} elements`);
-            }
-            return removed;
-        }
-
-        // Run immediately (don't wait for load)
-        removeSidebarNav();
-
-        // Run on DOM ready
-        if (parent.document.readyState === 'loading') {
-            parent.document.addEventListener('DOMContentLoaded', removeSidebarNav);
-        } else {
-            removeSidebarNav();
-        }
-
-        // Run on window load
-        parent.window.addEventListener('load', removeSidebarNav);
-
-        // Run periodically (every 50ms for first 5 seconds, then every 200ms)
-        let counter = 0;
-        const fastInterval = setInterval(function() {
-            removeSidebarNav();
-            counter++;
-            if (counter > 100) { // After 5 seconds (100 * 50ms)
-                clearInterval(fastInterval);
-                // Then check less frequently
-                setInterval(removeSidebarNav, 200);
-            }
-        }, 50);
-
-        // Use MutationObserver to watch for navigation being added
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.addedNodes.length) {
-                    removeSidebarNav();
-                }
-            });
-        });
-
-        // Observe the sidebar for changes
-        setTimeout(function() {
-            const sidebar = parent.document.querySelector('[data-testid="stSidebar"]');
-            if (sidebar) {
-                observer.observe(sidebar, {
-                    childList: true,
-                    subtree: true
-                });
-                console.log('MutationObserver active on sidebar');
-            }
-        }, 100);
-
-        console.log('NUCLEAR navigation removal active');
-    </script>
-""", height=0)
 
 # Initialize session state for navigation
 if 'current_page' not in st.session_state:
