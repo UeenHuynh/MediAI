@@ -3,8 +3,6 @@ Settings page - Application configuration and preferences.
 """
 import streamlit as st
 
-st.set_page_config(page_title="Settings", page_icon="⚙️")
-
 st.title("⚙️ Settings")
 st.markdown("Configure application preferences and system settings.")
 

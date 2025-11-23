@@ -3,8 +3,6 @@ Authentication page - User login and authentication.
 """
 import streamlit as st
 
-st.set_page_config(page_title="Authentication", page_icon="🔐")
-
 st.title("🔐 Authentication")
 st.markdown("Login to access the MediAI Healthcare ML Platform")
 

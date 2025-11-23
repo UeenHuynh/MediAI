@@ -4,8 +4,6 @@ Predict Mortality page - Predict ICU mortality risk for patients.
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Predict Mortality", page_icon="💔")
-
 st.title("💔 Predict Mortality Risk")
 st.markdown("Predict hospital mortality risk using 24-hour ICU data and severity scores.")
 

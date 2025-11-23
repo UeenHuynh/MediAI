@@ -5,8 +5,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-st.set_page_config(page_title="Model Performance", page_icon="📊")
-
 st.title("📊 Model Performance")
 st.markdown("Monitor and analyze the performance of sepsis and mortality prediction models.")
 

@@ -4,8 +4,6 @@ Predict Sepsis page - Predict sepsis risk for ICU patients.
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Predict Sepsis", page_icon="🔬")
-
 st.title("🔬 Predict Sepsis Risk")
 st.markdown("Predict sepsis onset within 6 hours using patient vitals and lab values.")
 
