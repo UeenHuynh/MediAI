@@ -124,7 +124,7 @@ def show_laboratory_values():
 
     with col2:
         paco2 = st.number_input("PaCO2 (mmHg)", min_value=0.0, max_value=150.0, value=0.0, step=1.0, key="paco2")
-        ph = st.number_input("pH", min_value=6.8, max_value=8.0, value=0.0, step=0.01, key="ph")
+        ph = st.number_input("pH", min_value=6.8, max_value=8.0, value=7.4, step=0.01, key="ph")
 
     with col3:
         albumin = st.number_input("Albumin (g/dL)", min_value=0.0, max_value=6.0, value=0.0, step=0.1, key="albumin")
