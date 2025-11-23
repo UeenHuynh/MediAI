@@ -1,6 +1,13 @@
 """
 MediAI Healthcare ML Platform - Streamlit UI
 Main entry point for the Streamlit application.
+
+IMPORTANT ARCHITECTURE NOTES:
+- This is a SINGLE-PAGE app with custom navigation (NOT multi-page)
+- Views are in 'views/' directory (NOT 'pages/') to prevent Streamlit auto-detection
+- Custom CSS + JavaScript aggressively hide default sidebar navigation
+- Configuration files (.pages.toml, config.toml) also disable navigation
+- The sidebar ONLY contains our custom navigation menu with icons
 """
 import streamlit as st
 import sys
@@ -9,12 +16,12 @@ from pathlib import Path
 # Add the apps directory to the Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
-# Page configuration
+# Page configuration - MUST be first Streamlit command
 st.set_page_config(
     page_title="MediAI Healthcare ML Platform",
     page_icon="🏥",
     layout="wide",
-    initial_sidebar_state="collapsed"  # Start with sidebar collapsed
+    initial_sidebar_state="expanded"  # Keep sidebar expanded to show our custom nav
 )
 
 # Custom CSS to COMPLETELY hide the default Streamlit navigation and style the app
@@ -84,6 +91,40 @@ st.markdown("""
             padding-top: 2rem;
         }
     </style>
+
+    <script>
+        // JavaScript to forcefully remove sidebar navigation after page load
+        window.addEventListener('load', function() {
+            // Remove sidebar navigation using multiple selectors
+            const selectors = [
+                '[data-testid="stSidebarNav"]',
+                'section[data-testid="stSidebarNav"]',
+                'div[data-testid="stSidebarNav"]',
+                '.css-1544g2n'
+            ];
+
+            selectors.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    if (el) {
+                        el.remove();
+                        el.style.display = 'none';
+                        el.style.visibility = 'hidden';
+                    }
+                });
+            });
+        });
+
+        // Also run periodically in case Streamlit re-renders
+        setInterval(function() {
+            const navElements = document.querySelectorAll('[data-testid="stSidebarNav"]');
+            navElements.forEach(el => {
+                if (el) {
+                    el.remove();
+                }
+            });
+        }, 100);
+    </script>
 """, unsafe_allow_html=True)
 
 # Initialize session state for navigation
