@@ -29,11 +29,17 @@ st.markdown("""
     <style>
         /* NUCLEAR OPTION: Ultra-aggressive hiding of ALL default sidebar navigation */
 
-        /* Primary target: stSidebarNav */
+        /* Primary target: stSidebarNav AND stSidebarNavLink */
         [data-testid="stSidebarNav"],
+        [data-testid="stSidebarNavLink"],
+        [data-testid="stSidebarNavItems"],
         section[data-testid="stSidebarNav"],
         div[data-testid="stSidebarNav"],
-        nav[data-testid="stSidebarNav"] {
+        nav[data-testid="stSidebarNav"],
+        div.st-emotion-cache-79elbk,
+        div.eczjsme10,
+        .st-emotion-cache-79elbk,
+        .eczjsme10 {
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
@@ -116,6 +122,8 @@ st.markdown("""
         function removeSidebarNav() {
             const selectors = [
                 '[data-testid="stSidebarNav"]',
+                '[data-testid="stSidebarNavLink"]',
+                '[data-testid="stSidebarNavItems"]',
                 'section[data-testid="stSidebarNav"]',
                 'div[data-testid="stSidebarNav"]',
                 '[class*="stSidebarNav"]',
@@ -125,9 +133,15 @@ st.markdown("""
                 '.css-1544g2n',
                 '.css-17lntkn',
                 '.css-pkbazv',
+                '.st-emotion-cache-79elbk',
+                '.eczjsme10',
+                'div.st-emotion-cache-79elbk',
+                'div.eczjsme10',
                 // Add more potential selectors
                 'section[data-testid="stSidebar"] > div:first-child nav',
-                'section[data-testid="stSidebar"] nav'
+                'section[data-testid="stSidebar"] nav',
+                'section[data-testid="stSidebar"] ul',
+                '[class*="st-emotion-cache"]'
             ];
 
             let removed = false;
@@ -145,14 +159,26 @@ st.markdown("""
                                 text.includes('predict mortality') ||
                                 text.includes('predict sepsis') ||
                                 (text.includes('settings') && !text.includes('⚙️'))) {
+
+                                // NUCLEAR: Apply inline styles FIRST
+                                el.style.display = 'none';
+                                el.style.visibility = 'hidden';
+                                el.style.opacity = '0';
+                                el.style.height = '0';
+                                el.style.width = '0';
+                                el.style.overflow = 'hidden';
+                                el.style.position = 'absolute';
+                                el.style.left = '-9999px';
+
+                                // Then remove from DOM
                                 el.remove();
                                 removed = true;
-                                console.log('Removed default navigation:', selector);
+                                console.log('✅ Removed default navigation:', selector, el.className);
                             }
                         }
                     });
                 } catch(e) {
-                    // Ignore errors
+                    console.error('Error removing nav:', e);
                 }
             });
             return removed;
