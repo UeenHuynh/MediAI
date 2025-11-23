@@ -3,33 +3,32 @@ Settings page - Application configuration and preferences.
 """
 import streamlit as st
 
+st.set_page_config(page_title="Settings", page_icon="⚙️")
 
-def show():
-    """Display the settings page."""
-    st.title("⚙️ Settings")
-    st.markdown("Configure application preferences and system settings.")
+st.title("⚙️ Settings")
+st.markdown("Configure application preferences and system settings.")
 
-    st.markdown("---")
+st.markdown("---")
 
-    # Create tabs for different settings categories
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "🎨 Display",
-        "🔔 Alerts",
-        "🔐 System",
-        "ℹ️ About"
-    ])
+# Create tabs for different settings categories
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🎨 Display",
+    "🔔 Alerts",
+    "🔐 System",
+    "ℹ️ About"
+])
 
-    with tab1:
-        show_display_settings()
+with tab1:
+    show_display_settings()
 
-    with tab2:
-        show_alert_settings()
+with tab2:
+    show_alert_settings()
 
-    with tab3:
-        show_system_settings()
+with tab3:
+    show_system_settings()
 
-    with tab4:
-        show_about()
+with tab4:
+    show_about()
 
 
 def show_display_settings():

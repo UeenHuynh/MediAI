@@ -1,3 +1,0 @@
-# This file explicitly configures Streamlit to have NO pages
-# This prevents Streamlit from auto-detecting any multi-page app structure
-# Leave empty to disable all page navigation

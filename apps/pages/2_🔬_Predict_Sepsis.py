@@ -4,27 +4,26 @@ Predict Sepsis page - Predict sepsis risk for ICU patients.
 import streamlit as st
 import pandas as pd
 
+st.set_page_config(page_title="Predict Sepsis", page_icon="🔬")
 
-def show():
-    """Display the predict sepsis page."""
-    st.title("🔬 Predict Sepsis Risk")
-    st.markdown("Predict sepsis onset within 6 hours using patient vitals and lab values.")
+st.title("🔬 Predict Sepsis Risk")
+st.markdown("Predict sepsis onset within 6 hours using patient vitals and lab values.")
 
-    st.markdown("---")
+st.markdown("---")
 
-    # Input method selection
-    input_method = st.radio(
-        "Select Input Method:",
-        ["Manual Entry", "Load from Database", "Upload CSV"],
-        horizontal=True
-    )
+# Input method selection
+input_method = st.radio(
+    "Select Input Method:",
+    ["Manual Entry", "Load from Database", "Upload CSV"],
+    horizontal=True
+)
 
-    if input_method == "Manual Entry":
-        show_manual_entry()
-    elif input_method == "Load from Database":
-        show_database_load()
-    else:
-        show_csv_upload()
+if input_method == "Manual Entry":
+    show_manual_entry()
+elif input_method == "Load from Database":
+    show_database_load()
+else:
+    show_csv_upload()
 
 
 def show_manual_entry():

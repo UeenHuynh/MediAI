@@ -5,25 +5,24 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+st.set_page_config(page_title="Model Performance", page_icon="📊")
 
-def show():
-    """Display the model performance page."""
-    st.title("📊 Model Performance")
-    st.markdown("Monitor and analyze the performance of sepsis and mortality prediction models.")
+st.title("📊 Model Performance")
+st.markdown("Monitor and analyze the performance of sepsis and mortality prediction models.")
 
-    st.markdown("---")
+st.markdown("---")
 
-    # Model selection
-    model_type = st.selectbox(
-        "Select Model:",
-        ["Sepsis Prediction Model", "Mortality Prediction Model"],
-        index=0
-    )
+# Model selection
+model_type = st.selectbox(
+    "Select Model:",
+    ["Sepsis Prediction Model", "Mortality Prediction Model"],
+    index=0
+)
 
-    if model_type == "Sepsis Prediction Model":
-        show_sepsis_performance()
-    else:
-        show_mortality_performance()
+if model_type == "Sepsis Prediction Model":
+    show_sepsis_performance()
+else:
+    show_mortality_performance()
 
 
 def show_sepsis_performance():

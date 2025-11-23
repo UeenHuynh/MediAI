@@ -4,27 +4,26 @@ Predict Mortality page - Predict ICU mortality risk for patients.
 import streamlit as st
 import pandas as pd
 
+st.set_page_config(page_title="Predict Mortality", page_icon="💔")
 
-def show():
-    """Display the predict mortality page."""
-    st.title("💔 Predict Mortality Risk")
-    st.markdown("Predict hospital mortality risk using 24-hour ICU data and severity scores.")
+st.title("💔 Predict Mortality Risk")
+st.markdown("Predict hospital mortality risk using 24-hour ICU data and severity scores.")
 
-    st.markdown("---")
+st.markdown("---")
 
-    # Input method selection
-    input_method = st.radio(
-        "Select Input Method:",
-        ["Manual Entry", "Load from Database", "Upload CSV"],
-        horizontal=True
-    )
+# Input method selection
+input_method = st.radio(
+    "Select Input Method:",
+    ["Manual Entry", "Load from Database", "Upload CSV"],
+    horizontal=True
+)
 
-    if input_method == "Manual Entry":
-        show_manual_entry()
-    elif input_method == "Load from Database":
-        show_database_load()
-    else:
-        show_csv_upload()
+if input_method == "Manual Entry":
+    show_manual_entry()
+elif input_method == "Load from Database":
+    show_database_load()
+else:
+    show_csv_upload()
 
 
 def show_manual_entry():
