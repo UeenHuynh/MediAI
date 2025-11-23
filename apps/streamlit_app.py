@@ -161,6 +161,44 @@ st.markdown("""
         background-color: #1f2937;
     }
 
+    /* Hide Streamlit default navigation menu */
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+
+    /* Custom navigation link styling */
+    section[data-testid="stSidebar"] a {
+        text-decoration: none;
+        color: #e5e7eb;
+        display: block;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+        margin-bottom: 0.25rem;
+    }
+
+    section[data-testid="stSidebar"] a:hover {
+        background-color: rgba(102, 126, 234, 0.2);
+        color: #ffffff;
+        transform: translateX(4px);
+    }
+
+    /* Active page highlight */
+    section[data-testid="stSidebar"] strong {
+        color: #667eea;
+        font-size: 1.05rem;
+    }
+
+    /* Sidebar spacing improvements */
+    section[data-testid="stSidebar"] {
+        padding-top: 1rem;
+    }
+
+    section[data-testid="stSidebar"] .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
     /* Compliance Badge */
     .compliance-badge {
         display: inline-block;
