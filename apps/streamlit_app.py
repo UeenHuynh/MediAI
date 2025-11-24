@@ -411,22 +411,13 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # Legal document links as buttons
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        pass
-    with col2:
-        subcol1, subcol2 = st.columns(2)
-        with subcol1:
-            if st.button("📋 Terms & Conditions", key="footer_terms", use_container_width=True):
-                st.session_state.legal_tab = 'terms'
-                st.switch_page("pages/legal.py")
-        with subcol2:
-            if st.button("🔒 Privacy Policy", key="footer_privacy", use_container_width=True):
-                st.session_state.legal_tab = 'privacy'
-                st.switch_page("pages/legal.py")
-    with col3:
-        pass
+    # Legal document links
+    st.markdown("""
+    <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem;">
+        <a href="/legal" style="color: #9ca3af; text-decoration: none; margin: 0 1rem;">📋 Terms & Conditions</a> |
+        <a href="/legal" style="color: #9ca3af; text-decoration: none; margin: 0 1rem;">🔒 Privacy Policy</a>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
