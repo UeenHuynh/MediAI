@@ -408,12 +408,25 @@ def main():
             <a href="https://gdpr.eu/" target="_blank" style="color: #10b981; text-decoration: none;">GDPR</a> Compliant |
             © 2025
         </p>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #9ca3af;">
-            <span style="cursor: default;">Terms & Conditions | Privacy Policy</span> -
-            <span style="font-style: italic;">View in 📄 Legal page</span>
-        </p>
     </div>
     """, unsafe_allow_html=True)
+
+    # Legal document links as buttons
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        pass
+    with col2:
+        subcol1, subcol2 = st.columns(2)
+        with subcol1:
+            if st.button("📋 Terms & Conditions", key="footer_terms", use_column_width=True):
+                st.session_state.legal_tab = 'terms'
+                st.switch_page("pages/legal.py")
+        with subcol2:
+            if st.button("🔒 Privacy Policy", key="footer_privacy", use_column_width=True):
+                st.session_state.legal_tab = 'privacy'
+                st.switch_page("pages/legal.py")
+    with col3:
+        pass
 
 
 if __name__ == "__main__":
