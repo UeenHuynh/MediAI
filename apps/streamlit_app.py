@@ -251,52 +251,41 @@ def show_compliance_modal():
     col1, col2 = st.columns(2)
 
     with col1:
+        st.markdown("### 🇺🇸 HIPAA Compliance")
+        st.markdown("**Health Insurance Portability and Accountability Act**")
+        st.markdown("")
+        st.markdown("**We protect your health information through:**")
         st.markdown("""
-        <div class="card">
-            <h3 style="color: #667eea;">🇺🇸 HIPAA Compliance</h3>
-            <p><strong>Health Insurance Portability and Accountability Act</strong></p>
-
-            <h4>We protect your health information through:</h4>
-            <ul>
-                <li>✓ AES-256 Encryption for all PHI</li>
-                <li>✓ Comprehensive Audit Logging</li>
-                <li>✓ Role-Based Access Controls</li>
-                <li>✓ Secure Data Transmission (TLS)</li>
-                <li>✓ 7-Year Retention Policy</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
+        - ✓ AES-256 Encryption for all PHI
+        - ✓ Comprehensive Audit Logging
+        - ✓ Role-Based Access Controls
+        - ✓ Secure Data Transmission (TLS)
+        - ✓ 7-Year Retention Policy
+        """)
 
     with col2:
+        st.markdown("### 🇪🇺 GDPR Compliance")
+        st.markdown("**General Data Protection Regulation**")
+        st.markdown("")
+        st.markdown("**We process your data with:**")
         st.markdown("""
-        <div class="card">
-            <h3 style="color: #667eea;">🇪🇺 GDPR Compliance</h3>
-            <p><strong>General Data Protection Regulation</strong></p>
-
-            <h4>We process your data with:</h4>
-            <ul>
-                <li>✓ Explicit Consent</li>
-                <li>✓ Data Minimization</li>
-                <li>✓ Purpose Limitation</li>
-                <li>✓ Pseudonymization</li>
-                <li>✓ Security by Design</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
+        - ✓ Explicit Consent
+        - ✓ Data Minimization
+        - ✓ Purpose Limitation
+        - ✓ Pseudonymization
+        - ✓ Security by Design
+        """)
 
     st.markdown("---")
 
     # Important Note
-    st.markdown("""
-    <div class="card" style="background-color: #fef3c7; border-left: 4px solid #f59e0b;">
-        <h4 style="color: #92400e; margin-top: 0;">⚠️ Important Note</h4>
-        <p style="color: #78350f; margin-bottom: 0;">
-            This is a <strong>demonstration platform</strong> for educational and research purposes only.
-            This system is <strong>NOT approved for clinical use</strong> and should not be used to make
-            medical decisions. All predictions must be reviewed by qualified healthcare professionals.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.warning("""
+    ⚠️ **Important Note**
+
+    This is a **demonstration platform** for educational and research purposes only.
+    This system is **NOT approved for clinical use** and should not be used to make
+    medical decisions. All predictions must be reviewed by qualified healthcare professionals.
+    """)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
