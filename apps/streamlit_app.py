@@ -411,13 +411,13 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # Legal document links
-    st.markdown("""
-    <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem;">
-        <a href="/legal" style="color: #9ca3af; text-decoration: none; margin: 0 1rem;">📋 Terms & Conditions</a> |
-        <a href="/legal" style="color: #9ca3af; text-decoration: none; margin: 0 1rem;">🔒 Privacy Policy</a>
-    </div>
-    """, unsafe_allow_html=True)
+    # Legal document links (temporarily hidden)
+    # st.markdown("""
+    # <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem;">
+    #     <a href="/legal" style="color: #9ca3af; text-decoration: none; margin: 0 1rem;">📋 Terms & Conditions</a> |
+    #     <a href="/legal" style="color: #9ca3af; text-decoration: none; margin: 0 1rem;">🔒 Privacy Policy</a>
+    # </div>
+    # """, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
