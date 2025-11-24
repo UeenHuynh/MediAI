@@ -398,42 +398,17 @@ def main():
     # Footer
     st.markdown("---")
 
-    # Footer with compliance info
+    # Footer with clickable compliance links
     st.markdown("""
     <div class="footer">
-        <p>🏥 MediAI v1.0.0 | © 2025</p>
+        <p>
+            🏥 MediAI v1.0.0 |
+            <a href="https://www.hhs.gov/hipaa/index.html" target="_blank" style="color: #10b981; text-decoration: none;">HIPAA</a> &
+            <a href="https://gdpr.eu/" target="_blank" style="color: #10b981; text-decoration: none;">GDPR</a> Compliant |
+            © 2025
+        </p>
     </div>
     """, unsafe_allow_html=True)
-
-    # Clickable compliance info expander
-    with st.expander("🛡️ Click here to view HIPAA & GDPR Compliance Information"):
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("""
-            ### 🇺🇸 HIPAA Compliance
-            **Health Insurance Portability and Accountability Act**
-
-            We protect your health information through:
-            - ✓ AES-256 Encryption for all PHI
-            - ✓ Comprehensive Audit Logging
-            - ✓ Role-Based Access Controls
-            - ✓ Secure Data Transmission (TLS)
-            - ✓ 7-Year Retention Policy
-            """)
-
-        with col2:
-            st.markdown("""
-            ### 🇪🇺 GDPR Compliance
-            **General Data Protection Regulation**
-
-            We process your data with:
-            - ✓ Explicit Consent
-            - ✓ Data Minimization
-            - ✓ Purpose Limitation
-            - ✓ Pseudonymization
-            - ✓ Security by Design
-            """)
 
 
 if __name__ == "__main__":
