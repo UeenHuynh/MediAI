@@ -408,9 +408,9 @@ def main():
             <a href="https://gdpr.eu/" target="_blank" style="color: #10b981; text-decoration: none;">GDPR</a> Compliant |
             © 2025
         </p>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem;">
-            <a href="/legal" style="color: #9ca3af; text-decoration: none;">Terms & Conditions</a> |
-            <a href="/legal" style="color: #9ca3af; text-decoration: none;">Privacy Policy</a>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #9ca3af;">
+            <span style="cursor: default;">Terms & Conditions | Privacy Policy</span> -
+            <span style="font-style: italic;">View in 📄 Legal page</span>
         </p>
     </div>
     """, unsafe_allow_html=True)
