@@ -68,7 +68,7 @@ st.markdown("""
     <style>
     /* Global Styles */
     .main {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #764ba2;
         background-attachment: fixed;
     }
 
@@ -286,6 +286,20 @@ def show_compliance_modal():
 
     st.markdown("---")
 
+    # Important Note
+    st.markdown("""
+    <div class="card" style="background-color: #fef3c7; border-left: 4px solid #f59e0b;">
+        <h4 style="color: #92400e; margin-top: 0;">⚠️ Important Note</h4>
+        <p style="color: #78350f; margin-bottom: 0;">
+            This is a <strong>demonstration platform</strong> for educational and research purposes only.
+            This system is <strong>NOT approved for clinical use</strong> and should not be used to make
+            medical decisions. All predictions must be reviewed by qualified healthcare professionals.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
@@ -394,9 +408,40 @@ def main():
 
     # Footer
     st.markdown("---")
+
+    # Compliance info expander
+    with st.expander("🛡️ HIPAA & GDPR Compliance Information"):
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("""
+            ### 🇺🇸 HIPAA Compliance
+            **Health Insurance Portability and Accountability Act**
+
+            We protect your health information through:
+            - ✓ AES-256 Encryption for all PHI
+            - ✓ Comprehensive Audit Logging
+            - ✓ Role-Based Access Controls
+            - ✓ Secure Data Transmission (TLS)
+            - ✓ 7-Year Retention Policy
+            """)
+
+        with col2:
+            st.markdown("""
+            ### 🇪🇺 GDPR Compliance
+            **General Data Protection Regulation**
+
+            We process your data with:
+            - ✓ Explicit Consent
+            - ✓ Data Minimization
+            - ✓ Purpose Limitation
+            - ✓ Pseudonymization
+            - ✓ Security by Design
+            """)
+
     st.markdown("""
     <div class="footer">
-        <p>🏥 MediAI v1.0.0 | HIPAA & GDPR Compliant | © 2025</p>
+        <p>🏥 MediAI v1.0.0 | © 2025</p>
     </div>
     """, unsafe_allow_html=True)
 
