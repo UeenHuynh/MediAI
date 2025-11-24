@@ -14,7 +14,7 @@ from utils.encryption import DataEncryption
 from utils.audit_logger import AuditLogger, AuditEventType
 
 # Import page modules
-from pages import auth, dashboard, predict_sepsis, predict_mortality, model_performance, settings
+from pages import auth, dashboard, predict_sepsis, predict_mortality, model_performance, settings, legal
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -353,6 +353,7 @@ def main():
         st.Page(predict_mortality.show_mortality_prediction, title="Mortality Prediction", icon="💔", url_path="mortality"),
         st.Page(model_performance.show_model_performance, title="Model Performance", icon="📊", url_path="performance"),
         st.Page(settings.show_settings, title="Settings", icon="⚙️", url_path="settings"),
+        st.Page(legal.show_legal, title="Legal", icon="📄", url_path="legal"),
     ]
 
     # Create navigation
@@ -406,6 +407,10 @@ def main():
             <a href="https://www.hhs.gov/hipaa/index.html" target="_blank" style="color: #10b981; text-decoration: none;">HIPAA</a> &
             <a href="https://gdpr.eu/" target="_blank" style="color: #10b981; text-decoration: none;">GDPR</a> Compliant |
             © 2025
+        </p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;">
+            <a href="/legal" style="color: #9ca3af; text-decoration: none;">Terms & Conditions</a> |
+            <a href="/legal" style="color: #9ca3af; text-decoration: none;">Privacy Policy</a>
         </p>
     </div>
     """, unsafe_allow_html=True)
