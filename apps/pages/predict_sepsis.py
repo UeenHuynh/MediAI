@@ -28,27 +28,19 @@ def show_sepsis_prediction():
     - Temporal trends (6-12 hour changes)
     """)
 
-    # Create form with tabs
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "👤 Demographics & Vitals",
-        "🧪 Laboratory Values",
-        "📊 SOFA Scores",
-        "📈 Trends & Time"
-    ])
-
+    # Create form with sections (no tabs - tabs don't work inside forms)
     with st.form("sepsis_prediction_form"):
 
-        with tab1:
-            show_demographics_vitals()
+        show_demographics_vitals()
 
-        with tab2:
-            show_laboratory_values()
+        st.markdown("---")
+        show_laboratory_values()
 
-        with tab3:
-            show_sofa_scores()
+        st.markdown("---")
+        show_sofa_scores()
 
-        with tab4:
-            show_trends_time()
+        st.markdown("---")
+        show_trends_time()
 
         st.markdown("---")
 
