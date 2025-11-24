@@ -398,8 +398,15 @@ def main():
     # Footer
     st.markdown("---")
 
-    # Compliance info expander
-    with st.expander("🛡️ HIPAA & GDPR Compliance Information"):
+    # Footer with compliance info
+    st.markdown("""
+    <div class="footer">
+        <p>🏥 MediAI v1.0.0 | © 2025</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Clickable compliance info expander
+    with st.expander("🛡️ Click here to view HIPAA & GDPR Compliance Information"):
         col1, col2 = st.columns(2)
 
         with col1:
@@ -427,12 +434,6 @@ def main():
             - ✓ Pseudonymization
             - ✓ Security by Design
             """)
-
-    st.markdown("""
-    <div class="footer">
-        <p>🏥 MediAI v1.0.0 | © 2025</p>
-    </div>
-    """, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
