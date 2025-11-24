@@ -418,11 +418,11 @@ def main():
     with col2:
         subcol1, subcol2 = st.columns(2)
         with subcol1:
-            if st.button("📋 Terms & Conditions", key="footer_terms", use_column_width=True):
+            if st.button("📋 Terms & Conditions", key="footer_terms", use_container_width=True):
                 st.session_state.legal_tab = 'terms'
                 st.switch_page("pages/legal.py")
         with subcol2:
-            if st.button("🔒 Privacy Policy", key="footer_privacy", use_column_width=True):
+            if st.button("🔒 Privacy Policy", key="footer_privacy", use_container_width=True):
                 st.session_state.legal_tab = 'privacy'
                 st.switch_page("pages/legal.py")
     with col3:
