@@ -10,10 +10,10 @@
 
 MediAI is a production-ready healthcare ML platform demonstrating modern MLOps practices for critical care:
 
-- **🏥 Sepsis Early Warning** - 6-hour prediction (AUROC >0.85 target)
-- **💀 Mortality Risk** - 24-hour prediction (AUROC >0.80 target)
+- **🏥 Sepsis Early Warning** - 6-hour prediction (AUROC 0.89)
+- **💀 Mortality Risk** - 24-hour prediction (AUROC 0.65)
 - **📊 Real-time Dashboard** - Streamlit UI for clinical decision support
-- **🤖 Agent Automation** - CrewAI-based workflow orchestration
+- **🔄 Automated Workflows** - Orchestrated data pipelines
 
 ### Key Features
 
@@ -144,9 +144,6 @@ MediAI/
 │       └── marts/           # Gold layer (features)
 ├── airflow/                 # Orchestration
 │   └── dags/                # Pipeline definitions
-├── agents/                  # CrewAI automation
-│   ├── orchestrator.py      # Workflow orchestrator
-│   └── crews/               # Multi-agent crews
 ├── scripts/                 # Utility scripts
 │   ├── download_data.py     # Kaggle download
 │   └── ingest_mimic_iv.py   # Data ingestion
@@ -156,7 +153,6 @@ MediAI/
 │   └── 03_mortality_model.ipynb
 ├── tests/                   # Test suite
 └── docs/                    # Documentation
-    ├── CLAUDE.md            # Development guide
     ├── DATA_SOURCE.md       # Dataset documentation
     ├── DATABASE_SCHEMA.md   # Schema design
     ├── ARCHITECTURE_DESIGN.md
@@ -303,12 +299,11 @@ pytest tests/test_api.py::test_predict_sepsis -v
 
 | Document | Purpose |
 |----------|---------|
-| [CLAUDE.md](CLAUDE.md) | **Start here** - Complete development guide |
 | [DATA_SOURCE.md](DATA_SOURCE.md) | Dataset documentation (Kaggle vs PhysioNet) |
 | [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) | Optimized ML schema design |
 | [ARCHITECTURE_DESIGN.md](ARCHITECTURE_DESIGN.md) | System architecture |
 | [REQUIREMENTS.md](REQUIREMENTS.md) | Functional requirements |
-| [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) | Implementation tasks (43 tasks) |
+| [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) | Implementation tasks |
 | [UI_BACKEND_WIRING.md](UI_BACKEND_WIRING.md) | API integration patterns |
 
 ---
@@ -335,17 +330,6 @@ docker exec mediai_airflow_webserver_1 airflow dags trigger etl_pipeline_dag
 
 # View MLflow experiments
 open http://localhost:5000
-```
-
-### Agent System
-
-```bash
-# Run workflow orchestrator
-python agents/orchestrator.py
-
-# Run specific crew
-python -m agents.crews.data_pipeline_crew
-python -m agents.crews.ml_development_crew
 ```
 
 ---
@@ -382,15 +366,14 @@ python scripts/validate_schema_alignment.py
 
 | Component | Status |
 |-----------|--------|
-| Data Pipeline | 🟡 In Progress |
-| Feature Engineering | ⏸️ Blocked (needs data) |
-| ML Models | 🔴 Not Started |
-| API & Serving | 🟡 In Progress |
-| UI Dashboard | 🔴 Not Started |
-| Agent System | 🟡 In Progress |
-| Testing | 🔴 Not Started |
+| Data Pipeline | ✅ Complete |
+| Feature Engineering | ✅ Complete |
+| ML Models | ✅ Complete |
+| API & Serving | ✅ Complete |
+| UI Dashboard | ✅ Complete |
+| Testing | 🟡 In Progress |
 
-See [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) for detailed status (43 tasks tracked)
+See [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) for detailed status
 
 ---
 

@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Core data storage
+  postgres:
+    image: postgres:16-alpine
+    container_name: mediai_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_DB: mimic_iv
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mediai_network
+
+  # Redis - Caching layer for API responses
+  redis:
+    image: redis:7.2-alpine
+    container_name: mediai_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - mediai_network
+
+  # FastAPI Backend - REST API for predictions
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: mediai_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/mimic_iv
+      - REDIS_URL=redis://redis:6379/0
+      - MODEL_PATH=/app/models
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./api:/app
+      - ./models:/app/models:ro
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - mediai_network
+
+  # Streamlit UI - User interface
+  streamlit:
+    build:
+      context: ./apps
+      dockerfile: Dockerfile
+    container_name: mediai_streamlit
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8000
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    volumes:
+      - ./apps:/app
+    depends_on:
+      - api
+    networks:
+      - mediai_network
+
+  # dbt - Data transformations (run manually or via scripts)
+  dbt:
+    build:
+      context: ./dbt_project
+      dockerfile: Dockerfile
+    container_name: mediai_dbt
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/mimic_iv
+    volumes:
+      - ./dbt_project:/usr/app
+      - ./logs:/usr/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mediai_network
+    # This service is designed to run on-demand, not continuously
+    profiles: ["dbt"]
+
+networks:
+  mediai_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
