@@ -17,7 +17,10 @@ class ModelService:
         self.models_dir = Path(__file__).parent.parent.parent / "models"
         self.sepsis_model = None
         self.sepsis_features = None
+        self.mortality_model = None
+        self.mortality_features = None
         self._load_sepsis_model()
+        self._load_mortality_model()
 
     def _load_sepsis_model(self):
         """Load sepsis prediction model"""
@@ -36,6 +39,24 @@ class ModelService:
             print(f"❌ Failed to load sepsis model: {e}")
             self.sepsis_model = None
             self.sepsis_features = None
+
+    def _load_mortality_model(self):
+        """Load mortality prediction model"""
+        try:
+            model_path = self.models_dir / "mortality_lightgbm_v1.pkl"
+            features_path = self.models_dir / "mortality_feature_names.pkl"
+
+            with open(model_path, 'rb') as f:
+                self.mortality_model = pickle.load(f)
+
+            with open(features_path, 'rb') as f:
+                self.mortality_features = pickle.load(f)
+
+            print(f"✅ Mortality model loaded with {len(self.mortality_features)} features")
+        except Exception as e:
+            print(f"❌ Failed to load mortality model: {e}")
+            self.mortality_model = None
+            self.mortality_features = None
 
     def predict_sepsis(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -251,6 +272,116 @@ class ModelService:
             return "⚡ CAUTION: Moderate sepsis risk. Monitor closely for deterioration. Consider trending labs and vital signs."
         else:
             return "✅ Low sepsis risk. Continue routine monitoring. Reassess if clinical status changes."
+
+    def predict_mortality(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Predict mortality risk from input data
+
+        Args:
+            input_data: Dictionary with patient features (13 features)
+
+        Returns:
+            Dictionary with prediction results
+        """
+        print(f"💀 predict_mortality called with {len(input_data)} features")
+
+        if self.mortality_model is None:
+            print("❌ Mortality model not loaded")
+            return {
+                "error": "Model not loaded",
+                "risk_score": 0.5,
+                "risk_level": "Unknown",
+                "recommendation": "Model unavailable - using mock prediction"
+            }
+
+        try:
+            # Prepare features
+            print("📊 Preparing mortality features...")
+            features_df = self._prepare_mortality_features(input_data)
+            print(f"✅ Features prepared: {features_df.shape}")
+
+            # Predict
+            print("🤖 Running mortality prediction...")
+            pred_proba = self.mortality_model.predict(features_df)[0]
+            print(f"✅ Prediction: {pred_proba:.4f}")
+
+            # Determine risk level
+            if pred_proba < 0.2:
+                risk_level = "Low"
+                color = "🟢"
+            elif pred_proba < 0.5:
+                risk_level = "Medium"
+                color = "🟡"
+            elif pred_proba < 0.75:
+                risk_level = "High"
+                color = "🟠"
+            else:
+                risk_level = "Critical"
+                color = "🔴"
+
+            # Generate recommendation
+            recommendation = self._generate_mortality_recommendation(pred_proba, risk_level)
+
+            return {
+                "risk_score": float(pred_proba),
+                "risk_level": risk_level,
+                "risk_color": color,
+                "recommendation": recommendation,
+                "model_version": "mortality_lightgbm_v1",
+                "features_used": len(self.mortality_features)
+            }
+
+        except Exception as e:
+            print(f"❌ Mortality prediction error: {e}")
+            return {
+                "error": str(e),
+                "risk_score": 0.5,
+                "risk_level": "Unknown",
+                "recommendation": "Error during prediction"
+            }
+
+    def _prepare_mortality_features(self, input_data: Dict[str, Any]) -> pd.DataFrame:
+        """Prepare features for mortality prediction (13 features)"""
+
+        features = {}
+
+        # Demographics
+        features['age'] = input_data.get('age', 65)
+        features['gender'] = 1 if input_data.get('gender', 'M') == 'M' else 0
+
+        # Worst vitals/labs in first 24h
+        features['worst_heart_rate'] = input_data.get('worst_heart_rate', 100)
+        features['worst_sbp_low'] = input_data.get('worst_sbp_low', 100)
+        features['worst_temperature_high'] = input_data.get('worst_temperature_high', 37.5)
+        features['worst_respiratory_rate'] = input_data.get('worst_respiratory_rate', 20)
+        features['worst_spo2'] = input_data.get('worst_spo2', 95)
+        features['worst_gcs'] = input_data.get('worst_gcs', 14)
+        features['worst_lactate'] = input_data.get('worst_lactate', 2.0)
+        features['worst_creatinine'] = input_data.get('worst_creatinine', 1.2)
+
+        # Clinical scores
+        features['sofa_day1'] = input_data.get('sofa_day1', 3)
+        features['apache_ii_score'] = input_data.get('apache_ii_score', 10)
+
+        # Interventions
+        features['vasopressor_use'] = 1 if input_data.get('vasopressor_use', False) else 0
+
+        # Create DataFrame with correct feature order
+        df = pd.DataFrame([features])
+        df = df[self.mortality_features]  # Ensure correct order
+
+        return df
+
+    def _generate_mortality_recommendation(self, risk_score: float, risk_level: str) -> str:
+        """Generate mortality risk recommendation"""
+        if risk_level == "Critical":
+            return "🚨 CRITICAL: Very high mortality risk (>75%). Intensive monitoring and aggressive treatment required. Consider ICU escalation, family discussion."
+        elif risk_level == "High":
+            return "⚠️ HIGH RISK: Significant mortality risk (50-75%). Close monitoring essential. Review treatment goals and escalation plans."
+        elif risk_level == "Medium":
+            return "⚡ MODERATE RISK: Moderate mortality risk (20-50%). Continue current treatment. Monitor for deterioration."
+        else:
+            return "✅ LOW RISK: Low mortality risk (<20%). Continue routine ICU care. Reassess regularly."
 
 
 # Global instance
