@@ -280,18 +280,60 @@ curl -X POST http://localhost:8000/predict/sepsis \
 
 ## 🧪 Testing
 
+Comprehensive testing suite with unit, integration, and API tests.
+
+### Run Tests
+
 ```bash
 # Run all tests
 pytest tests/ -v
 
-# With coverage
-pytest tests/ --cov=api --cov=dbt_project --cov-report=html
+# Run specific test suite
+pytest tests/test_model_service.py -v    # Model service tests (11 tests)
+pytest tests/test_encryption.py -v       # Encryption tests (8 tests)
+pytest tests/test_api.py -v              # API tests (4 tests)
+pytest tests/test_integration.py -v      # Integration tests (9 tests)
 
-# Specific test
-pytest tests/test_api.py::test_predict_sepsis -v
+# With coverage report
+pytest tests/ --cov=apps --cov=api --cov-report=html
+
+# Specific test method
+pytest tests/test_model_service.py::TestModelService::test_model_loading -v
 ```
 
-**Coverage Target:** >70%
+### Test Coverage
+
+**Target:** 70%+ coverage
+
+**Current Test Suite:**
+- ✅ 11 model service tests (100% pass rate)
+- ✅ 8 encryption tests
+- ✅ 4 API endpoint tests
+- ✅ 9 integration tests
+
+**Test Categories:**
+- Unit tests for model predictions (sepsis & mortality)
+- Feature preparation and validation
+- Encryption/decryption functionality
+- API request/response validation
+- End-to-end prediction workflows
+
+See [tests/README.md](tests/README.md) for detailed documentation.
+
+### CI/CD Pipeline
+
+Automated testing runs on:
+- ✅ Every push to `main` and `develop` branches
+- ✅ All pull requests
+- ✅ Pre-commit hooks (optional)
+
+**Pipeline Stages:**
+1. **Test** - Run pytest suite with coverage
+2. **Lint** - Code quality (flake8, black, isort)
+3. **Security** - Security scan (bandit, safety)
+4. **Build** - Docker image building
+
+See `.github/workflows/ci.yml` for configuration.
 
 ---
 
@@ -371,7 +413,8 @@ python scripts/validate_schema_alignment.py
 | ML Models | ✅ Complete |
 | API & Serving | ✅ Complete |
 | UI Dashboard | ✅ Complete |
-| Testing | 🟡 In Progress |
+| Testing | ✅ Complete |
+| CI/CD | ✅ Complete |
 
 See [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) for detailed status
 
