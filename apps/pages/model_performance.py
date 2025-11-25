@@ -34,16 +34,16 @@ def show_sepsis_model_performance():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("AUROC", "0.88", delta="Target: 0.85+", help="Area Under ROC Curve")
+        st.metric("AUROC", "0.893", delta="Target: 0.85+", help="Area Under ROC Curve")
 
     with col2:
-        st.metric("Sensitivity", "0.81", delta="Target: 0.75-0.85", help="True Positive Rate / Recall")
+        st.metric("Sensitivity", "0.828", delta="Target: 0.75-0.85", help="True Positive Rate / Recall")
 
     with col3:
-        st.metric("Specificity", "0.86", delta="Target: 0.82-0.90", help="True Negative Rate")
+        st.metric("Specificity", "0.806", delta="Target: 0.82-0.90", help="True Negative Rate")
 
     with col4:
-        st.metric("Accuracy", "0.84", help="Overall classification accuracy")
+        st.metric("Accuracy", "0.816", help="Overall classification accuracy")
 
     st.markdown("---")
 
@@ -84,10 +84,12 @@ def show_sepsis_model_performance():
             "num_boost_round": 1000
         },
         "performance": {
-            "AUROC": "0.88 (target: 0.85-0.92)",
-            "Accuracy": "84%",
-            "Sensitivity": "81%",
-            "Specificity": "86%"
+            "AUROC": "0.893 (actual from training)",
+            "Accuracy": "81.6%",
+            "Sensitivity": "82.8%",
+            "Specificity": "80.6%",
+            "Precision": "76.3%",
+            "F1-Score": "79.4%"
         }
     }
 
@@ -103,16 +105,16 @@ def show_mortality_model_performance():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("AUROC", "0.85", delta="Target: 0.82-0.90", help="Area Under ROC Curve")
+        st.metric("AUROC", "0.645", delta="Target: 0.82-0.90", help="Area Under ROC Curve")
 
     with col2:
-        st.metric("Sensitivity", "0.76", delta="Target: 0.70-0.82", help="True Positive Rate / Recall")
+        st.metric("Sensitivity", "0.599", delta="Target: 0.70-0.82", help="True Positive Rate / Recall")
 
     with col3:
-        st.metric("Specificity", "0.83", delta="Target: 0.80-0.88", help="True Negative Rate")
+        st.metric("Specificity", "0.600", delta="Target: 0.80-0.88", help="True Negative Rate")
 
     with col4:
-        st.metric("Accuracy", "0.81", help="Overall classification accuracy")
+        st.metric("Accuracy", "0.602", help="Overall classification accuracy")
 
     st.markdown("---")
 
@@ -153,10 +155,10 @@ def show_mortality_model_performance():
             "num_boost_round": 500
         },
         "performance": {
-            "AUROC": "0.85 (target: 0.82-0.90)",
-            "Accuracy": "81%",
-            "Sensitivity": "76%",
-            "Specificity": "83%"
+            "AUROC": "0.645 (actual from training)",
+            "Accuracy": "60.2%",
+            "Sensitivity": "59.9%",
+            "Specificity": "60.0%"
         }
     }
 
@@ -173,15 +175,15 @@ def show_roc_curve(model_type: str):
     fpr = np.linspace(0, 1, 100)
 
     if model_type == "sepsis":
-        # AUROC = 0.88
-        tpr = fpr ** 0.28 + 0.15 * np.random.random(100)
+        # AUROC = 0.893
+        tpr = fpr ** 0.27 + 0.15 * np.random.random(100)
         tpr = np.clip(tpr, 0, 1)
-        auroc = 0.88
+        auroc = 0.893
     else:
-        # AUROC = 0.85
-        tpr = fpr ** 0.35 + 0.12 * np.random.random(100)
+        # AUROC = 0.645
+        tpr = fpr ** 0.65 + 0.10 * np.random.random(100)
         tpr = np.clip(tpr, 0, 1)
-        auroc = 0.85
+        auroc = 0.645
 
     fig = go.Figure()
 
@@ -217,13 +219,13 @@ def show_confusion_matrix(model_type: str):
     """Show confusion matrix"""
 
     if model_type == "sepsis":
-        # Sensitivity = 0.81, Specificity = 0.86
-        # Assuming 2000 validation samples with 6% positive (120 positive cases)
-        tn, fp, fn, tp = 1616, 264, 23, 97
+        # Actual from training: Sensitivity = 0.828, Specificity = 0.806
+        # Test set: 2000 samples with 43.1% positive (862 positive cases)
+        tn, fp, fn, tp = 917, 221, 149, 713
     else:
-        # Sensitivity = 0.76, Specificity = 0.83
-        # Assuming 2000 validation samples with 10% positive (200 positive cases)
-        tn, fp, fn, tp = 1494, 306, 48, 152
+        # Actual from training: Sensitivity = 0.599, Specificity = 0.600
+        # Test set: 2000 samples with 47.9% positive (958 positive cases)
+        tn, fp, fn, tp = 625, 417, 384, 574
 
     matrix = np.array([[tn, fp], [fn, tp]])
 
