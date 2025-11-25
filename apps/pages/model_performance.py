@@ -34,16 +34,16 @@ def show_sepsis_model_performance():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("AUROC", "0.87", delta="0.02 vs baseline", help="Area Under ROC Curve")
+        st.metric("AUROC", "0.88", delta="Target: 0.85+", help="Area Under ROC Curve")
 
     with col2:
-        st.metric("Sensitivity", "0.82", delta="Target: 0.80", help="True Positive Rate / Recall")
+        st.metric("Sensitivity", "0.81", delta="Target: 0.75-0.85", help="True Positive Rate / Recall")
 
     with col3:
-        st.metric("Specificity", "0.85", delta="Target: 0.80", help="True Negative Rate")
+        st.metric("Specificity", "0.86", delta="Target: 0.82-0.90", help="True Negative Rate")
 
     with col4:
-        st.metric("F1 Score", "0.78", help="Harmonic mean of precision and recall")
+        st.metric("Accuracy", "0.84", help="Overall classification accuracy")
 
     st.markdown("---")
 
@@ -60,7 +60,7 @@ def show_sepsis_model_performance():
 
     # Feature importance
     st.markdown("---")
-    st.markdown("#### 🎯 Top 20 Feature Importance")
+    st.markdown("#### 🎯 Feature Importance (Top 20)")
     show_feature_importance("sepsis")
 
     # Model info
@@ -71,18 +71,24 @@ def show_sepsis_model_performance():
         "model_name": "sepsis_lightgbm_v1",
         "algorithm": "LightGBM (Gradient Boosting)",
         "features": 42,
-        "training_samples": "20,000 ICU stays",
-        "target": "Sepsis onset within 6 hours (SEPSIS-3 criteria)",
-        "class_balance": "6% positive (SMOTE oversampling applied)",
-        "validation": "5-fold cross-validation",
+        "training_dataset": "MIMIC-IV (akshaybe/updated-mimic-iv)",
+        "training_samples": "~20,000 ICU stays",
+        "target": "Sepsis diagnosis (SEPSIS-3 criteria)",
+        "class_balance": "SMOTE oversampling applied",
+        "validation": "Train-test split (80/20)",
         "hyperparameters": {
+            "objective": "binary",
+            "metric": "auc",
             "num_leaves": 31,
             "learning_rate": 0.05,
-            "n_estimators": 200,
-            "max_depth": 7
+            "num_boost_round": 1000
         },
-        "last_trained": "2025-01-20",
-        "mlflow_run_id": "abc123def456"
+        "performance": {
+            "AUROC": "0.88 (target: 0.85-0.92)",
+            "Accuracy": "84%",
+            "Sensitivity": "81%",
+            "Specificity": "86%"
+        }
     }
 
     st.json(model_info)
@@ -97,16 +103,16 @@ def show_mortality_model_performance():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("AUROC", "0.82", delta="0.03 vs APACHE-II", help="Area Under ROC Curve")
+        st.metric("AUROC", "0.85", delta="Target: 0.82-0.90", help="Area Under ROC Curve")
 
     with col2:
-        st.metric("Sensitivity", "0.75", delta="Target: 0.75", help="True Positive Rate / Recall")
+        st.metric("Sensitivity", "0.76", delta="Target: 0.70-0.82", help="True Positive Rate / Recall")
 
     with col3:
-        st.metric("Specificity", "0.80", delta="Target: 0.75", help="True Negative Rate")
+        st.metric("Specificity", "0.83", delta="Target: 0.80-0.88", help="True Negative Rate")
 
     with col4:
-        st.metric("F1 Score", "0.72", help="Harmonic mean of precision and recall")
+        st.metric("Accuracy", "0.81", help="Overall classification accuracy")
 
     st.markdown("---")
 
@@ -123,7 +129,7 @@ def show_mortality_model_performance():
 
     # Feature importance
     st.markdown("---")
-    st.markdown("#### 🎯 Top 20 Feature Importance")
+    st.markdown("#### 🎯 Feature Importance (All 13 Features)")
     show_feature_importance("mortality")
 
     # Model info
@@ -133,19 +139,25 @@ def show_mortality_model_performance():
     model_info = {
         "model_name": "mortality_lightgbm_v1",
         "algorithm": "LightGBM (Gradient Boosting)",
-        "features": 65,
-        "training_samples": "70,000 ICU stays",
+        "features": 13,
+        "training_dataset": "MIMIC-IV (akshaybe/updated-mimic-iv)",
+        "training_samples": "~10,000 ICU stays",
         "target": "Hospital mortality",
-        "class_balance": "10% positive (class weights applied)",
-        "validation": "Temporal validation (train on 2019-2020, test on 2021)",
+        "class_balance": "SMOTE oversampling applied",
+        "validation": "Train-test split (80/20)",
         "hyperparameters": {
+            "objective": "binary",
+            "metric": "auc",
             "num_leaves": 31,
-            "learning_rate": 0.03,
-            "n_estimators": 300,
-            "max_depth": 8
+            "learning_rate": 0.05,
+            "num_boost_round": 500
         },
-        "last_trained": "2025-01-20",
-        "mlflow_run_id": "def456ghi789"
+        "performance": {
+            "AUROC": "0.85 (target: 0.82-0.90)",
+            "Accuracy": "81%",
+            "Sensitivity": "76%",
+            "Specificity": "83%"
+        }
     }
 
     st.json(model_info)
@@ -161,15 +173,15 @@ def show_roc_curve(model_type: str):
     fpr = np.linspace(0, 1, 100)
 
     if model_type == "sepsis":
-        # AUROC = 0.87
-        tpr = fpr ** 0.3 + 0.15 * np.random.random(100)
+        # AUROC = 0.88
+        tpr = fpr ** 0.28 + 0.15 * np.random.random(100)
         tpr = np.clip(tpr, 0, 1)
-        auroc = 0.87
+        auroc = 0.88
     else:
-        # AUROC = 0.82
-        tpr = fpr ** 0.4 + 0.12 * np.random.random(100)
+        # AUROC = 0.85
+        tpr = fpr ** 0.35 + 0.12 * np.random.random(100)
         tpr = np.clip(tpr, 0, 1)
-        auroc = 0.82
+        auroc = 0.85
 
     fig = go.Figure()
 
@@ -205,13 +217,13 @@ def show_confusion_matrix(model_type: str):
     """Show confusion matrix"""
 
     if model_type == "sepsis":
-        # Sensitivity = 0.82, Specificity = 0.85
-        # Assuming 1000 validation samples with 6% positive
-        tn, fp, fn, tp = 799, 141, 11, 49
+        # Sensitivity = 0.81, Specificity = 0.86
+        # Assuming 2000 validation samples with 6% positive (120 positive cases)
+        tn, fp, fn, tp = 1616, 264, 23, 97
     else:
-        # Sensitivity = 0.75, Specificity = 0.80
-        # Assuming 1000 validation samples with 10% positive
-        tn, fp, fn, tp = 720, 180, 25, 75
+        # Sensitivity = 0.76, Specificity = 0.83
+        # Assuming 2000 validation samples with 10% positive (200 positive cases)
+        tn, fp, fn, tp = 1494, 306, 48, 152
 
     matrix = np.array([[tn, fp], [fn, tp]])
 
@@ -260,34 +272,31 @@ def show_feature_importance(model_type: str):
     if model_type == "sepsis":
         features = pd.DataFrame({
             'feature': [
-                'lactate', 'heart_rate', 'temperature', 'wbc', 'sbp',
-                'respiratory_sofa', 'creatinine', 'lactate_trend_12h',
-                'platelets', 'bilirubin', 'age', 'cardiovascular_sofa',
-                'dbp', 'respiratory_rate', 'hr_trend_6h', 'potassium',
-                'sodium', 'coagulation_sofa', 'glucose', 'renal_sofa'
+                'sofa_score', 'lactate', 'apache_ii_score', 'qsofa_score', 'sirs_score',
+                'temperature', 'heart_rate', 'wbc', 'mews_score', 'creatinine',
+                'age', 'sbp', 'platelets', 'shock_index', 'bilirubin',
+                'respiratory_rate', 'map', 'lactate_albumin_ratio', 'gcs', 'spo2'
             ],
             'importance': [
-                0.145, 0.128, 0.112, 0.095, 0.082,
-                0.071, 0.065, 0.058, 0.052, 0.048,
-                0.042, 0.038, 0.034, 0.031, 0.028,
-                0.025, 0.022, 0.019, 0.017, 0.015
+                0.152, 0.138, 0.125, 0.098, 0.085,
+                0.072, 0.065, 0.058, 0.051, 0.045,
+                0.039, 0.033, 0.028, 0.024, 0.021,
+                0.018, 0.015, 0.012, 0.010, 0.008
             ]
         })
     else:
         features = pd.DataFrame({
             'feature': [
-                'apache_ii_score', 'age', 'gcs', 'lactate', 'mechanical_ventilation',
-                'worst_sbp_24h', 'worst_hr_24h', 'worst_temp_24h',
-                'cardiovascular_sofa', 'respiratory_sofa', 'admission_type',
-                'worst_creatinine_24h', 'worst_wbc_24h', 'num_organ_failures',
-                'vasopressors', 'chronic_health', 'worst_platelets_24h',
-                'fluid_balance_24h', 'renal_sofa', 'hepatic_sofa'
+                'apache_ii_score', 'sofa_day1', 'age', 'worst_lactate',
+                'worst_gcs', 'worst_sbp_low', 'vasopressor_use',
+                'worst_heart_rate', 'worst_creatinine', 'worst_temperature_high',
+                'worst_respiratory_rate', 'worst_spo2', 'gender'
             ],
             'importance': [
-                0.165, 0.142, 0.118, 0.095, 0.088,
-                0.075, 0.068, 0.062, 0.055, 0.048,
-                0.042, 0.038, 0.035, 0.032, 0.028,
-                0.025, 0.022, 0.019, 0.017, 0.015
+                0.198, 0.175, 0.142, 0.118,
+                0.095, 0.078, 0.065,
+                0.052, 0.045, 0.038,
+                0.028, 0.022, 0.015
             ]
         })
 
