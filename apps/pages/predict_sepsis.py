@@ -8,6 +8,7 @@ import requests
 import os
 from utils.audit_logger import AuditEventType
 from utils.encryption import DataEncryption
+from services.model_service import get_model_service
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
@@ -262,6 +263,8 @@ def handle_prediction():
             "dbp": st.session_state.dbp,
             "temperature": st.session_state.temp,
             "respiratory_rate": st.session_state.rr,
+            "spo2": st.session_state.get('spo2', 98),
+            "gcs": st.session_state.get('gcs', 15),
             "wbc": st.session_state.wbc,
             "lactate": st.session_state.lactate,
             "creatinine": st.session_state.creat,
@@ -271,6 +274,7 @@ def handle_prediction():
             "potassium": st.session_state.k,
             "glucose": st.session_state.glucose,
             "hemoglobin": st.session_state.hgb,
+            "bun": st.session_state.get('bun', 15.0),
             "bicarbonate": st.session_state.hco3 if st.session_state.hco3 > 0 else None,
             "pao2": st.session_state.pao2 if st.session_state.pao2 > 0 else None,
             "paco2": st.session_state.paco2 if st.session_state.paco2 > 0 else None,
@@ -304,27 +308,61 @@ def handle_prediction():
         details={'model': 'sepsis'}
     )
 
-    # Call API
-    with st.spinner("🔬 Analyzing patient data..."):
+    # Use local model for prediction
+    with st.spinner("🔬 Analyzing patient data with ML model..."):
         try:
-            response = requests.post(
-                f"{API_URL}/api/v1/predict/sepsis",
-                json=request_data,
-                timeout=30
-            )
+            # Get model service
+            model_service = get_model_service()
 
-            if response.status_code == 200:
-                result = response.json()
-                show_prediction_result(result, "Sepsis")
-            else:
-                st.error(f"❌ API Error: {response.status_code}")
-                st.json(response.json())
+            # Run prediction
+            prediction_result = model_service.predict_sepsis(request_data['features'])
 
-        except requests.exceptions.ConnectionError:
-            st.error("❌ Cannot connect to API. Using mock prediction for demo.")
-            show_mock_prediction(request_data)
+            # Format result to match expected structure
+            from datetime import datetime
+            result = {
+                'prediction': {
+                    'risk_score': prediction_result.get('risk_score', 0.5),
+                    'risk_level': prediction_result.get('risk_level', 'Unknown').upper(),
+                    'recommendation': prediction_result.get('recommendation', ''),
+                },
+                'metadata': {
+                    'model_version': prediction_result.get('model_version', 'sepsis_lightgbm_v1'),
+                    'features_used': prediction_result.get('features_used', 42),
+                    'prediction_time': datetime.now().isoformat()
+                }
+            }
+
+            # Add error info if present
+            if 'error' in prediction_result:
+                result['metadata']['error'] = prediction_result['error']
+                st.warning(f"⚠️ Model warning: {prediction_result['error']}")
+
+            show_prediction_result(result, "Sepsis")
+
         except Exception as e:
-            st.error(f"❌ Error: {str(e)}")
+            st.error(f"❌ Model prediction error: {str(e)}")
+            st.info("Falling back to API...")
+
+            # Fallback to API if local model fails
+            try:
+                response = requests.post(
+                    f"{API_URL}/api/v1/predict/sepsis",
+                    json=request_data,
+                    timeout=30
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    show_prediction_result(result, "Sepsis")
+                else:
+                    st.error(f"❌ API Error: {response.status_code}")
+                    st.json(response.json())
+
+            except requests.exceptions.ConnectionError:
+                st.error("❌ Cannot connect to API. Using mock prediction for demo.")
+                show_mock_prediction(request_data)
+            except Exception as api_error:
+                st.error(f"❌ API Error: {str(api_error)}")
 
 
 def show_prediction_result(result: dict, model_type: str):
