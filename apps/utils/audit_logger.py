@@ -7,7 +7,7 @@ Tracks all user actions, data access, and system events for compliance
 
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from enum import Enum
 import os
@@ -265,7 +265,7 @@ class AuditLogger:
 
         # Read log files from last N days
         for i in range(days):
-            date = datetime.now() - pd.Timedelta(days=i)
+            date = datetime.now() - timedelta(days=i)
             log_file = self.log_dir / f"audit_{date.strftime('%Y%m%d')}.log"
 
             if log_file.exists():
