@@ -95,3 +95,11 @@ coverage.xml
 # Config
 config/data_path.txt
 kaggle.json
+
+# Development & Testing Files
+debug_*.py
+test_*.py
+inspect_*.py
+
+# Training Results
+results/
