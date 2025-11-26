@@ -16,6 +16,9 @@ from utils.audit_logger import AuditLogger, AuditEventType
 # Import page modules
 from pages import auth, dashboard, predict_sepsis, predict_mortality, model_performance, settings, legal
 
+# Import chatbot
+from components.chatbot import render_chatbot
+
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
@@ -395,6 +398,9 @@ def main():
             st.session_state.authenticated = False
             st.session_state.user_id = None
             st.rerun()
+
+    # Render chatbot (available on all pages)
+    render_chatbot()
 
     # Footer
     st.markdown("---")
