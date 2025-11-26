@@ -6,9 +6,16 @@ Form for sepsis risk prediction with 42 clinical features
 import streamlit as st
 import requests
 import os
+import sys
+from pathlib import Path
+
+# Add parent directory to path for components
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from utils.audit_logger import AuditEventType
 from utils.encryption import DataEncryption
 from services.model_service import get_model_service
+from components.floating_assistant import render_floating_assistant
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
@@ -62,6 +69,9 @@ def show_sepsis_prediction():
 
         if submitted:
             handle_prediction()
+
+    # Render floating assistant for contextual help
+    render_floating_assistant(page_name="Predict Sepsis")
 
 
 def show_demographics_vitals():
