@@ -64,7 +64,7 @@ def show_sepsis_prediction():
         with col2:
             submitted = st.form_submit_button(
                 "🔬 Predict Sepsis Risk",
-                use_container_width=True
+                use_column_width=True
             )
 
         if submitted:
@@ -415,7 +415,7 @@ def show_prediction_result(result: dict, model_type: str):
             }
         ))
         fig.update_layout(height=300)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_column_width=True)
 
     with col2:
         st.markdown(f"## Risk Level: {risk_level}")
@@ -427,7 +427,7 @@ def show_prediction_result(result: dict, model_type: str):
             import pandas as pd
             features_df = pd.DataFrame(result['top_features'])
             if not features_df.empty:
-                st.dataframe(features_df, use_container_width=True)
+                st.dataframe(features_df, use_column_width=True)
 
     with st.expander("ℹ️ Prediction Metadata"):
         st.json(result.get('metadata', {}))

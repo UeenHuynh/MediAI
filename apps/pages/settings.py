@@ -117,7 +117,7 @@ def show_risk_threshold_settings():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("💾 Save Thresholds", use_container_width=True):
+        if st.button("💾 Save Thresholds", use_column_width=True):
             # Log configuration change
             audit = st.session_state.audit_logger
             audit.log_event(
@@ -142,7 +142,7 @@ def show_risk_threshold_settings():
             st.success("✅ Thresholds saved successfully")
 
     with col2:
-        if st.button("🔄 Reset to Defaults", use_container_width=True):
+        if st.button("🔄 Reset to Defaults", use_column_width=True):
             st.info("Thresholds reset to default values")
             st.rerun()
 
@@ -211,7 +211,7 @@ def show_security_settings():
             help="Set logging verbosity"
         )
 
-        if st.button("📊 View My Activity Log", use_container_width=True):
+        if st.button("📊 View My Activity Log", use_column_width=True):
             with st.expander("Recent Activity", expanded=True):
                 activity = audit.get_user_activity(
                     user_id=st.session_state.user_id,
@@ -222,7 +222,7 @@ def show_security_settings():
                     st.write(f"**{len(activity)} events in last 7 days**")
                     import pandas as pd
                     df = pd.DataFrame(activity[:20])  # Show last 20
-                    st.dataframe(df, use_container_width=True)
+                    st.dataframe(df, use_column_width=True)
                 else:
                     st.info("No activity logs found")
 
@@ -298,7 +298,7 @@ def show_security_settings():
             - Data portability
             """)
 
-    if st.button("📄 View Compliance Documentation", use_container_width=True):
+    if st.button("📄 View Compliance Documentation", use_column_width=True):
         st.info("""
         **Documentation Available:**
         - `/docs/HIPAA_COMPLIANCE.md`
@@ -379,7 +379,7 @@ def show_notification_settings():
 
     st.markdown("---")
 
-    if st.button("💾 Save Notification Settings", use_container_width=True):
+    if st.button("💾 Save Notification Settings", use_column_width=True):
         # Log configuration change
         audit = st.session_state.audit_logger
         audit.log_event(
@@ -453,7 +453,7 @@ def show_user_profile():
     with col3:
         confirm_password = st.text_input("Confirm New Password", type="password")
 
-    if st.button("🔄 Change Password", use_container_width=True):
+    if st.button("🔄 Change Password", use_column_width=True):
         if new_password == confirm_password and len(new_password) >= 8:
             st.success("✅ Password changed successfully")
         else:
@@ -464,10 +464,10 @@ def show_user_profile():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("💾 Save Profile", use_container_width=True):
+        if st.button("💾 Save Profile", use_column_width=True):
             st.success("✅ Profile updated successfully")
 
     with col2:
-        if st.button("❌ Delete Account", use_container_width=True):
+        if st.button("❌ Delete Account", use_column_width=True):
             st.error("⚠️ This action cannot be undone!")
             st.warning("Contact administrator to delete your account")

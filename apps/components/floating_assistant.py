@@ -699,7 +699,7 @@ def render_floating_assistant(page_name: Optional[str] = None):
         if st.button("❓" if not st.session_state.fa_open else "✕",
                      key="floating_help_toggle",
                      help="Trợ giúp MediAI",
-                     use_container_width=True):
+                     use_column_width=True):
             st.session_state.fa_open = not st.session_state.fa_open
             st.rerun()
 

@@ -73,7 +73,7 @@ def show_login_form():
 
         remember_me = st.checkbox("Remember me for 30 days")
 
-        submit = st.form_submit_button("Sign In", use_container_width=True)
+        submit = st.form_submit_button("Sign In", use_column_width=True)
 
         if submit:
             # Validate credentials (demo implementation)
@@ -137,7 +137,7 @@ def show_register_form():
 
         submit = st.form_submit_button(
             "Create Account",
-            use_container_width=True,
+            use_column_width=True,
             disabled=not (terms and hipaa)
         )
 

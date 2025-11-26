@@ -148,7 +148,7 @@ def show_dashboard():
             )
         ])
         fig.update_layout(height=300)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_column_width=True)
 
     with col2:
         st.subheader("Recent Predictions")
@@ -158,7 +158,7 @@ def show_dashboard():
             'Risk Level': ['HIGH', 'MEDIUM', 'CRITICAL', 'LOW', 'HIGH'],
             'Model': ['Sepsis', 'Mortality', 'Sepsis', 'Mortality', 'Sepsis']
         })
-        st.dataframe(recent_data, use_container_width=True)
+        st.dataframe(recent_data, use_column_width=True)
 
 
 def show_sepsis_prediction():
@@ -243,7 +243,7 @@ def show_sepsis_prediction():
         hour_of_admission = st.slider("Hour of Admission", 0, 23, 12)
         icu_los_so_far = st.number_input("ICU LOS so far (hours)", min_value=0.0, value=12.0)
 
-        submitted = st.form_submit_button("🔬 Predict Sepsis Risk", use_container_width=True)
+        submitted = st.form_submit_button("🔬 Predict Sepsis Risk", use_column_width=True)
 
         if submitted:
             # Build request
@@ -393,7 +393,7 @@ def show_prediction_result(result: dict, model_type: str):
             }
         ))
         fig.update_layout(height=300)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_column_width=True)
 
     with col2:
         risk_class = f"risk-{risk_level.lower()}"
@@ -404,7 +404,7 @@ def show_prediction_result(result: dict, model_type: str):
         if 'top_features' in result:
             features_df = pd.DataFrame(result['top_features'])
             if not features_df.empty:
-                st.dataframe(features_df, use_container_width=True)
+                st.dataframe(features_df, use_column_width=True)
 
     # Metadata
     with st.expander("ℹ️ Prediction Metadata"):

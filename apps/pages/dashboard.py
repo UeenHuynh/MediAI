@@ -354,7 +354,7 @@ def show_patient_detail(patient: pd.Series):
             }
         ))
         fig.update_layout(height=250, margin=dict(l=20, r=20, t=40, b=20))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_column_width=True)
 
     with col2:
         st.markdown("#### 💔 Mortality Risk")
@@ -381,7 +381,7 @@ def show_patient_detail(patient: pd.Series):
             }
         ))
         fig.update_layout(height=250, margin=dict(l=20, r=20, t=40, b=20))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_column_width=True)
 
     # Recommendation
     st.markdown("---")
@@ -438,7 +438,7 @@ def show_risk_trend_chart():
         hovermode='x unified'
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_column_width=True)
 
 
 def show_risk_scatter(df: pd.DataFrame):
@@ -465,4 +465,4 @@ def show_risk_scatter(df: pd.DataFrame):
         margin=dict(l=20, r=20, t=20, b=20)
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_column_width=True)

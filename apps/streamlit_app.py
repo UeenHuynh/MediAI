@@ -304,7 +304,7 @@ def show_compliance_modal():
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        if st.button("Continue to Application", use_container_width=True, disabled=not (hipaa_consent and gdpr_consent)):
+        if st.button("Continue to Application", use_column_width=True, disabled=not (hipaa_consent and gdpr_consent)):
             st.session_state.compliance_accepted = True
 
             # Log consent
@@ -338,7 +338,7 @@ def main():
     # Sidebar with user info, navigation, and compliance status
     with st.sidebar:
         # Logo
-        st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", use_container_width=True)
+        st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", use_column_width=True)
 
         # User info
         st.markdown("### 👤 User")
@@ -382,7 +382,7 @@ def main():
 
         st.markdown("---")
 
-        if st.button("🚪 Logout", use_container_width=True):
+        if st.button("🚪 Logout", use_column_width=True):
             # Log logout
             audit = st.session_state.audit_logger
             audit.log_event(

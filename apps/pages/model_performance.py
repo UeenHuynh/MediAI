@@ -212,7 +212,7 @@ def show_roc_curve(model_type: str):
         legend=dict(x=0.6, y=0.1)
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_column_width=True)
 
 
 def show_confusion_matrix(model_type: str):
@@ -245,7 +245,7 @@ def show_confusion_matrix(model_type: str):
         margin=dict(l=20, r=20, t=20, b=20)
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_column_width=True)
 
     # Metrics from confusion matrix
     col1, col2, col3, col4 = st.columns(4)
@@ -369,4 +369,4 @@ def show_feature_importance(model_type: str):
         showlegend=False
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_column_width=True)

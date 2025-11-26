@@ -84,7 +84,7 @@ def show_mortality_prediction():
         with col2:
             submitted = st.form_submit_button(
                 "💔 Predict Mortality Risk",
-                use_container_width=True
+                use_column_width=True
             )
 
         if submitted:
@@ -199,7 +199,7 @@ def show_mortality_result(result: dict):
             }
         ))
         fig.update_layout(height=300)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_column_width=True)
 
     with col2:
         st.markdown(f"## Risk Level: {risk_level}")
