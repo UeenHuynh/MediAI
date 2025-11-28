@@ -341,7 +341,7 @@ def main():
     # Sidebar with user info, navigation, and compliance status
     with st.sidebar:
         # Logo
-        st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", use_container_width=True)
+        st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", width='stretch')
 
         # User info
         st.markdown("### 👤 User")

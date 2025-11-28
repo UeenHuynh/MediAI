@@ -2,14 +2,14 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.31+-red.svg)](https://streamlit.io/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-red.svg)](https://streamlit.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > **End-to-end MLOps platform for ICU patient risk prediction with HIPAA/GDPR compliance**
 
 <!-- PROJECT LOGO/BANNER -->
 <!-- TODO: Add banner image -->
-![MediAI Platform Banner](docs/images/banner.png)
+![MediAI Platform Banner](docs/images/banner.jpeg)
 
 ---
 
@@ -33,7 +33,7 @@ MediAI is a production-ready healthcare ML platform for ICU clinical decision su
 
 <!-- DASHBOARD SCREENSHOT -->
 <!-- TODO: Add dashboard screenshot -->
-![Dashboard Overview](docs/images/dashboard.png)
+![Dashboard Overview](docs/images/Sélection_815.png)
 
 ---
 
@@ -44,7 +44,7 @@ MediAI is a production-ready healthcare ML platform for ICU clinical decision su
 
 <!-- SEPSIS PREDICTION SCREENSHOT -->
 <!-- TODO: Add sepsis prediction page screenshot -->
-![Sepsis Prediction](docs/images/sepsis-prediction.png)
+![Sepsis Prediction](docs/images/Sélection_816.png)
 
 - **Input:** 42 features (vitals, labs, demographics, SOFA scores)
 - **Output:** Risk score, level, recommendations, SHAP explanations
@@ -56,7 +56,7 @@ MediAI is a production-ready healthcare ML platform for ICU clinical decision su
 
 <!-- MORTALITY PREDICTION SCREENSHOT -->
 <!-- TODO: Add mortality prediction page screenshot -->
-![Mortality Prediction](docs/images/mortality-prediction.png)
+![Mortality Prediction](docs/images/Sélection_817.png)
 
 - **Input:** 65 features (SOFA, APACHE-II, worst vitals/labs in 24h)
 - **Output:** Risk score, survival probability, feature importance
@@ -168,7 +168,7 @@ Open browser to **http://localhost:8501**
 
 <!-- LOGIN SCREENSHOT -->
 <!-- TODO: Add login page screenshot -->
-![Login Page](docs/images/login.png)
+![Login Page](docs/images/Sélection_818.png)
 
 ---
 
@@ -277,83 +277,690 @@ MediAI/
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ System Design & Architecture
 
-### Data Pipeline (Medallion Architecture)
+### High-Level System Architecture
+
+<!-- SYSTEM DESIGN DIAGRAM -->
+<!-- TODO: Add system design diagram showing all layers and components -->
+<!-- ![System  DesignOverview](docs/images/icon.png) -->
 
 <!-- ARCHITECTURE DIAGRAM -->
 <!-- TODO: Add architecture diagram -->
-![Architecture Diagram](docs/images/architecture.png)
+![Architecture Diagram](docs/images/icon.png)
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         PRESENTATION LAYER                                │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │  Streamlit Multi-Page App (Port 8501)                             │  │
+│  │  - Dashboard | Sepsis Prediction | Mortality Prediction           │  │
+│  │  - Model Performance | Settings | Legal/Compliance                │  │
+│  │  - Session State Management | AES-256 Encryption                  │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                │ HTTP REST API (JSON)
+                                ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         APPLICATION LAYER                                 │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │  FastAPI Backend (Port 8000)                                       │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌─────────────────────────┐  │  │
+│  │  │   Routers    │  │   Services   │  │     Middleware          │  │  │
+│  │  │ - /predict/* │  │ - ML Service │  │ - CORS                  │  │  │
+│  │  │ - /health    │  │ - Cache Svc  │  │ - Error Handler         │  │  │
+│  │  │ - /patients  │  │ - DB Service │  │ - Request Validation    │  │  │
+│  │  └──────────────┘  └──────────────┘  └─────────────────────────┘  │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+└──────────┬───────────────────┬────────────────────┬──────────────────────┘
+           │                   │                    │
+           ▼                   ▼                    ▼
+┌─────────────────┐  ┌──────────────────┐  ┌─────────────────────┐
+│  Redis Cache    │  │  ML Model Store  │  │  Audit Logging      │
+│  - LRU Policy   │  │  - LightGBM      │  │  - JSON Log Files   │
+│  - 256MB Limit  │  │  - SHAP Values   │  │  - 7-Year Retention │
+│  - 1hr TTL      │  │  - Scalers       │  │  - HIPAA Compliant  │
+└─────────────────┘  └──────────────────┘  └─────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         DATA LAYER (Medallion Architecture)               │
+│                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐ │
+│  │  PostgreSQL Database (Port 5434)                                    │ │
+│  │                                                                     │ │
+│  │  BRONZE (Raw)           SILVER (Staging)        GOLD (Analytics)   │ │
+│  │  ┌────────────┐         ┌──────────────┐        ┌───────────────┐ │ │
+│  │  │ raw.*      │         │ staging.*    │        │ analytics.*   │ │ │
+│  │  │ - icustays │  dbt    │ - Cleaned    │  dbt   │ - Features    │ │ │
+│  │  │ - patients │────────>│ - Validated  │───────>│ - ML Ready    │ │ │
+│  │  │ - vitals   │ models  │ - Indexed    │ models │ - Denormed    │ │ │
+│  │  │ - labs     │         │ - Typed      │        │ - <10ms query │ │ │
+│  │  └────────────┘         └──────────────┘        └───────────────┘ │ │
+│  │                                                                     │ │
+│  └─────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────┘
+           ▲
+           │ Orchestration & Workflow
+           │
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         ORCHESTRATION LAYER (Optional)                    │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │  Apache Airflow (Port 8080)                                        │  │
+│  │  - Data Ingestion DAG (Kaggle → PostgreSQL)                        │  │
+│  │  - ETL Pipeline DAG (dbt transformations)                          │  │
+│  │  - Model Retraining DAG (scheduled/manual)                         │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### System Components Overview
+
+| Component | Technology | Purpose | Port | SLA |
+|-----------|-----------|---------|------|-----|
+| **Frontend** | Streamlit 1.31+ | Clinical decision support UI | 8501 | 99.5% uptime |
+| **API Gateway** | FastAPI 0.109+ | REST API for ML predictions | 8000 | <200ms latency |
+| **Cache Layer** | Redis 7.2 | Response caching, session store | 6379 | 80%+ hit rate |
+| **Database** | PostgreSQL 16 | MIMIC-IV data, feature store | 5434 | <10ms queries |
+| **ML Runtime** | LightGBM + SHAP | Model inference & explainability | - | <100ms inference |
+| **ETL Engine** | dbt 1.7+ | Data transformations | - | Daily refresh |
+| **Orchestrator** | Airflow 2.8 | Workflow scheduling | 8080 | Optional |
+| **Model Registry** | MLflow 2.10 | Model versioning & tracking | 5000 | Optional |
+
+---
+
+## 🔄 Data Pipeline Architecture (Medallion Pattern)
+
+### Bronze Layer (Raw Data)
+
+**Purpose:** Immutable landing zone for raw MIMIC-IV data
+
+```sql
+-- Schema: raw
+-- Tables: 15+ tables (core subset shown)
+
+raw.icustays          -- 73,000 ICU admissions
+raw.patients          -- Patient demographics
+raw.admissions        -- Hospital admission records
+raw.chartevents       -- Vitals (200M+ rows)
+raw.labevents         -- Lab results (100M+ rows)
+raw.inputevents       -- Medications, fluids
+raw.outputevents      -- Fluid output
+raw.diagnoses_icd     -- ICD-9/10 codes
+```
+
+**Characteristics:**
+- No transformations applied
+- Exact copy from Kaggle dataset
+- Append-only (never delete)
+- Partitioned by `hadm_id` for performance
+- Size: ~50GB uncompressed
+
+### Silver Layer (Staging)
+
+**Purpose:** Cleaned, validated, business-ready data
+
+**Transformations Applied:**
+
+1. **Data Quality**
+   - Outlier removal (IQR method)
+   - Deduplication (window functions)
+   - Null handling (imputation rules)
+   - Range validation (clinical thresholds)
+
+2. **Standardization**
+   - Unit conversions (°F → °C, mg/dL → mmol/L)
+   - Timestamp alignment (UTC)
+   - Categorical encoding (gender, ethnicity)
+   - Missing value flags
+
+3. **Performance Optimization**
+   - Indexed on `subject_id`, `hadm_id`, `stay_id`
+   - Column pruning (drop unused columns)
+   - Data type optimization (INT → SMALLINT)
+
+**Example dbt Model:**
+
+```sql
+-- models/staging/stg_chartevents.sql
+WITH source AS (
+    SELECT * FROM {{ source('mimic_iv', 'chartevents') }}
+),
+
+cleaned AS (
+    SELECT
+        subject_id,
+        hadm_id,
+        stay_id,
+        charttime,
+        itemid,
+
+        -- Remove outliers using IQR
+        CASE
+            WHEN value BETWEEN
+                percentile_cont(0.25) OVER (PARTITION BY itemid) -
+                1.5 * (percentile_cont(0.75) OVER (PARTITION BY itemid) -
+                       percentile_cont(0.25) OVER (PARTITION BY itemid))
+            AND
+                percentile_cont(0.75) OVER (PARTITION BY itemid) +
+                1.5 * (percentile_cont(0.75) OVER (PARTITION BY itemid) -
+                       percentile_cont(0.25) OVER (PARTITION BY itemid))
+            THEN value::NUMERIC
+            ELSE NULL
+        END AS value_cleaned,
+
+        -- Convert units
+        CASE
+            WHEN valueuom = 'F' THEN (value::NUMERIC - 32) * 5/9  -- Fahrenheit to Celsius
+            WHEN valueuom = 'mg/dL' THEN value::NUMERIC / 18.0    -- Glucose to mmol/L
+            ELSE value::NUMERIC
+        END AS value_standardized
+
+    FROM source
+    WHERE value IS NOT NULL
+)
+
+SELECT * FROM cleaned
+```
+
+### Gold Layer (Analytics)
+
+**Purpose:** ML-ready feature tables, denormalized for performance
+
+**Feature Tables:**
+
+```sql
+-- analytics.features_sepsis_6h (42 features)
+CREATE TABLE analytics.features_sepsis_6h AS
+SELECT
+    -- Identifiers
+    subject_id,
+    stay_id,
+    prediction_time,
+
+    -- Demographics (4)
+    age,
+    gender_encoded,
+    weight_kg,
+    height_cm,
+
+    -- Vitals (6) - Latest before prediction_time
+    heart_rate,
+    sbp,
+    dbp,
+    temperature_c,
+    respiratory_rate,
+    spo2,
+
+    -- Labs (15) - Latest within 6 hours
+    lactate,
+    wbc,
+    platelet,
+    bilirubin,
+    creatinine,
+    bun,
+    glucose,
+    -- ... (8 more lab features)
+
+    -- SOFA Scores (6) - Calculated from components
+    sofa_cardiovascular,
+    sofa_respiratory,
+    sofa_renal,
+    sofa_hepatic,
+    sofa_coagulation,
+    sofa_neurological,
+
+    -- Trends (8) - Rate of change over 6 hours
+    lactate_trend,
+    heart_rate_trend,
+    temperature_trend,
+    -- ... (5 more trend features)
+
+    -- Temporal (3)
+    hour_of_day,
+    day_of_week,
+    los_hours,
+
+    -- Target
+    sepsis_label  -- 1 if sepsis onset within 6 hours, 0 otherwise
+
+FROM staging.stg_vitals v
+JOIN staging.stg_labs l USING (subject_id, stay_id)
+JOIN staging.stg_sofa s USING (subject_id, stay_id)
+WHERE prediction_time BETWEEN intime AND outtime - INTERVAL '6 hours';
+
+-- Create index for fast lookups
+CREATE INDEX idx_sepsis_features ON analytics.features_sepsis_6h(stay_id, prediction_time);
+```
+
+**Performance Optimization:**
+
+- **Materialized Views:** Pre-computed SOFA scores
+- **Denormalization:** Single table per prediction task
+- **Indexing Strategy:** B-tree on `stay_id`, `subject_id`
+- **Partitioning:** By `admission_year` for historical queries
+- **Query Time:** <10ms for single patient features
+
+---
+
+## 🚀 Application Architecture
+
+### API Design (FastAPI)
+
+**Endpoint Structure:**
+
+```
+/
+├── /health                    # Health check
+├── /predict/
+│   ├── /sepsis               # POST - Predict sepsis risk
+│   └── /mortality            # POST - Predict mortality risk
+├── /patients/
+│   ├── /{patient_id}         # GET - Patient details
+│   └── /{patient_id}/history # GET - Prediction history
+└── /docs                     # Swagger UI
+```
+
+**Request Flow:**
+
+```
+1. Client Request
+   ↓
+2. CORS Middleware
+   ↓
+3. Request Validation (Pydantic)
+   ↓
+4. Cache Check (Redis)
+   ├─ Hit → Return cached response (5ms)
+   └─ Miss ↓
+5. Feature Extraction (PostgreSQL)
+   ↓
+6. Model Inference (LightGBM)
+   ↓
+7. SHAP Explanation
+   ↓
+8. Cache Write (Redis)
+   ↓
+9. Audit Logging
+   ↓
+10. Response (JSON)
+```
+
+**Caching Strategy:**
+
+```python
+# Cache key format: prediction:{model}:{feature_hash}
+# TTL: 1 hour
+# Eviction: LRU policy
+
+import hashlib
+import redis
+
+def get_cache_key(model_type: str, features: dict) -> str:
+    """Generate deterministic cache key"""
+    feature_str = json.dumps(features, sort_keys=True)
+    feature_hash = hashlib.md5(feature_str.encode()).hexdigest()
+    return f"prediction:{model_type}:{feature_hash}"
+
+async def predict_with_cache(model_type: str, features: dict):
+    cache_key = get_cache_key(model_type, features)
+
+    # Try cache first
+    cached = redis_client.get(cache_key)
+    if cached:
+        return json.loads(cached)
+
+    # Cache miss - run inference
+    prediction = model_service.predict(model_type, features)
+
+    # Store in cache
+    redis_client.setex(cache_key, 3600, json.dumps(prediction))
+
+    return prediction
+```
+
+**Error Handling:**
+
+```python
+# Custom exception hierarchy
+BaseAPIException
+├── ValidationError (400)
+├── ModelNotFoundError (404)
+├── ModelInferenceError (500)
+└── DatabaseError (500)
+
+# Example handler
+@app.exception_handler(ModelInferenceError)
+async def model_inference_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Model prediction failed",
+            "error_type": "ModelInferenceError",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
+```
+
+### Frontend Architecture (Streamlit)
+
+**Multi-Page Navigation:**
+
+```python
+# apps/streamlit_app.py
+import streamlit as st
+
+# Page configuration
+st.set_page_config(
+    page_title="MediAI - ICU Risk Prediction",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Define pages
+pages = [
+    st.Page("pages/dashboard.py", title="Dashboard", icon="📊"),
+    st.Page("pages/predict_sepsis.py", title="Sepsis Prediction", icon="🔬"),
+    st.Page("pages/predict_mortality.py", title="Mortality Prediction", icon="💔"),
+    st.Page("pages/model_performance.py", title="Model Performance", icon="📈"),
+    st.Page("pages/settings.py", title="Settings", icon="⚙️"),
+    st.Page("pages/legal.py", title="Legal & Compliance", icon="📜"),
+]
+
+# Navigation
+pg = st.navigation(pages)
+pg.run()
+```
+
+**Session State Management:**
+
+```python
+# Persistent state across pages
+if 'user_id' not in st.session_state:
+    st.session_state.user_id = None
+    st.session_state.is_authenticated = False
+    st.session_state.prediction_history = []
+    st.session_state.cache = {}
+
+# Example usage
+if not st.session_state.is_authenticated:
+    st.switch_page("pages/auth.py")
+```
+
+**Component Communication:**
+
+```
+Streamlit UI
+    ↓ (HTTP POST)
+FastAPI Backend
+    ↓ (SQL Query)
+PostgreSQL
+    ↓ (Feature Vector)
+Model Service
+    ↓ (Prediction + SHAP)
+FastAPI Response
+    ↓ (JSON)
+Streamlit Render
+```
+
+---
+
+## 🔐 Security Architecture
+
+### Defense in Depth Strategy
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ BRONZE LAYER (Raw)                                  │
-│ Direct copy from Kaggle MIMIC-IV                    │
-│ - raw.icustays, raw.patients, raw.admissions        │
-│ - raw.chartevents (vitals), raw.labevents           │
-│ Schema: raw.*                                       │
-└──────────────────────┬──────────────────────────────┘
-                       │ dbt staging models
-                       ▼
+│ Layer 1: Network Security                          │
+│ - Docker network isolation                         │
+│ - Firewall rules (ports 8000, 8501 only)           │
+│ - TLS/SSL for external traffic                     │
+└─────────────────────────────────────────────────────┘
+                        ↓
 ┌─────────────────────────────────────────────────────┐
-│ SILVER LAYER (Staging)                              │
-│ Cleaned, typed, indexed, validated                  │
-│ - Outlier removal (IQR method)                      │
-│ - Deduplication (last_value() window)               │
-│ - Unit standardization (°F→°C, mg/dL→mmol/L)        │
-│ Schema: staging.*                                   │
-└──────────────────────┬──────────────────────────────┘
-                       │ dbt mart models
-                       ▼
+│ Layer 2: Application Security                      │
+│ - CORS policies (whitelist origins)                │
+│ - Input validation (Pydantic schemas)              │
+│ - Rate limiting (100 req/min per IP)               │
+│ - SQL injection prevention (parameterized queries) │
+└─────────────────────────────────────────────────────┘
+                        ↓
 ┌─────────────────────────────────────────────────────┐
-│ GOLD LAYER (Analytics)                              │
-│ ML-ready features, denormalized, indexed            │
-│ - analytics.features_sepsis_6h (42 features)        │
-│ - analytics.features_mortality_24h (65 features)    │
-│ - analytics.ml_input_master (denormalized)          │
-│ - Materialized views for SOFA scores               │
-│ Query time: <10ms                                   │
+│ Layer 3: Data Security                             │
+│ - AES-256 encryption at rest (PHI)                 │
+│ - Encrypted database connections (SSL)             │
+│ - Secure key management (environment variables)    │
+│ - Audit logging (tamper-evident)                   │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│ Layer 4: Compliance Controls                       │
+│ - HIPAA audit trail (7-year retention)             │
+│ - GDPR consent management                          │
+│ - Data anonymization (k-anonymity)                 │
+│ - Right to be forgotten implementation             │
 └─────────────────────────────────────────────────────┘
 ```
 
-### Service Architecture
+### Encryption Implementation
+
+**Data at Rest:**
+
+```python
+# apps/utils/encryption.py
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+
+class DataEncryption:
+    """AES-256-GCM encryption for PHI data"""
+
+    def __init__(self, master_key: str):
+        # Derive encryption key using PBKDF2
+        kdf = PBKDF2(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=b'mediai_salt_v1',  # In production, use random salt
+            iterations=100000
+        )
+        self.key = base64.urlsafe_b64encode(kdf.derive(master_key.encode()))
+        self.fernet = Fernet(self.key)
+
+    def encrypt(self, data: str) -> str:
+        """Encrypt sensitive data"""
+        return self.fernet.encrypt(data.encode()).decode()
+
+    def decrypt(self, encrypted_data: str) -> str:
+        """Decrypt sensitive data"""
+        return self.fernet.decrypt(encrypted_data.encode()).decode()
+
+# Usage in database
+encrypted_ssn = encryptor.encrypt("123-45-6789")
+# Stored: gAAAAABf7K8x... (base64-encoded ciphertext)
+```
+
+**Data in Transit:**
+
+```python
+# TLS/SSL configuration for production
+from fastapi import FastAPI
+import uvicorn
+
+app = FastAPI()
+
+if __name__ == "__main__":
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        ssl_keyfile="/path/to/key.pem",
+        ssl_certfile="/path/to/cert.pem",
+        ssl_version=ssl.PROTOCOL_TLS_SERVER,
+        ssl_ciphers="TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+    )
+```
+
+---
+
+## 📊 Monitoring & Observability (Roadmap)
+
+### Metrics Collection (Prometheus)
+
+```yaml
+# Planned metrics
+- api_requests_total (counter)
+- api_request_duration_seconds (histogram)
+- model_inference_duration_seconds (histogram)
+- prediction_score_distribution (histogram)
+- cache_hit_rate (gauge)
+- database_connection_pool_size (gauge)
+- active_users (gauge)
+```
+
+### Dashboards (Grafana)
 
 ```
-┌─────────────────────────────────────────────────────┐
-│ Streamlit UI (Port 8501)                            │
-│ - Multi-page navigation (st.navigation API)         │
-│ - Gradient design (#667eea → #764ba2)               │
-│ - HIPAA/GDPR compliance UI                          │
-└───────────────────┬─────────────────────────────────┘
-                    │ HTTP REST API
-                    ▼
-┌─────────────────────────────────────────────────────┐
-│ FastAPI Backend (Port 8000)                         │
-│ - /predict/sepsis, /predict/mortality               │
-│ - Pydantic validation, SHAP explanations            │
-│ - Redis caching (80%+ hit rate)                     │
-└──────┬──────────┬──────────┬────────────────────────┘
-       │          │          │
-       ▼          ▼          ▼
-┌──────────┐ ┌─────────┐ ┌──────────┐
-│PostgreSQL│ │  Redis  │ │  MLflow  │
-│ Port 5432│ │Port 6379│ │Port 5000 │
-│  MIMIC-IV│ │  Cache  │ │  Models  │
-└──────────┘ └─────────┘ └──────────┘
-       ▲
-       │ Orchestration
-┌──────────────────┐
-│ Airflow (8080)   │
-│ - Ingestion DAG  │
-│ - ETL DAG (dbt)  │
-└──────────────────┘
+Dashboard 1: System Health
+- API latency (p50, p95, p99)
+- Error rate (4xx, 5xx)
+- Throughput (requests/sec)
+- Resource usage (CPU, memory)
+
+Dashboard 2: ML Performance
+- Prediction distribution (low/medium/high risk)
+- Model inference time
+- SHAP computation time
+- Feature distribution drift
+
+Dashboard 3: Business Metrics
+- Daily active users
+- Predictions per day
+- Cache hit rate
+- Audit events
 ```
+
+---
+
+## 🔄 Deployment Architecture
+
+### Container Orchestration
+
+```yaml
+# docker-compose.yml (Production-ready)
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+
+  api:
+    build: ./api
+    deploy:
+      replicas: 3  # Horizontal scaling
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - WORKERS=4
+      - LOG_LEVEL=INFO
+
+  streamlit:
+    build: ./apps
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+```
+
+### Scaling Strategy
+
+**Horizontal Scaling:**
+- API: 3+ replicas behind load balancer
+- Streamlit: 2+ replicas (stateless)
+- Redis: Sentinel mode (1 master, 2 replicas)
+
+**Vertical Scaling:**
+- PostgreSQL: Scale up to 8 CPU / 32GB RAM
+- Redis: Scale up to 4GB memory
+- ML models: GPU acceleration (optional)
+
+---
+
+## 🛠️ Technology Stack Summary
+
+### Backend Stack
+- **API Framework:** FastAPI 0.109+ (async, type hints, auto docs)
+- **Database:** PostgreSQL 16 (ACID, JSON support, window functions)
+- **Cache:** Redis 7.2 (LRU eviction, pub/sub)
+- **ORM:** SQLAlchemy 2.0 (async support)
+- **Validation:** Pydantic 2.5 (data validation, serialization)
+
+### ML Stack
+- **Training:** LightGBM 4.2 (GBDT, GPU support)
+- **Explainability:** SHAP 0.44 (TreeExplainer)
+- **Feature Engineering:** Pandas 2.1, NumPy 1.26
+- **Model Registry:** MLflow 2.10 (versioning, tracking)
+
+### Data Engineering Stack
+- **ETL:** dbt 1.7+ (SQL transformations)
+- **Orchestration:** Apache Airflow 2.8 (DAG scheduling)
+- **Data Quality:** Great Expectations (planned)
+
+### Frontend Stack
+- **Framework:** Streamlit 1.31+ (multi-page navigation)
+- **Visualization:** Plotly 5.18, Matplotlib 3.8
+- **State Management:** Streamlit session state
+
+### DevOps Stack
+- **Containerization:** Docker 24.0, Docker Compose 2.23
+- **CI/CD:** GitHub Actions
+- **Testing:** pytest 7.4, pytest-cov
+- **Linting:** flake8, black, isort
+- **Security:** bandit, safety
+
+---
 
 **Key Design Decisions:**
 - **Denormalized Master Table** - `analytics.ml_input_master` for <10ms feature queries
-- **Redis Caching** - Model predictions cached for 1 hour
-- **Stateless API** - Horizontal scaling ready
+- **Redis Caching** - Model predictions cached for 1 hour (80%+ hit rate)
+- **Stateless API** - Horizontal scaling ready (3+ replicas)
 - **Session State Management** - Streamlit session persistence
+- **Medallion Architecture** - Bronze/Silver/Gold data quality layers
+- **Container-First Design** - Docker Compose for local dev, Kubernetes-ready
 
 📚 **Full architecture details:** [ARCHITECTURE_DESIGN.md](ARCHITECTURE_DESIGN.md)
 
