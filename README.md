@@ -1615,7 +1615,7 @@ redis-cli
 
 ---
 
-## 🎯 Roadmap
+<!-- ## 🎯 Roadmap
 
 ### Future Enhancements
 
@@ -1662,7 +1662,7 @@ redis-cli
 - ⚠️ Not FDA-approved or clinically validated
 - ⚠️ Requires human expert review before clinical use
 
----
+--- -->
 
 ## 🤝 Contributing
 
