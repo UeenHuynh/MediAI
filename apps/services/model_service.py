@@ -14,7 +14,21 @@ class ModelService:
     """Service for loading and running ML models"""
 
     def __init__(self):
-        self.models_dir = Path(__file__).parent.parent.parent / "models"
+        # Try multiple paths for models directory
+        possible_paths = [
+            Path("/models"),  # Docker mount path
+            Path(__file__).parent.parent.parent / "models",  # Local path
+        ]
+
+        self.models_dir = None
+        for path in possible_paths:
+            if path.exists():
+                self.models_dir = path
+                break
+
+        if self.models_dir is None:
+            print("❌ Models directory not found!")
+
         self.sepsis_model = None
         self.sepsis_features = None
         self.mortality_model = None

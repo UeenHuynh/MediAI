@@ -63,7 +63,7 @@ def main():
 
     # Sidebar
     with st.sidebar:
-        st.image("https://via.placeholder.com/300x100/FF4B4B/FFFFFF?text=MediAI", use_column_width=True)
+        st.image("https://via.placeholder.com/300x100/FF4B4B/FFFFFF?text=MediAI", width='stretch')
         st.markdown("### Navigation")
 
         page = st.radio(

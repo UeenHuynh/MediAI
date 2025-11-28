@@ -80,13 +80,14 @@ services:
     container_name: mediai_streamlit
     restart: unless-stopped
     ports:
-      - "8501:8501"
+      - "8504:8501"
     environment:
       - API_URL=http://api:8000
       - STREAMLIT_SERVER_PORT=8501
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
     volumes:
       - ./apps:/app
+      - ./models:/models:ro
     depends_on:
       - api
     networks:
