@@ -24,12 +24,13 @@ MediAI is a production-ready healthcare ML platform for ICU clinical decision su
 
 ### Key Features
 
-✅ **Medallion Architecture** - Bronze → Silver → Gold data layers with dbt
-✅ **Fast ML Inference** - <200ms API latency with Redis caching
+✅ **Pre-trained ML Models** - LightGBM models with SHAP explanations
+✅ **Fast ML Inference** - Direct model integration with feature validation
 ✅ **Explainable AI** - SHAP values for clinical interpretability
 ✅ **Production Ready** - Docker Compose orchestration
 ✅ **Comprehensive Testing** - 32 tests with 70%+ coverage, CI/CD pipeline
 ✅ **Professional UI** - Gradient design, dark sidebar, multi-page navigation
+✅ **CrewAI Agents** - Multi-agent framework for data processing automation
 
 <!-- DASHBOARD SCREENSHOT -->
 <!-- TODO: Add dashboard screenshot -->
@@ -105,12 +106,12 @@ python scripts/download_data.py
 - ✅ Pre-cleaned ICU data
 - ✅ ~73K ICU stays, 200M+ observations
 
-📚 **Full dataset details:** [DATA_SOURCE.md](DATA_SOURCE.md)
+📚 **Dataset source:** [Kaggle - Updated MIMIC-IV](https://www.kaggle.com/datasets/akshaybe/updated-mimic-iv)
 
 #### 3. Start All Services
 
 ```bash
-# Start infrastructure (PostgreSQL, Redis, Airflow, MLflow, API, UI)
+# Start infrastructure (PostgreSQL, Redis, API, UI)
 docker-compose up -d
 
 # Check services are running
@@ -118,44 +119,39 @@ docker-compose ps
 ```
 
 **Service Endpoints:**
-- 🗄️ PostgreSQL: `localhost:5432`
-- ⚡ Redis: `localhost:6379`
-- 🔄 Airflow: `http://localhost:8080` (admin/admin)
-- 📊 MLflow: `http://localhost:5000`
+- 🗄️ PostgreSQL: `localhost:5432` (Optional)
+- ⚡ Redis: `localhost:6379` (Optional)
 - 🚀 FastAPI: `http://localhost:8000/docs`
 - 🎨 Streamlit UI: `http://localhost:8501`
 
-#### 4. Load Data & Build Features
+**Note:** PostgreSQL and Redis are optional. The app can run with just the API and UI using pre-trained models.
+
+#### 4. Load Sample Data (Optional)
 
 ```bash
-# Ingest MIMIC-IV data into PostgreSQL
-python scripts/ingest_mimic_iv.py --data-path <kaggle-download-path>
+# Generate and load sample data for testing
+python scripts/generate_sample_data.py
+python scripts/load_sample_data.py
 
-# Verify ingestion
-docker exec mediai_postgres_1 psql -U postgres -d mimic_iv -c "SELECT COUNT(*) FROM raw.icustays;"
-# Expected: ~73,000 rows
-
-# Run dbt transformations (Bronze → Silver → Gold)
-cd dbt_project
-dbt run --models staging.*  # Silver layer (cleaning)
-dbt run --models marts.*     # Gold layer (ML features)
-dbt test                     # Data quality checks
-
-# Verify feature tables
-psql -U postgres -d mimic_iv -c "\dt analytics.*"
-# Expected: features_sepsis_6h, features_mortality_24h, ml_input_master
+# Verify data loading
+# Check that the application can access sample data
 ```
 
 #### 5. Train Models (Optional - Pre-trained Available)
 
+**Pre-trained models are already included in `models/` directory:**
+- ✅ `sepsis_lightgbm_v1.pkl` - Sepsis prediction model (AUROC 0.89)
+- ✅ `mortality_lightgbm_v1.pkl` - Mortality prediction model (AUROC 0.65)
+
+**To retrain models from scratch:**
+
 ```bash
-# Train sepsis model
-jupyter notebook notebooks/02_sepsis_model.ipynb
+# Open training notebooks in Jupyter or Kaggle
+# See models/KAGGLE_TRAINING_README.md for instructions
 
-# Train mortality model
-jupyter notebook notebooks/03_mortality_model.ipynb
-
-# Models are registered in MLflow at http://localhost:5000
+# Training notebooks:
+# - models/kaggle_sepsis_training.ipynb
+# - models/kaggle_mortality_training_complete.ipynb
 ```
 
 ### Access the Application
@@ -178,21 +174,24 @@ Open browser to **http://localhost:8501**
 MediAI/
 ├── api/                          # FastAPI Backend
 │   ├── main.py                  # API entry point
+│   ├── main_simple.py           # Simplified API entry (development)
 │   ├── routers/
 │   │   ├── predictions.py       # ML prediction endpoints
-│   │   ├── patients.py          # Patient data endpoints
 │   │   └── health.py            # Health check
 │   ├── models/
 │   │   └── schemas.py           # Pydantic request/response schemas
 │   ├── services/
-│   │   ├── model_service.py     # ML model loading & inference
 │   │   └── prediction_service.py # Prediction business logic
-│   └── core/
-│       ├── config.py            # Configuration management
-│       └── dependencies.py      # Dependency injection
+│   ├── core/
+│   │   ├── config.py            # Configuration management
+│   │   └── database.py          # Database connection
+│   ├── utils/                   # API utilities
+│   ├── logs/                    # API logs
+│   └── requirements.txt         # API dependencies
 │
 ├── apps/                         # Streamlit UI
 │   ├── streamlit_app.py         # Main entry (st.navigation API)
+│   ├── app.py                   # Alternative entry point
 │   ├── pages/                   # Multi-page app
 │   │   ├── auth.py              # Login/registration
 │   │   ├── dashboard.py         # Main dashboard
@@ -201,43 +200,58 @@ MediAI/
 │   │   ├── model_performance.py # Model metrics & charts
 │   │   ├── settings.py          # User settings
 │   │   └── legal.py             # HIPAA/GDPR policies
+│   ├── components/              # Reusable UI components
+│   │   └── chatbot.py           # Chatbot component
 │   ├── services/
-│   │   └── api_client.py        # FastAPI client wrapper
-│   └── utils/
-│       ├── encryption.py        # AES-256 data encryption
-│       └── audit_logger.py      # HIPAA/GDPR audit logging
+│   │   └── model_service.py     # ML model loading & inference
+│   ├── utils/
+│   │   ├── encryption.py        # AES-256 data encryption
+│   │   └── audit_logger.py      # HIPAA/GDPR audit logging
+│   ├── docs/                    # Legal documents
+│   │   ├── privacy_policy.md
+│   │   └── terms_and_conditions.md
+│   ├── logs/                    # Application logs
+│   │   └── audit/               # Audit trail logs
+│   ├── .streamlit/              # Streamlit configuration
+│   │   └── chat_history.json   # Chat history storage
+│   └── requirements.txt         # UI dependencies
 │
-├── dbt_project/                  # Data Transformations (dbt)
-│   ├── models/
-│   │   ├── staging/             # Silver layer (cleaned data)
-│   │   │   ├── stg_icustays.sql
-│   │   │   ├── stg_chartevents.sql
-│   │   │   └── stg_labevents.sql
-│   │   └── marts/               # Gold layer (analytics)
-│   │       ├── dim_patients.sql # Patient dimension
-│   │       ├── fact_vitals_hourly.sql
-│   │       ├── features_sepsis_6h.sql    # 42 sepsis features
-│   │       ├── features_mortality_24h.sql # 65 mortality features
-│   │       └── ml_input_master.sql       # Denormalized master table
-│   ├── tests/                   # dbt data quality tests
-│   ├── dbt_project.yml
-│   └── profiles.yml
+├── agents/                       # CrewAI Agents Framework
+│   ├── orchestrator.py          # Multi-agent orchestration
+│   ├── core/                    # Core agent classes
+│   │   └── base_agent.py        # Base agent implementation
+│   ├── crews/                   # Agent crews
+│   │   └── data_pipeline_crew.py # Data pipeline crew
+│   ├── roles/                   # Agent role definitions
+│   │   └── data_engineer.py     # Data engineer agent
+│   ├── tools/                   # Agent tools
+│   │   ├── database_tool.py     # Database operations
+│   │   └── file_tool.py         # File operations
+│   ├── config/                  # Agent configuration
+│   ├── examples/                # Usage examples
+│   │   ├── example_orchestrator.py
+│   │   ├── example_data_pipeline_crew.py
+│   │   ├── example_data_ingestion_agent.py
+│   │   └── README.md            # Examples documentation
+│   └── requirements.txt         # Agent dependencies
 │
-├── airflow/                      # Orchestration
-│   └── dags/
-│       ├── ingest_mimic_iv_dag.py   # Data ingestion DAG
-│       └── etl_pipeline_dag.py      # dbt transformation DAG
+├── models/                       # Trained ML Models
+│   ├── sepsis_lightgbm_v1.pkl   # Sepsis prediction model
+│   ├── mortality_lightgbm_v1.pkl # Mortality prediction model
+│   ├── sepsis_feature_names.pkl  # Sepsis feature list
+│   ├── mortality_feature_names.pkl # Mortality feature list
+│   ├── kaggle_sepsis_training.ipynb # Sepsis training notebook
+│   ├── kaggle_mortality_training_complete.ipynb # Mortality training notebook
+│   └── KAGGLE_TRAINING_README.md # Training documentation
+│
+├── database/                     # Database Setup
+│   └── init/
+│       └── 01_create_schemas.sql # Schema initialization
 │
 ├── scripts/                      # Utility Scripts
 │   ├── download_data.py         # Kaggle dataset download
-│   ├── ingest_mimic_iv.py       # PostgreSQL data loading
-│   ├── validate_schema_alignment.py # API-DB schema validation
-│   └── load_sample_data.py      # Demo data generator
-│
-├── notebooks/                    # Jupyter Notebooks
-│   ├── 01_eda.ipynb             # Exploratory data analysis
-│   ├── 02_sepsis_model.ipynb    # Sepsis model training
-│   └── 03_mortality_model.ipynb # Mortality model training
+│   ├── generate_sample_data.py  # Sample data generator
+│   └── load_sample_data.py      # Load demo data
 │
 ├── tests/                        # Testing Suite
 │   ├── conftest.py              # pytest fixtures
@@ -245,7 +259,6 @@ MediAI/
 │   ├── test_encryption.py       # 8 encryption tests
 │   ├── test_api.py              # 4 API tests
 │   ├── test_integration.py      # 9 integration tests
-│   ├── pytest.ini               # pytest configuration
 │   └── README.md                # Testing documentation
 │
 ├── .github/
@@ -254,25 +267,40 @@ MediAI/
 │       └── cd.yml               # CD pipeline (build, deploy)
 │
 ├── docs/                         # Documentation
-│   ├── DATA_SOURCE.md           # Dataset documentation
-│   ├── DATABASE_SCHEMA.md       # Optimized ML schema design
-│   ├── ARCHITECTURE_DESIGN.md   # System architecture
-│   ├── REQUIREMENTS.md          # Functional requirements
-│   ├── TASK_BREAKDOWN.md        # Implementation tasks (43 tasks)
-│   ├── UI_BACKEND_WIRING.md     # API integration patterns
 │   └── images/                  # Screenshots & diagrams
-│       ├── banner.png
-│       ├── dashboard.png
-│       ├── sepsis-prediction.png
-│       ├── mortality-prediction.png
-│       ├── login.png
-│       └── architecture.png
+│       ├── banner.jpeg
+│       ├── icon.png
+│       ├── Sélection_*.png      # UI screenshots
+│       └── README.md            # Image documentation
+│
+├── data/                         # Data Directory
+│   └── sample/                  # Sample data files
+│
+├── logs/                         # Application Logs
+│
+├── results/                      # Model Results & Outputs
+│
+├── htmlcov/                      # Test Coverage Reports
 │
 ├── docker-compose.yml            # Multi-service orchestration
+├── Makefile                      # Common commands
+├── pytest.ini                    # pytest configuration
 ├── .env                          # Environment variables
+├── .env.example                  # Environment template
 ├── .gitignore
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+├── LICENSE                       # MIT License
+├── requirements.txt              # Root dependencies
+├── README.md                     # This file
+│
+├── check_deployment_readiness.py # Deployment checker
+├── debug_prediction.py           # Prediction debugger
+├── inspect_model.py              # Model inspector
+├── run_agent_demo.py             # Agent demo runner
+├── test_model.py                 # Model testing
+├── test_model_high_risk.py       # High-risk scenarios
+├── test_mortality_model.py       # Mortality model tests
+├── test_multiple_scenarios.py    # Multiple scenarios tester
+└── test_score_calculation.py     # Score calculation tests
 ```
 
 ---
@@ -327,15 +355,15 @@ MediAI/
 │                         DATA LAYER (Medallion Architecture)               │
 │                                                                           │
 │  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │  PostgreSQL Database (Port 5434)                                    │ │
+│  │  PostgreSQL Database (Port 5434) - Optional                         │ │
 │  │                                                                     │ │
-│  │  BRONZE (Raw)           SILVER (Staging)        GOLD (Analytics)   │ │
+│  │  SCHEMAS (Current/Planned)                                         │ │
 │  │  ┌────────────┐         ┌──────────────┐        ┌───────────────┐ │ │
-│  │  │ raw.*      │         │ staging.*    │        │ analytics.*   │ │ │
-│  │  │ - icustays │  dbt    │ - Cleaned    │  dbt   │ - Features    │ │ │
-│  │  │ - patients │────────>│ - Validated  │───────>│ - ML Ready    │ │ │
-│  │  │ - vitals   │ models  │ - Indexed    │ models │ - Denormed    │ │ │
-│  │  │ - labs     │         │ - Typed      │        │ - <10ms query │ │ │
+│  │  │ public.*   │         │ staging.*    │        │ analytics.*   │ │ │
+│  │  │ - schemas  │  SQL    │ - Cleaned    │  SQL   │ - Features    │ │ │
+│  │  │ - init     │────────>│ - Validated  │───────>│ - ML Ready    │ │ │
+│  │  │ - config   │ scripts │ - Indexed    │ scripts│ - Aggregated  │ │ │
+│  │  │            │         │              │        │               │ │ │
 │  │  └────────────┘         └──────────────┘        └───────────────┘ │ │
 │  │                                                                     │ │
 │  └─────────────────────────────────────────────────────────────────────┘ │
@@ -344,12 +372,12 @@ MediAI/
            │ Orchestration & Workflow
            │
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                         ORCHESTRATION LAYER (Optional)                    │
+│                         ORCHESTRATION LAYER (Planned)                     │
 │  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │  Apache Airflow (Port 8080)                                        │  │
-│  │  - Data Ingestion DAG (Kaggle → PostgreSQL)                        │  │
-│  │  - ETL Pipeline DAG (dbt transformations)                          │  │
-│  │  - Model Retraining DAG (scheduled/manual)                         │  │
+│  │  CrewAI Multi-Agent System                                         │  │
+│  │  - Data Ingestion Agents                                           │  │
+│  │  - Data Pipeline Crews                                             │  │
+│  │  - Model Management Agents                                         │  │
 │  └────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -360,186 +388,77 @@ MediAI/
 |-----------|-----------|---------|------|-----|
 | **Frontend** | Streamlit 1.31+ | Clinical decision support UI | 8501 | 99.5% uptime |
 | **API Gateway** | FastAPI 0.109+ | REST API for ML predictions | 8000 | <200ms latency |
-| **Cache Layer** | Redis 7.2 | Response caching, session store | 6379 | 80%+ hit rate |
-| **Database** | PostgreSQL 16 | MIMIC-IV data, feature store | 5434 | <10ms queries |
+| **Cache Layer** | Redis 7.2 | Response caching, session store | 6379 | Optional |
+| **Database** | PostgreSQL 16 | Data storage (optional) | 5434 | Optional |
 | **ML Runtime** | LightGBM + SHAP | Model inference & explainability | - | <100ms inference |
-| **ETL Engine** | dbt 1.7+ | Data transformations | - | Daily refresh |
-| **Orchestrator** | Airflow 2.8 | Workflow scheduling | 8080 | Optional |
-| **Model Registry** | MLflow 2.10 | Model versioning & tracking | 5000 | Optional |
+| **Agents** | CrewAI | Multi-agent orchestration | - | Framework |
 
 ---
 
-## 🔄 Data Pipeline Architecture (Medallion Pattern)
+## 🔄 Data Pipeline Architecture
 
-### Bronze Layer (Raw Data)
+### Current Implementation: Direct Model Integration
 
-**Purpose:** Immutable landing zone for raw MIMIC-IV data
+The current version uses **pre-trained models** with direct data integration:
 
-```sql
--- Schema: raw
--- Tables: 15+ tables (core subset shown)
-
-raw.icustays          -- 73,000 ICU admissions
-raw.patients          -- Patient demographics
-raw.admissions        -- Hospital admission records
-raw.chartevents       -- Vitals (200M+ rows)
-raw.labevents         -- Lab results (100M+ rows)
-raw.inputevents       -- Medications, fluids
-raw.outputevents      -- Fluid output
-raw.diagnoses_icd     -- ICD-9/10 codes
+**Data Flow:**
+```
+User Input (Streamlit UI)
+    ↓
+Feature Validation & Preparation (Pydantic Schemas)
+    ↓
+Model Service (LightGBM Models)
+    ↓
+Prediction + SHAP Explanations
+    ↓
+Results Display (Streamlit UI)
 ```
 
-**Characteristics:**
+**Key Features:**
+
+1. **Pre-trained Models**
+   - Sepsis model: 42 features (AUROC 0.89)
+   - Mortality model: 13 features (AUROC 0.65)
+   - Models located in `models/` directory
+   - Feature names stored in pickle files
+
+2. **Feature Processing**
+   - Real-time feature validation
+   - Automatic scaling and transformation
+   - Missing value handling
+   - Clinical range validation
+
+3. **Database Setup**
+   - PostgreSQL schema initialization (`database/init/01_create_schemas.sql`)
+   - Optional MIMIC-IV data integration
+   - Sample data generation for testing
+
+### Future Enhancement: Medallion Architecture (Planned)
+
+For full MIMIC-IV data integration, a **Bronze → Silver → Gold** architecture is planned:
+
+**Bronze Layer (Raw Data):**
+- Raw MIMIC-IV data from Kaggle
+- Tables: icustays, patients, chartevents, labevents, etc.
 - No transformations applied
-- Exact copy from Kaggle dataset
-- Append-only (never delete)
-- Partitioned by `hadm_id` for performance
 - Size: ~50GB uncompressed
 
-### Silver Layer (Staging)
+**Silver Layer (Cleaned):**
+- Data quality checks (outlier removal, deduplication)
+- Unit conversions (°F → °C, mg/dL → mmol/L)
+- Standardization and validation
+- Indexed for performance
 
-**Purpose:** Cleaned, validated, business-ready data
-
-**Transformations Applied:**
-
-1. **Data Quality**
-   - Outlier removal (IQR method)
-   - Deduplication (window functions)
-   - Null handling (imputation rules)
-   - Range validation (clinical thresholds)
-
-2. **Standardization**
-   - Unit conversions (°F → °C, mg/dL → mmol/L)
-   - Timestamp alignment (UTC)
-   - Categorical encoding (gender, ethnicity)
-   - Missing value flags
-
-3. **Performance Optimization**
-   - Indexed on `subject_id`, `hadm_id`, `stay_id`
-   - Column pruning (drop unused columns)
-   - Data type optimization (INT → SMALLINT)
-
-**Example dbt Model:**
-
-```sql
--- models/staging/stg_chartevents.sql
-WITH source AS (
-    SELECT * FROM {{ source('mimic_iv', 'chartevents') }}
-),
-
-cleaned AS (
-    SELECT
-        subject_id,
-        hadm_id,
-        stay_id,
-        charttime,
-        itemid,
-
-        -- Remove outliers using IQR
-        CASE
-            WHEN value BETWEEN
-                percentile_cont(0.25) OVER (PARTITION BY itemid) -
-                1.5 * (percentile_cont(0.75) OVER (PARTITION BY itemid) -
-                       percentile_cont(0.25) OVER (PARTITION BY itemid))
-            AND
-                percentile_cont(0.75) OVER (PARTITION BY itemid) +
-                1.5 * (percentile_cont(0.75) OVER (PARTITION BY itemid) -
-                       percentile_cont(0.25) OVER (PARTITION BY itemid))
-            THEN value::NUMERIC
-            ELSE NULL
-        END AS value_cleaned,
-
-        -- Convert units
-        CASE
-            WHEN valueuom = 'F' THEN (value::NUMERIC - 32) * 5/9  -- Fahrenheit to Celsius
-            WHEN valueuom = 'mg/dL' THEN value::NUMERIC / 18.0    -- Glucose to mmol/L
-            ELSE value::NUMERIC
-        END AS value_standardized
-
-    FROM source
-    WHERE value IS NOT NULL
-)
-
-SELECT * FROM cleaned
-```
-
-### Gold Layer (Analytics)
-
-**Purpose:** ML-ready feature tables, denormalized for performance
-
-**Feature Tables:**
-
-```sql
--- analytics.features_sepsis_6h (42 features)
-CREATE TABLE analytics.features_sepsis_6h AS
-SELECT
-    -- Identifiers
-    subject_id,
-    stay_id,
-    prediction_time,
-
-    -- Demographics (4)
-    age,
-    gender_encoded,
-    weight_kg,
-    height_cm,
-
-    -- Vitals (6) - Latest before prediction_time
-    heart_rate,
-    sbp,
-    dbp,
-    temperature_c,
-    respiratory_rate,
-    spo2,
-
-    -- Labs (15) - Latest within 6 hours
-    lactate,
-    wbc,
-    platelet,
-    bilirubin,
-    creatinine,
-    bun,
-    glucose,
-    -- ... (8 more lab features)
-
-    -- SOFA Scores (6) - Calculated from components
-    sofa_cardiovascular,
-    sofa_respiratory,
-    sofa_renal,
-    sofa_hepatic,
-    sofa_coagulation,
-    sofa_neurological,
-
-    -- Trends (8) - Rate of change over 6 hours
-    lactate_trend,
-    heart_rate_trend,
-    temperature_trend,
-    -- ... (5 more trend features)
-
-    -- Temporal (3)
-    hour_of_day,
-    day_of_week,
-    los_hours,
-
-    -- Target
-    sepsis_label  -- 1 if sepsis onset within 6 hours, 0 otherwise
-
-FROM staging.stg_vitals v
-JOIN staging.stg_labs l USING (subject_id, stay_id)
-JOIN staging.stg_sofa s USING (subject_id, stay_id)
-WHERE prediction_time BETWEEN intime AND outtime - INTERVAL '6 hours';
-
--- Create index for fast lookups
-CREATE INDEX idx_sepsis_features ON analytics.features_sepsis_6h(stay_id, prediction_time);
-```
+**Gold Layer (Analytics):**
+- ML-ready feature tables
+- Denormalized for fast queries
+- Pre-computed aggregations
+- Feature tables: `features_sepsis_6h`, `features_mortality_24h`
 
 **Performance Optimization:**
-
-- **Materialized Views:** Pre-computed SOFA scores
-- **Denormalization:** Single table per prediction task
-- **Indexing Strategy:** B-tree on `stay_id`, `subject_id`
-- **Partitioning:** By `admission_year` for historical queries
-- **Query Time:** <10ms for single patient features
+- Materialized views for SOFA scores
+- B-tree indexes on patient identifiers
+- Query time: <10ms for single patient features
 
 ---
 
@@ -936,9 +855,10 @@ services:
 - **Model Registry:** MLflow 2.10 (versioning, tracking)
 
 ### Data Engineering Stack
-- **ETL:** dbt 1.7+ (SQL transformations)
-- **Orchestration:** Apache Airflow 2.8 (DAG scheduling)
-- **Data Quality:** Great Expectations (planned)
+- **Data Processing:** Pandas 2.1, NumPy 1.26
+- **Agents:** CrewAI (multi-agent orchestration)
+- **Data Quality:** Pydantic validation, pytest
+- **Future:** dbt, Apache Airflow (planned for full ETL pipeline)
 
 ### Frontend Stack
 - **Framework:** Streamlit 1.31+ (multi-page navigation)
@@ -955,14 +875,13 @@ services:
 ---
 
 **Key Design Decisions:**
-- **Denormalized Master Table** - `analytics.ml_input_master` for <10ms feature queries
-- **Redis Caching** - Model predictions cached for 1 hour (80%+ hit rate)
+- **Pre-trained Models** - Ready-to-use LightGBM models with feature validation
+- **Direct Integration** - Streamlined data flow from UI to model inference
 - **Stateless API** - Horizontal scaling ready (3+ replicas)
 - **Session State Management** - Streamlit session persistence
-- **Medallion Architecture** - Bronze/Silver/Gold data quality layers
+- **CrewAI Agents** - Multi-agent framework for automation
 - **Container-First Design** - Docker Compose for local dev, Kubernetes-ready
-
-📚 **Full architecture details:** [ARCHITECTURE_DESIGN.md](ARCHITECTURE_DESIGN.md)
+- **Extensible Architecture** - Ready for future Medallion (Bronze/Silver/Gold) integration
 
 ---
 
@@ -1022,12 +941,15 @@ services:
 - Mortality rate: 10%
 - Train/Val/Test: 70/15/15 split
 
-**Model Registry:**
-- MLflow tracking: `http://localhost:5000`
-- Model versions: `sepsis_lightgbm_v1`, `mortality_lightgbm_v1`
-- Artifacts: model.pkl, feature_names.json, scaler.pkl
+**Model Storage:**
+- Location: `models/` directory
+- Model versions: `sepsis_lightgbm_v1.pkl`, `mortality_lightgbm_v1.pkl`
+- Feature lists: `sepsis_feature_names.pkl`, `mortality_feature_names.pkl`
 
-📚 **Training notebooks:** `notebooks/02_sepsis_model.ipynb`, `notebooks/03_mortality_model.ipynb`
+📚 **Training notebooks:**
+- `models/kaggle_sepsis_training.ipynb`
+- `models/kaggle_mortality_training_complete.ipynb`
+- See `models/KAGGLE_TRAINING_README.md` for training instructions
 
 ---
 
@@ -1179,7 +1101,7 @@ curl -X POST http://localhost:8000/predict/mortality \
 }
 ```
 
-📚 **Full API patterns:** [UI_BACKEND_WIRING.md](UI_BACKEND_WIRING.md)
+📚 **Interactive API documentation:** http://localhost:8000/docs (Swagger UI)
 
 ---
 
@@ -1435,13 +1357,13 @@ audit.log_prediction(
 
 | Document | Description |
 |----------|-------------|
-| [DATA_SOURCE.md](DATA_SOURCE.md) | Dataset guide (Kaggle vs PhysioNet, download instructions) |
-| [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) | Optimized ML schema design (Bronze/Silver/Gold layers) |
-| [ARCHITECTURE_DESIGN.md](ARCHITECTURE_DESIGN.md) | System architecture & design decisions |
-| [REQUIREMENTS.md](REQUIREMENTS.md) | Functional & non-functional requirements |
-| [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) | Implementation tasks (43 tasks tracked) |
-| [UI_BACKEND_WIRING.md](UI_BACKEND_WIRING.md) | API integration patterns & examples |
+| [README.md](README.md) | Main project documentation (this file) |
 | [tests/README.md](tests/README.md) | Testing documentation & guidelines |
+| [models/KAGGLE_TRAINING_README.md](models/KAGGLE_TRAINING_README.md) | Model training guide on Kaggle |
+| [agents/examples/README.md](agents/examples/README.md) | CrewAI agents usage examples |
+| [apps/docs/privacy_policy.md](apps/docs/privacy_policy.md) | Privacy policy & HIPAA compliance |
+| [apps/docs/terms_and_conditions.md](apps/docs/terms_and_conditions.md) | Terms and conditions |
+| [docs/images/README.md](docs/images/README.md) | Screenshots and diagrams |
 
 ---
 
@@ -1478,12 +1400,6 @@ docker-compose logs -f [service_name]
 # Restart a service
 docker-compose restart [service_name]
 
-# Run dbt models
-cd dbt_project
-dbt run --models staging.*  # Silver layer
-dbt run --models marts.*    # Gold layer
-dbt test                    # Data quality tests
-
 # Run API locally (development mode)
 cd api
 uvicorn main:app --reload --port 8000
@@ -1492,66 +1408,113 @@ uvicorn main:app --reload --port 8000
 cd apps
 streamlit run streamlit_app.py --server.port 8501
 
-# Trigger Airflow DAG manually
-docker exec mediai_airflow_webserver_1 airflow dags trigger etl_pipeline_dag
+# Run agent demo
+python run_agent_demo.py
 
-# List Airflow DAGs
-docker exec mediai_airflow_webserver_1 airflow dags list
+# Check deployment readiness
+python check_deployment_readiness.py
 
-# View MLflow experiments
-open http://localhost:5000
+# Test models
+python test_model.py
+python test_mortality_model.py
+python test_multiple_scenarios.py
 
-# Connect to PostgreSQL
+# Debug predictions
+python debug_prediction.py
+
+# Inspect model details
+python inspect_model.py
+
+# Connect to PostgreSQL (if running)
 docker exec -it mediai_postgres_1 psql -U postgres -d mimic_iv
 
-# Connect to Redis
+# Connect to Redis (if running)
 docker exec -it mediai_redis_1 redis-cli
+
+# Use Makefile commands (if available)
+make help                   # Show available commands
+make test                   # Run tests
+make lint                   # Run linters
+make format                 # Format code
 ```
 
 ### Adding New Features
 
-**1. Add Database Schema (dbt model)**
-```bash
-cd dbt_project/models/marts
-# Create new_feature.sql
-dbt run --models new_feature
-dbt test --models new_feature
-```
-
-**2. Update API Schema (`api/models/schemas.py`)**
+**1. Update API Schema (`api/models/schemas.py`)**
 ```python
 class NewFeatureInput(BaseModel):
     feature1: float = Field(..., ge=0, le=100)
     feature2: str = Field(..., max_length=50)
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "feature1": 50.0,
+                "feature2": "example"
+            }
+        }
 ```
 
-**3. Validate Alignment**
-```bash
-python scripts/validate_schema_alignment.py
-```
-
-**4. Add API Endpoint (`api/routers/predictions.py`)**
+**2. Add API Endpoint (`api/routers/predictions.py`)**
 ```python
 @router.post("/predict/new-feature")
 async def predict_new_feature(features: NewFeatureInput):
-    # Implementation
-    pass
+    """New feature prediction endpoint"""
+    try:
+        # Feature validation and processing
+        result = await prediction_service.predict(features)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 ```
 
-**5. Add UI Page (`apps/pages/new_feature.py`)**
+**3. Add UI Page (`apps/pages/new_feature.py`)**
 ```python
+import streamlit as st
+
 def show_new_feature():
     st.title("New Feature")
-    # Implementation
+    st.write("Feature description")
+
+    # Input form
+    with st.form("new_feature_form"):
+        feature1 = st.number_input("Feature 1", min_value=0.0, max_value=100.0)
+        feature2 = st.text_input("Feature 2", max_chars=50)
+
+        submitted = st.form_submit_button("Predict")
+
+        if submitted:
+            # Call API and display results
+            st.success("Prediction successful!")
+```
+
+**4. Register in Navigation (`apps/streamlit_app.py`)**
+```python
+import streamlit as st
+from pages import new_feature
+
+pages = [
+    st.Page(new_feature.show_new_feature, title="New Feature", icon="🆕"),
+    # ... other pages
+]
+
+pg = st.navigation(pages)
+pg.run()
+```
+
+**5. Add Tests (`tests/test_new_feature.py`)**
+```python
+import pytest
+
+def test_new_feature_endpoint():
+    # Test implementation
     pass
 ```
 
-**6. Register in Navigation (`apps/streamlit_app.py`)**
-```python
-pages = [
-    st.Page(new_feature.show_new_feature, title="New Feature", icon="🆕"),
-]
-```
+**6. Update Documentation**
+- Update README.md with new feature description
+- Add examples to docs/
+- Update API documentation
 
 ### Debugging Tips
 
@@ -1594,24 +1557,23 @@ redis-cli
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Data Pipeline | ✅ Complete | Bronze/Silver/Gold layers with dbt |
-| Feature Engineering | ✅ Complete | 42 sepsis, 65 mortality features |
-| ML Models | ✅ Complete | Sepsis AUROC 0.89, Mortality AUROC 0.65 |
-| API & Serving | ✅ Complete | FastAPI with Redis caching |
+| ML Models | ✅ Complete | Pre-trained LightGBM models included |
+| Model Service | ✅ Complete | Direct integration with feature validation |
+| API & Serving | ✅ Complete | FastAPI with prediction endpoints |
 | UI Dashboard | ✅ Complete | Streamlit with st.navigation API |
+| CrewAI Agents | ✅ Complete | Multi-agent orchestration framework |
 | Testing | ✅ Complete | 32 tests, 70%+ coverage |
 | CI/CD | ✅ Complete | GitHub Actions workflows |
-| Security | ✅ Complete | HIPAA/GDPR compliance |
-| Documentation | ✅ Complete | 6 comprehensive docs |
+| Security | ✅ Complete | HIPAA/GDPR compliance features |
+| Documentation | ✅ Complete | Comprehensive README |
 
 **Recent Updates:**
 - ✅ Implemented comprehensive testing suite (32 tests)
 - ✅ Added CI/CD pipelines (GitHub Actions)
 - ✅ Enhanced HIPAA/GDPR compliance features
-- ✅ Optimized database schema for ML inference
 - ✅ Multi-page navigation with st.navigation API
-
-📚 **Detailed task tracking:** [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md)
+- ✅ Integrated CrewAI agents framework
+- ✅ Added pre-trained models with SHAP explanations
 
 ---
 
@@ -1752,12 +1714,12 @@ See [LICENSE](LICENSE) file for full details.
 - **FastAPI** - Modern Python web framework
 - **Streamlit** - Rapid ML app development
 - **LightGBM** - Gradient boosting framework
-- **dbt** - Data transformation tool
-- **PostgreSQL** - Robust relational database
-- **Redis** - High-performance caching
-- **Airflow** - Workflow orchestration
-- **MLflow** - ML lifecycle management
+- **CrewAI** - Multi-agent orchestration framework
+- **PostgreSQL** - Robust relational database (optional)
+- **Redis** - High-performance caching (optional)
 - **Docker** - Containerization
+- **SHAP** - Model explainability
+- **Pydantic** - Data validation
 
 ---
 
