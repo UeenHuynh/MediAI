@@ -87,6 +87,14 @@ class DataEncryption:
             logger.error(f"Decryption failed: {e}")
             raise
 
+    def encrypt(self, plaintext: str) -> str:
+        """Alias for encrypt_string for backward compatibility"""
+        return self.encrypt_string(plaintext)
+
+    def decrypt(self, encrypted_text: str) -> str:
+        """Alias for decrypt_string for backward compatibility"""
+        return self.decrypt_string(encrypted_text)
+
     def encrypt_dict(self, data: Dict[str, Any]) -> str:
         """
         Encrypt a dictionary by serializing to JSON first
@@ -171,6 +179,67 @@ class DataEncryption:
                 del decrypted_data[encrypted_field]
 
         return decrypted_data
+
+    def encrypt_patient_data(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Encrypt patient data (encrypts patient_id and name fields)
+
+        Args:
+            patient_data: Patient data dictionary
+
+        Returns:
+            Dictionary with encrypted patient_id and name fields
+        """
+        encrypted_data = patient_data.copy()
+
+        # Encrypt patient_id and name if present
+        if 'patient_id' in encrypted_data and encrypted_data['patient_id'] is not None:
+            encrypted_data['patient_id'] = self.encrypt_string(str(encrypted_data['patient_id']))
+
+        if 'name' in encrypted_data and encrypted_data['name'] is not None:
+            encrypted_data['name'] = self.encrypt_string(str(encrypted_data['name']))
+
+        return encrypted_data
+
+    def decrypt_patient_data(self, encrypted_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Decrypt patient data (decrypts patient_id and name fields)
+
+        Args:
+            encrypted_data: Encrypted patient data dictionary
+
+        Returns:
+            Dictionary with decrypted patient_id and name fields
+        """
+        decrypted_data = encrypted_data.copy()
+
+        # Decrypt patient_id and name if present
+        if 'patient_id' in decrypted_data and decrypted_data['patient_id'] is not None:
+            try:
+                decrypted_data['patient_id'] = self.decrypt_string(decrypted_data['patient_id'])
+            except Exception:
+                pass  # Already decrypted or invalid
+
+        if 'name' in decrypted_data and decrypted_data['name'] is not None:
+            try:
+                decrypted_data['name'] = self.decrypt_string(decrypted_data['name'])
+            except Exception:
+                pass  # Already decrypted or invalid
+
+        return decrypted_data
+
+    def hash_patient_id(self, patient_id: str) -> str:
+        """
+        Hash patient ID using SHA-256
+
+        Args:
+            patient_id: Patient ID to hash
+
+        Returns:
+            Hexadecimal SHA-256 hash (64 characters)
+        """
+        import hashlib
+        return hashlib.sha256(patient_id.encode()).hexdigest()
 
     @staticmethod
     def generate_new_key() -> str:
