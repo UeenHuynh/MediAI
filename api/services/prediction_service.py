@@ -13,15 +13,10 @@ from typing import Any, Dict
 import pandas as pd
 import redis
 from core.config import settings
-from models.schemas import (
-    FeatureContribution,
-    MortalityPredictionRequest,
-    MortalityPredictionResponse,
-    PredictionDetail,
-    RiskLevel,
-    SepsisPredictionRequest,
-    SepsisPredictionResponse,
-)
+from models.schemas import (FeatureContribution, MortalityPredictionRequest,
+                            MortalityPredictionResponse, PredictionDetail,
+                            RiskLevel, SepsisPredictionRequest,
+                            SepsisPredictionResponse)
 
 logger = logging.getLogger(__name__)
 
