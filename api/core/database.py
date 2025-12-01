@@ -60,7 +60,7 @@ def test_connection():
     """Test database connection"""
     try:
         with engine.connect() as conn:
-            result = conn.execute(text("SELECT 1"))
+            conn.execute(text("SELECT 1"))
             logger.info("Database connection successful")
             return True
     except Exception as e:

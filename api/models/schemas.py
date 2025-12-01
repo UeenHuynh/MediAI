@@ -5,7 +5,6 @@ IMPORTANT: These schemas must match database feature tables exactly
 
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional
-from datetime import datetime
 from enum import Enum
 
 

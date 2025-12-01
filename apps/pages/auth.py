@@ -71,7 +71,7 @@ def show_login_form():
         username = st.text_input("Username", placeholder="Enter your username")
         password = st.text_input("Password", type="password", placeholder="Enter your password")
 
-        remember_me = st.checkbox("Remember me for 30 days")
+        st.checkbox("Remember me for 30 days")
 
         submit = st.form_submit_button("Sign In", use_container_width=True)
 

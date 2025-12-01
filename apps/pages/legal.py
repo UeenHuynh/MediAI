@@ -13,10 +13,9 @@ def show_legal():
     st.markdown('<div class="page-header">📄 Legal Documents</div>', unsafe_allow_html=True)
 
     # Check if there's a request for specific tab
-    default_tab = 0
     if 'legal_tab' in st.session_state:
         if st.session_state.legal_tab == 'privacy':
-            default_tab = 1
+            pass
         st.session_state.legal_tab = None  # Reset after use
 
     # Tabs for different documents

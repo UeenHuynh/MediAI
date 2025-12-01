@@ -7,7 +7,6 @@ import streamlit as st
 import requests
 import os
 from utils.audit_logger import AuditEventType
-from utils.encryption import DataEncryption
 from services.model_service import get_model_service
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")

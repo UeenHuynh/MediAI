@@ -36,7 +36,7 @@ class MedicalChatbot:
             if self.history_file.exists():
                 with open(self.history_file, 'r') as f:
                     st.session_state.chat_history = json.load(f)
-        except Exception as e:
+        except Exception:
             st.session_state.chat_history = []
 
     def _save_history(self):

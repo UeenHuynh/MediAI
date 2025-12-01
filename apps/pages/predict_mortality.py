@@ -204,7 +204,7 @@ def show_mortality_result(result: dict):
     with col2:
         st.markdown(f"## Risk Level: {risk_level}")
         st.markdown(f"**Mortality Risk:** {risk_score:.1%}")
-        st.markdown(f"**Recommendation:**")
+        st.markdown("**Recommendation:**")
         st.info(prediction.get('recommendation', 'N/A'))
 
         # Risk interpretation
