@@ -3,11 +3,11 @@ Model Performance Page
 Display model metrics, confusion matrix, and feature importance
 """
 
-import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
 import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
 
 def show_model_performance():

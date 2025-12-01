@@ -3,10 +3,11 @@ Mortality Prediction Page
 Predict ICU mortality risk using 13 clinical features
 """
 
-import streamlit as st
 from datetime import datetime
-from utils.audit_logger import AuditEventType
+
+import streamlit as st
 from services.model_service import get_model_service
+from utils.audit_logger import AuditEventType
 
 
 def show_mortality_prediction():

@@ -2,12 +2,12 @@
 Database connection and session management
 """
 
-from sqlalchemy import create_engine, text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 import logging
 
 from core.config import settings
+from sqlalchemy import create_engine, text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def init_db():
             conn.commit()
             logger.info("Database schemas initialized")
     except Exception as e:
-        logger.error(f"Error initializing database: {str(e)}")
+        logger.error("Error initializing database: %s", str(e))
         raise
 
 
@@ -64,5 +64,5 @@ def test_connection():
             logger.info("Database connection successful")
             return True
     except Exception as e:
-        logger.error(f"Database connection failed: {str(e)}")
+        logger.error("Database connection failed: %s", str(e))
         return False

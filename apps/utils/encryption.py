@@ -5,15 +5,16 @@ HIPAA/GDPR Compliant Data Encryption for PHI (Protected Health Information)
 Uses AES-256 encryption with Fernet (symmetric encryption)
 """
 
+import base64
+import json
+import logging
+import os
+from typing import Any, Dict, Optional
+
 from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.backends import default_backend
-import base64
-import os
-import json
-from typing import Dict, Any, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class DataEncryption:
             encrypted_bytes = self.cipher.encrypt(plaintext.encode())
             return encrypted_bytes.decode()
         except Exception as e:
-            logger.error(f"Encryption failed: {e}")
+            logger.error("Encryption failed: %s", e)
             raise
 
     def decrypt_string(self, encrypted_text: str) -> str:
@@ -84,7 +85,7 @@ class DataEncryption:
             decrypted_bytes = self.cipher.decrypt(encrypted_text.encode())
             return decrypted_bytes.decode()
         except Exception as e:
-            logger.error(f"Decryption failed: {e}")
+            logger.error("Decryption failed: %s", e)
             raise
 
     def encrypt(self, plaintext: str) -> str:
@@ -109,7 +110,7 @@ class DataEncryption:
             json_str = json.dumps(data)
             return self.encrypt_string(json_str)
         except Exception as e:
-            logger.error(f"Dictionary encryption failed: {e}")
+            logger.error("Dictionary encryption failed: %s", e)
             raise
 
     def decrypt_dict(self, encrypted_json: str) -> Dict[str, Any]:
@@ -126,7 +127,7 @@ class DataEncryption:
             json_str = self.decrypt_string(encrypted_json)
             return json.loads(json_str)
         except Exception as e:
-            logger.error(f"Dictionary decryption failed: {e}")
+            logger.error("Dictionary decryption failed: %s", e)
             raise
 
     def encrypt_phi_fields(self, patient_data: Dict[str, Any], phi_fields: list) -> Dict[str, Any]:

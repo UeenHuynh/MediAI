@@ -3,9 +3,10 @@ Pydantic models for request/response validation
 IMPORTANT: These schemas must match database feature tables exactly
 """
 
-from pydantic import BaseModel, Field, validator
-from typing import List, Optional
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, Field, validator
 
 
 class RiskLevel(str, Enum):

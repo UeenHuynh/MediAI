@@ -3,11 +3,12 @@ MediAI Streamlit Application
 ICU Risk Prediction Dashboard
 """
 
-import streamlit as st
+import os
+
 import pandas as pd
 import plotly.graph_objects as go
 import requests
-import os
+import streamlit as st
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")

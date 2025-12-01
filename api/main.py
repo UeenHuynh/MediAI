@@ -3,16 +3,16 @@ MediAI FastAPI Application
 Main entry point for the REST API serving ML predictions
 """
 
+import logging
+import time
+from contextlib import asynccontextmanager
+
+from core.config import settings
+from core.database import init_db
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from contextlib import asynccontextmanager
-import time
-import logging
-
-from core.config import settings
-from routers import predictions, health
-from core.database import init_db
+from routers import health, predictions
 
 # Configure logging
 logging.basicConfig(
@@ -61,7 +61,7 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
-    logger.info(f"{request.method} {request.url.path} - {process_time:.3f}s")
+    logger.info("%s %s - %ss", request.method, request.url.path, process_time:.3f)
     return response
 
 

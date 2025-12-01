@@ -4,9 +4,10 @@ Load and run predictions with local ML models
 """
 
 import pickle
-import pandas as pd
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pandas as pd
 
 
 class ModelService:
@@ -275,7 +276,7 @@ class ModelService:
         elif features['sbp'] >= 200: score += 2
         return score
 
-    def _generate_recommendation(self, risk_score: float, risk_level: str) -> str:
+    def _generate_recommendation(self, _risk_score: float, risk_level: str) -> str:
         """Generate clinical recommendation"""
         if risk_level == "Critical":
             return "🚨 URGENT: High sepsis risk detected. Immediate intervention required. Consider sepsis bundle: blood cultures, broad-spectrum antibiotics, fluid resuscitation."
@@ -385,7 +386,7 @@ class ModelService:
 
         return df
 
-    def _generate_mortality_recommendation(self, risk_score: float, risk_level: str) -> str:
+    def _generate_mortality_recommendation(self, _risk_score: float, risk_level: str) -> str:
         """Generate mortality risk recommendation"""
         if risk_level == "Critical":
             return "🚨 CRITICAL: Very high mortality risk (>75%). Intensive monitoring and aggressive treatment required. Consider ICU escalation, family discussion."

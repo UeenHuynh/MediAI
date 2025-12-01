@@ -2,19 +2,19 @@
 Health check endpoints
 """
 
+from datetime import datetime
+
+import redis
+from core.config import settings
+from core.database import get_db, test_connection
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from datetime import datetime
-import redis
-
-from core.database import get_db, test_connection
-from core.config import settings
 
 router = APIRouter()
 
 
 @router.get("/health")
-async def health_check(db: Session = Depends(get_db)):
+async def health_check(_db: Session = Depends(get_db)):
     """
     Health check endpoint
     Returns system status and component health

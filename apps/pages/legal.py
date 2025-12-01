@@ -3,8 +3,9 @@ Legal Documents Page
 Terms & Conditions and Privacy Policy
 """
 
-import streamlit as st
 from pathlib import Path
+
+import streamlit as st
 
 
 def show_legal():

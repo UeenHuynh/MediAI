@@ -3,9 +3,10 @@ Authentication Page
 Login and registration for MediAI platform
 """
 
+import hashlib
+
 import streamlit as st
 from utils.audit_logger import AuditEventType
-import hashlib
 
 
 def hash_password(password: str) -> str:

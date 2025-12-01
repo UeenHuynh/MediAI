@@ -5,18 +5,19 @@ ICU Risk Prediction Platform with HIPAA/GDPR Compliance
 Using st.navigation() API for clean multi-page navigation
 """
 
-import streamlit as st
 import os
 
-# Import compliance utilities
-from utils.encryption import DataEncryption
-from utils.audit_logger import AuditLogger, AuditEventType
-
-# Import page modules
-from pages import auth, dashboard, predict_sepsis, predict_mortality, model_performance, settings, legal
+import streamlit as st
 
 # Import chatbot
 from components.chatbot import render_chatbot
+
+# Import page modules
+from pages import auth, dashboard, legal, model_performance, predict_mortality, predict_sepsis, settings
+from utils.audit_logger import AuditEventType, AuditLogger
+
+# Import compliance utilities
+from utils.encryption import DataEncryption
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")

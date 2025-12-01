@@ -5,13 +5,13 @@ HIPAA/GDPR Compliant Audit Trail System
 Tracks all user actions, data access, and system events for compliance
 """
 
-import logging
 import json
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
-from enum import Enum
+import logging
 import os
+from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class AuditEventType(Enum):
@@ -98,7 +98,7 @@ class AuditLogger:
             console_handler.setLevel(logging.INFO)
             console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
-            logger.warning(f"Could not create audit log file {self.log_file}: {e}. Using console logging.")
+            logger.warning("Could not create audit log file %s: %s. Using console logging.", self.log_file, e)
 
         logger.propagate = False
 

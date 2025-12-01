@@ -3,11 +3,12 @@ Sepsis Prediction Page
 Form for sepsis risk prediction with 42 clinical features
 """
 
-import streamlit as st
-import requests
 import os
-from utils.audit_logger import AuditEventType
+
+import requests
+import streamlit as st
 from services.model_service import get_model_service
+from utils.audit_logger import AuditEventType
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
@@ -426,6 +427,7 @@ def show_mock_prediction(request_data: dict):
     """Show mock prediction when API is unavailable"""
 
     import random
+
     import numpy as np
 
     # Simple risk scoring based on vitals

@@ -2,13 +2,14 @@
 Simplified MediAI FastAPI Application for deployment testing
 """
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import logging
+import os
 from datetime import datetime
+
 import psycopg2
 import redis
-import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -68,7 +69,7 @@ async def health_check():
         conn.close()
         health_status["services"]["database"] = "healthy"
     except Exception as e:
-        logger.error(f"Database health check failed: {e}")
+        logger.error("Database health check failed: %s", e)
         health_status["services"]["database"] = f"unhealthy: {str(e)}"
         health_status["status"] = "degraded"
 
@@ -79,7 +80,7 @@ async def health_check():
         r.ping()
         health_status["services"]["redis"] = "healthy"
     except Exception as e:
-        logger.error(f"Redis health check failed: {e}")
+        logger.error("Redis health check failed: %s", e)
         health_status["services"]["redis"] = f"unhealthy: {str(e)}"
         health_status["status"] = "degraded"
 
@@ -115,7 +116,7 @@ async def get_data_stats():
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
-        logger.error(f"Failed to get data stats: {e}")
+        logger.error("Failed to get data stats: %s", e)
         return {
             "status": "error",
             "error": str(e),

@@ -2,25 +2,25 @@
 Prediction service handling model loading and inference
 """
 
+import hashlib
+import json
+import logging
 import os
 import pickle
-import hashlib
-import logging
-from typing import Dict, Any
-import redis
-import json
 from datetime import datetime
-import pandas as pd
+from typing import Any, Dict
 
+import pandas as pd
+import redis
 from core.config import settings
 from models.schemas import (
-    SepsisPredictionRequest,
-    SepsisPredictionResponse,
+    FeatureContribution,
     MortalityPredictionRequest,
     MortalityPredictionResponse,
     PredictionDetail,
-    FeatureContribution,
-    RiskLevel
+    RiskLevel,
+    SepsisPredictionRequest,
+    SepsisPredictionResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class PredictionService:
             self.redis_client.ping()
             logger.info("Redis connection established")
         except Exception as e:
-            logger.warning(f"Redis connection failed: {str(e)}. Caching disabled.")
+            logger.warning("Redis connection failed: %s. Caching disabled.", str(e))
             self.redis_client = None
 
     def _load_models(self):
@@ -59,7 +59,7 @@ class PredictionService:
                 self.models['sepsis'] = pickle.load(f)
             logger.info("Sepsis model loaded")
         else:
-            logger.warning(f"Sepsis model not found at {sepsis_model_file}")
+            logger.warning("Sepsis model not found at %s", sepsis_model_file)
 
         # Load mortality model
         mortality_model_file = os.path.join(model_path, "mortality_model_v1.pkl")
@@ -68,7 +68,7 @@ class PredictionService:
                 self.models['mortality'] = pickle.load(f)
             logger.info("Mortality model loaded")
         else:
-            logger.warning(f"Mortality model not found at {mortality_model_file}")
+            logger.warning("Mortality model not found at %s", mortality_model_file)
 
     def _get_cache_key(self, patient_id: str, features: Dict) -> str:
         """Generate cache key from patient_id and features"""
@@ -84,10 +84,10 @@ class PredictionService:
         try:
             cached = self.redis_client.get(cache_key)
             if cached:
-                logger.info(f"Cache hit for key: {cache_key}")
+                logger.info("Cache hit for key: %s", cache_key)
                 return json.loads(cached)
         except Exception as e:
-            logger.error(f"Cache read error: {str(e)}")
+            logger.error("Cache read error: %s", str(e))
 
         return None
 
@@ -102,9 +102,9 @@ class PredictionService:
                 settings.CACHE_TTL_SECONDS,
                 json.dumps(data)
             )
-            logger.info(f"Cached prediction with key: {cache_key}")
+            logger.info("Cached prediction with key: %s", cache_key)
         except Exception as e:
-            logger.error(f"Cache write error: {str(e)}")
+            logger.error("Cache write error: %s", str(e))
 
     def _categorize_risk(self, probability: float) -> RiskLevel:
         """Categorize risk probability into levels"""
