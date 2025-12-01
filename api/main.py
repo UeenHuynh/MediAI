@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("Starting MediAI API...")
@@ -61,14 +61,14 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
-    logger.info("%s %s - %ss", request.method, request.url.path, process_time:.3f)
+    logger.info("%s %s - %.3fs", request.method, request.url.path, process_time)
     return response
 
 
 # Exception handler
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Global exception: {str(exc)}", exc_info=True)
+async def global_exception_handler(_request: Request, exc: Exception):
+    logger.error("Global exception: %s", str(exc), exc_info=True)
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error occurred"}

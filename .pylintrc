@@ -52,8 +52,6 @@ max-branches=15
 # Maximum number of statements in function / method body
 max-statements=50
 
-# Maximum cyclomatic complexity
-max-complexity=15
 
 [SIMILARITIES]
 # Minimum lines number of a similarity
