@@ -4,6 +4,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-red.svg)](https://streamlit.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/UeenHuynh/MediAI/actions/workflows/ci.yml/badge.svg)](https://github.com/UeenHuynh/MediAI/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/UeenHuynh/MediAI/branch/main/graph/badge.svg)](https://codecov.io/gh/UeenHuynh/MediAI)
 
 > **End-to-end MLOps platform for ICU patient risk prediction with HIPAA/GDPR compliance**
 
