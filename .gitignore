@@ -103,3 +103,4 @@ inspect_*.py
 
 # Training Results
 results/
+bandit-report.json

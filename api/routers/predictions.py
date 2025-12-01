@@ -6,9 +6,12 @@ import logging
 
 from core.database import get_db
 from fastapi import APIRouter, Depends, HTTPException
-from models.schemas import (MortalityPredictionRequest,
-                            MortalityPredictionResponse,
-                            SepsisPredictionRequest, SepsisPredictionResponse)
+from models.schemas import (
+    MortalityPredictionRequest,
+    MortalityPredictionResponse,
+    SepsisPredictionRequest,
+    SepsisPredictionResponse,
+)
 from services.prediction_service import PredictionService
 from sqlalchemy.orm import Session
 

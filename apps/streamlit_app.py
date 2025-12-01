@@ -8,12 +8,22 @@ Using st.navigation() API for clean multi-page navigation
 import os
 
 import streamlit as st
+
 # Import chatbot
 from components.chatbot import render_chatbot
+
 # Import page modules
-from pages import (auth, dashboard, legal, model_performance,
-                   predict_mortality, predict_sepsis, settings)
+from pages import (
+    auth,
+    dashboard,
+    legal,
+    model_performance,
+    predict_mortality,
+    predict_sepsis,
+    settings,
+)
 from utils.audit_logger import AuditEventType, AuditLogger
+
 # Import compliance utilities
 from utils.encryption import DataEncryption
 
