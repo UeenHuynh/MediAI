@@ -78,10 +78,10 @@ def main():
         page = st.radio(
             "Select Page",
             [
-                "🏠 Dashboard",
-                "🔬 Predict Sepsis",
-                "💔 Predict Mortality",
-                "📊 Model Performance",
+                "Dashboard",
+                "Predict Sepsis",
+                "Predict Mortality",
+                "Model Performance",
             ],
             label_visibility="collapsed",
         )
@@ -115,13 +115,13 @@ def main():
         )
 
     # Page routing
-    if page == "🏠 Dashboard":
+    if page == "Dashboard":
         show_dashboard()
-    elif page == "🔬 Predict Sepsis":
+    elif page == "Predict Sepsis":
         show_sepsis_prediction()
-    elif page == "💔 Predict Mortality":
+    elif page == "Predict Mortality":
         show_mortality_prediction()
-    elif page == "📊 Model Performance":
+    elif page == "Model Performance":
         show_model_performance()
 
 
