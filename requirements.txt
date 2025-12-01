@@ -20,15 +20,16 @@ fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic==2.5.3
 python-multipart==0.0.6
+httpx<0.28  # Pin to <0.28 for TestClient compatibility
 
 # Caching
 redis==5.0.1
 hiredis==2.3.2
 
 # UI Framework
-streamlit==1.31.0
+streamlit==1.32.0
 plotly==5.18.0
-altair==5.2.0
+altair==4.2.2
 
 # Data Validation
 great-expectations==0.18.8

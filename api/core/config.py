@@ -2,9 +2,10 @@
 Configuration management using Pydantic Settings
 """
 
+from typing import List, Union
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from typing import List
-import os
 
 
 class Settings(BaseSettings):
@@ -30,10 +31,18 @@ class Settings(BaseSettings):
     MORTALITY_MODEL_VERSION: str = "v1"
 
     # CORS
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:8501",  # Streamlit
         "http://localhost:3000",  # React (if used)
     ]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ORIGINS from comma-separated string or list"""
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",")]
+        return v
 
     # Logging
     LOG_LEVEL: str = "INFO"
@@ -45,6 +54,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra fields from .env
 
 
 # Create global settings instance

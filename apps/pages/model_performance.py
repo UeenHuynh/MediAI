@@ -3,17 +3,20 @@ Model Performance Page
 Display model metrics, confusion matrix, and feature importance
 """
 
-import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
 import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
 
 def show_model_performance():
     """Model performance metrics page"""
 
-    st.markdown('<div class="page-header">📊 Model Performance Metrics</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="page-header">📊 Model Performance Metrics</div>',
+        unsafe_allow_html=True,
+    )
 
     # Model selection
     model_tab1, model_tab2 = st.tabs(["🔬 Sepsis Model", "💔 Mortality Model"])
@@ -37,10 +40,17 @@ def show_sepsis_model_performance():
         st.metric("AUROC", "0.893", delta="Target: 0.85+", help="Area Under ROC Curve")
 
     with col2:
-        st.metric("Sensitivity", "0.828", delta="Target: 0.75-0.85", help="True Positive Rate / Recall")
+        st.metric(
+            "Sensitivity",
+            "0.828",
+            delta="Target: 0.75-0.85",
+            help="True Positive Rate / Recall",
+        )
 
     with col3:
-        st.metric("Specificity", "0.806", delta="Target: 0.82-0.90", help="True Negative Rate")
+        st.metric(
+            "Specificity", "0.806", delta="Target: 0.82-0.90", help="True Negative Rate"
+        )
 
     with col4:
         st.metric("Accuracy", "0.816", help="Overall classification accuracy")
@@ -81,7 +91,7 @@ def show_sepsis_model_performance():
             "metric": "auc",
             "num_leaves": 31,
             "learning_rate": 0.05,
-            "num_boost_round": 1000
+            "num_boost_round": 1000,
         },
         "performance": {
             "AUROC": "0.893 (actual from training)",
@@ -89,8 +99,8 @@ def show_sepsis_model_performance():
             "Sensitivity": "82.8%",
             "Specificity": "80.6%",
             "Precision": "76.3%",
-            "F1-Score": "79.4%"
-        }
+            "F1-Score": "79.4%",
+        },
     }
 
     st.json(model_info)
@@ -105,13 +115,22 @@ def show_mortality_model_performance():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("AUROC", "0.645", delta="Target: 0.82-0.90", help="Area Under ROC Curve")
+        st.metric(
+            "AUROC", "0.645", delta="Target: 0.82-0.90", help="Area Under ROC Curve"
+        )
 
     with col2:
-        st.metric("Sensitivity", "0.599", delta="Target: 0.70-0.82", help="True Positive Rate / Recall")
+        st.metric(
+            "Sensitivity",
+            "0.599",
+            delta="Target: 0.70-0.82",
+            help="True Positive Rate / Recall",
+        )
 
     with col3:
-        st.metric("Specificity", "0.600", delta="Target: 0.80-0.88", help="True Negative Rate")
+        st.metric(
+            "Specificity", "0.600", delta="Target: 0.80-0.88", help="True Negative Rate"
+        )
 
     with col4:
         st.metric("Accuracy", "0.602", help="Overall classification accuracy")
@@ -152,14 +171,14 @@ def show_mortality_model_performance():
             "metric": "auc",
             "num_leaves": 31,
             "learning_rate": 0.05,
-            "num_boost_round": 500
+            "num_boost_round": 500,
         },
         "performance": {
             "AUROC": "0.645 (actual from training)",
             "Accuracy": "60.2%",
             "Sensitivity": "59.9%",
-            "Specificity": "60.0%"
-        }
+            "Specificity": "60.0%",
+        },
     }
 
     st.json(model_info)
@@ -176,32 +195,36 @@ def show_roc_curve(model_type: str):
 
     if model_type == "sepsis":
         # AUROC = 0.893
-        tpr = fpr ** 0.27 + 0.15 * np.random.random(100)
+        tpr = fpr**0.27 + 0.15 * np.random.random(100)
         tpr = np.clip(tpr, 0, 1)
         auroc = 0.893
     else:
         # AUROC = 0.645
-        tpr = fpr ** 0.65 + 0.10 * np.random.random(100)
+        tpr = fpr**0.65 + 0.10 * np.random.random(100)
         tpr = np.clip(tpr, 0, 1)
         auroc = 0.645
 
     fig = go.Figure()
 
     # ROC curve
-    fig.add_trace(go.Scatter(
-        x=fpr,
-        y=tpr,
-        name=f'Model (AUROC = {auroc:.2f})',
-        line=dict(color='#667eea', width=3)
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=fpr,
+            y=tpr,
+            name=f"Model (AUROC = {auroc:.2f})",
+            line=dict(color="#667eea", width=3),
+        )
+    )
 
     # Diagonal reference line
-    fig.add_trace(go.Scatter(
-        x=[0, 1],
-        y=[0, 1],
-        name='Random (AUROC = 0.50)',
-        line=dict(color='gray', width=2, dash='dash')
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=[0, 1],
+            y=[0, 1],
+            name="Random (AUROC = 0.50)",
+            line=dict(color="gray", width=2, dash="dash"),
+        )
+    )
 
     fig.update_layout(
         xaxis_title="False Positive Rate (1 - Specificity)",
@@ -209,7 +232,7 @@ def show_roc_curve(model_type: str):
         height=350,
         margin=dict(l=20, r=20, t=20, b=20),
         showlegend=True,
-        legend=dict(x=0.6, y=0.1)
+        legend=dict(x=0.6, y=0.1),
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -229,21 +252,20 @@ def show_confusion_matrix(model_type: str):
 
     matrix = np.array([[tn, fp], [fn, tp]])
 
-    fig = go.Figure(data=go.Heatmap(
-        z=matrix,
-        x=['Predicted Negative', 'Predicted Positive'],
-        y=['Actual Negative', 'Actual Positive'],
-        text=matrix,
-        texttemplate='%{text}',
-        textfont={"size": 20},
-        colorscale='Blues',
-        showscale=False
-    ))
-
-    fig.update_layout(
-        height=350,
-        margin=dict(l=20, r=20, t=20, b=20)
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=matrix,
+            x=["Predicted Negative", "Predicted Positive"],
+            y=["Actual Negative", "Actual Positive"],
+            text=matrix,
+            texttemplate="%{text}",
+            textfont={"size": 20},
+            colorscale="Blues",
+            showscale=False,
+        )
     )
+
+    fig.update_layout(height=350, margin=dict(l=20, r=20, t=20, b=20))
 
     st.plotly_chart(fig, use_container_width=True)
 
@@ -256,7 +278,9 @@ def show_confusion_matrix(model_type: str):
     accuracy = (tp + tn) / (tp + tn + fp + fn)
 
     with col1:
-        st.metric("Precision (PPV)", f"{precision:.2f}", help="Positive Predictive Value")
+        st.metric(
+            "Precision (PPV)", f"{precision:.2f}", help="Positive Predictive Value"
+        )
 
     with col2:
         st.metric("Recall (Sensitivity)", f"{recall:.2f}", help="True Positive Rate")
@@ -272,93 +296,97 @@ def show_feature_importance(model_type: str):
     """Show feature importance chart"""
 
     if model_type == "sepsis":
-        features = pd.DataFrame({
-            'feature': [
-                'sofa_score',
-                'respiratory_rate',
-                'age',
-                'creatinine',
-                'bilirubin',
-                'platelets',
-                'shock_index',
-                'lactate',
-                'temperature',
-                'heart_rate',
-                'wbc',
-                'apache_ii_score',
-                'spo2',
-                'map',
-                'bun_creatinine_ratio',
-                'dbp',
-                'sbp',
-                'sirs_score',
-                'pulse_pressure',
-                'lactate_albumin_ratio',
-            ],
-            'importance': [
-                0.8795,
-                0.0104,
-                0.0096,
-                0.0086,
-                0.0071,
-                0.0071,
-                0.0063,
-                0.0063,
-                0.0059,
-                0.0058,
-                0.0056,
-                0.0056,
-                0.0055,
-                0.0049,
-                0.0048,
-                0.0042,
-                0.0039,
-                0.0039,
-                0.0036,
-                0.0032,
-            ]
-        })
+        features = pd.DataFrame(
+            {
+                "feature": [
+                    "sofa_score",
+                    "respiratory_rate",
+                    "age",
+                    "creatinine",
+                    "bilirubin",
+                    "platelets",
+                    "shock_index",
+                    "lactate",
+                    "temperature",
+                    "heart_rate",
+                    "wbc",
+                    "apache_ii_score",
+                    "spo2",
+                    "map",
+                    "bun_creatinine_ratio",
+                    "dbp",
+                    "sbp",
+                    "sirs_score",
+                    "pulse_pressure",
+                    "lactate_albumin_ratio",
+                ],
+                "importance": [
+                    0.8795,
+                    0.0104,
+                    0.0096,
+                    0.0086,
+                    0.0071,
+                    0.0071,
+                    0.0063,
+                    0.0063,
+                    0.0059,
+                    0.0058,
+                    0.0056,
+                    0.0056,
+                    0.0055,
+                    0.0049,
+                    0.0048,
+                    0.0042,
+                    0.0039,
+                    0.0039,
+                    0.0036,
+                    0.0032,
+                ],
+            }
+        )
     else:
-        features = pd.DataFrame({
-            'feature': [
-                'apache_ii_score',
-                'sofa_day1',
-                'worst_lactate',
-                'worst_heart_rate',
-                'worst_spo2',
-                'worst_creatinine',
-                'age',
-                'worst_respiratory_rate',
-                'worst_temperature_high',
-                'worst_sbp_low',
-                'worst_gcs',
-                'vasopressor_use',
-                'gender',
-            ],
-            'importance': [
-                0.1196,
-                0.1052,
-                0.0945,
-                0.0938,
-                0.0894,
-                0.0888,
-                0.0874,
-                0.0868,
-                0.0865,
-                0.0857,
-                0.0342,
-                0.0195,
-                0.0087,
-            ]
-        })
+        features = pd.DataFrame(
+            {
+                "feature": [
+                    "apache_ii_score",
+                    "sofa_day1",
+                    "worst_lactate",
+                    "worst_heart_rate",
+                    "worst_spo2",
+                    "worst_creatinine",
+                    "age",
+                    "worst_respiratory_rate",
+                    "worst_temperature_high",
+                    "worst_sbp_low",
+                    "worst_gcs",
+                    "vasopressor_use",
+                    "gender",
+                ],
+                "importance": [
+                    0.1196,
+                    0.1052,
+                    0.0945,
+                    0.0938,
+                    0.0894,
+                    0.0888,
+                    0.0874,
+                    0.0868,
+                    0.0865,
+                    0.0857,
+                    0.0342,
+                    0.0195,
+                    0.0087,
+                ],
+            }
+        )
 
     fig = px.bar(
         features,
-        x='importance',
-        y='feature',
-        orientation='h',
-        color='importance',
-        color_continuous_scale='Blues'
+        x="importance",
+        y="feature",
+        orientation="h",
+        color="importance",
+        color_continuous_scale="Blues",
     )
 
     fig.update_layout(
@@ -366,7 +394,7 @@ def show_feature_importance(model_type: str):
         yaxis_title="Feature",
         height=500,
         margin=dict(l=20, r=20, t=20, b=20),
-        showlegend=False
+        showlegend=False,
     )
 
     st.plotly_chart(fig, use_container_width=True)

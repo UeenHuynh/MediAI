@@ -3,27 +3,26 @@ MediAI FastAPI Application
 Main entry point for the REST API serving ML predictions
 """
 
+import logging
+import time
+from contextlib import asynccontextmanager
+
+from core.config import settings
+from core.database import init_db
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from contextlib import asynccontextmanager
-import time
-import logging
-
-from core.config import settings
-from routers import predictions, health
-from core.database import init_db
+from routers import health, predictions
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("Starting MediAI API...")
@@ -41,7 +40,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -61,17 +60,16 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
-    logger.info(f"{request.method} {request.url.path} - {process_time:.3f}s")
+    logger.info("%s %s - %.3fs", request.method, request.url.path, process_time)
     return response
 
 
 # Exception handler
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Global exception: {str(exc)}", exc_info=True)
+async def global_exception_handler(_request: Request, exc: Exception):
+    logger.error("Global exception: %s", str(exc), exc_info=True)
     return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error occurred"}
+        status_code=500, content={"detail": "Internal server error occurred"}
     )
 
 
@@ -88,15 +86,16 @@ async def root():
         "version": "1.0.0",
         "description": "ICU Risk Prediction API",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host=settings.API_HOST,
         port=settings.API_PORT,
-        reload=settings.DEBUG
+        reload=settings.DEBUG,
     )

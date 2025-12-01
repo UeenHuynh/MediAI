@@ -2,18 +2,18 @@
 Simplified MediAI FastAPI Application for deployment testing
 """
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import logging
+import os
 from datetime import datetime
+
 import psycopg2
 import redis
-import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ app = FastAPI(
     description="REST API for sepsis and mortality risk prediction in ICU patients (Simplified)",
     version="1.0.0-simple",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # CORS middleware
@@ -45,7 +45,7 @@ async def root():
         "description": "ICU Risk Prediction API",
         "status": "operational",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
 
@@ -55,12 +55,14 @@ async def health_check():
     health_status = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "services": {}
+        "services": {},
     }
 
     # Check PostgreSQL
     try:
-        DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres123@postgres:5432/mimic_iv")
+        DATABASE_URL = os.getenv(
+            "DATABASE_URL", "postgresql://postgres:postgres123@postgres:5432/mimic_iv"
+        )
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor()
         cursor.execute("SELECT 1")
@@ -68,7 +70,7 @@ async def health_check():
         conn.close()
         health_status["services"]["database"] = "healthy"
     except Exception as e:
-        logger.error(f"Database health check failed: {e}")
+        logger.error("Database health check failed: %s", e)
         health_status["services"]["database"] = f"unhealthy: {str(e)}"
         health_status["status"] = "degraded"
 
@@ -79,7 +81,7 @@ async def health_check():
         r.ping()
         health_status["services"]["redis"] = "healthy"
     except Exception as e:
-        logger.error(f"Redis health check failed: {e}")
+        logger.error("Redis health check failed: %s", e)
         health_status["services"]["redis"] = f"unhealthy: {str(e)}"
         health_status["status"] = "degraded"
 
@@ -90,7 +92,9 @@ async def health_check():
 async def get_data_stats():
     """Get database statistics"""
     try:
-        DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres123@postgres:5432/mimic_iv")
+        DATABASE_URL = os.getenv(
+            "DATABASE_URL", "postgresql://postgres:postgres123@postgres:5432/mimic_iv"
+        )
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor()
 
@@ -103,7 +107,7 @@ async def get_data_stats():
                 cursor.execute(f"SELECT COUNT(*) FROM {table}")
                 count = cursor.fetchone()[0]
                 stats[table.replace("raw.", "")] = count
-            except:
+            except Exception:
                 stats[table.replace("raw.", "")] = "N/A"
 
         cursor.close()
@@ -112,22 +116,18 @@ async def get_data_stats():
         return {
             "status": "success",
             "data": stats,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
     except Exception as e:
-        logger.error(f"Failed to get data stats: {e}")
+        logger.error("Failed to get data stats: %s", e)
         return {
             "status": "error",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main_simple:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+
+    uvicorn.run("main_simple:app", host="0.0.0.0", port=8000, reload=True)

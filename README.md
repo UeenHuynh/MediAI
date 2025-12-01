@@ -4,6 +4,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-red.svg)](https://streamlit.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/UeenHuynh/MediAI/actions/workflows/ci.yml/badge.svg)](https://github.com/UeenHuynh/MediAI/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/UeenHuynh/MediAI/branch/main/graph/badge.svg)](https://codecov.io/gh/UeenHuynh/MediAI)
 
 > **End-to-end MLOps platform for ICU patient risk prediction with HIPAA/GDPR compliance**
 
@@ -28,7 +30,7 @@ MediAI is a production-ready healthcare ML platform for ICU clinical decision su
 ✅ **Fast ML Inference** - Direct model integration with feature validation
 ✅ **Explainable AI** - SHAP values for clinical interpretability
 ✅ **Production Ready** - Docker Compose orchestration
-✅ **Comprehensive Testing** - 32 tests with 70%+ coverage, CI/CD pipeline
+✅ **Comprehensive Testing** - 34 tests with 27% coverage, CI/CD pipeline
 ✅ **Professional UI** - Gradient design, dark sidebar, multi-page navigation
 ✅ **CrewAI Agents** - Multi-agent framework for data processing automation
 
@@ -59,7 +61,7 @@ MediAI is a production-ready healthcare ML platform for ICU clinical decision su
 <!-- TODO: Add mortality prediction page screenshot -->
 ![Mortality Prediction](docs/images/Sélection_817.png)
 
-- **Input:** 65 features (SOFA, APACHE-II, worst vitals/labs in 24h)
+- **Input:** 13 features (age, SOFA scores, GCS, lactate, vasopressor usage)
 - **Output:** Risk score, survival probability, feature importance
 - **Target:** AUROC >0.80, Sensitivity >0.75
 - **Clinical Impact:** Resource allocation, family counseling
@@ -423,6 +425,8 @@ Results Display (Streamlit UI)
    - Feature names stored in pickle files
 
 2. **Feature Processing**
+   - Sepsis: 42 features (vitals, labs, demographics, SOFA scores)
+   - Mortality: 13 features (age, SOFA scores, GCS, lactate, vasopressor)
    - Real-time feature validation
    - Automatic scaling and transformation
    - Missing value handling
@@ -921,12 +925,10 @@ services:
 
 **Algorithm:** LightGBM Binary Classifier
 
-**Features (65 total):**
-- **SOFA Components (6):** cardiovascular, respiratory, renal, hepatic, coagulation, neurological
-- **APACHE-II Components (12):** age, temperature, MAP, heart rate, respiratory rate, etc.
-- **Worst Vitals/Labs in 24h (35):** worst heart rate, worst lactate, etc.
-- **ICU Details (6):** first care unit, admission type, LOS
-- **Demographics (6):** age, gender, ethnicity, insurance, admission location
+**Features (13 total):**
+- **Demographics (1):** age
+- **SOFA Scores (6):** cardiovascular, respiratory, renal, hepatic, coagulation, neurological
+- **Clinical Indicators (6):** GCS score, lactate levels, vasopressor usage, mechanical ventilation, dialysis, other severity markers
 
 **Prediction Target:** Hospital mortality
 
@@ -1109,10 +1111,10 @@ curl -X POST http://localhost:8000/predict/mortality \
 
 ### Test Suite
 
-**Test Coverage:** 70%+ (target met)
+**Test Coverage:** 27% (target: 10%, passing)
 
 **Test Statistics:**
-- ✅ 32 total tests
+- ✅ 34 total tests
 - ✅ 11 model service tests (100% pass rate)
 - ✅ 8 encryption/security tests
 - ✅ 4 API endpoint tests

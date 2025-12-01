@@ -5,36 +5,45 @@ ICU Risk Prediction Platform with HIPAA/GDPR Compliance
 Using st.navigation() API for clean multi-page navigation
 """
 
-import streamlit as st
 import os
-from datetime import datetime
 
-# Import compliance utilities
-from utils.encryption import DataEncryption
-from utils.audit_logger import AuditLogger, AuditEventType
-
-# Import page modules
-from pages import auth, dashboard, predict_sepsis, predict_mortality, model_performance, settings, legal
+import streamlit as st
 
 # Import chatbot
 from components.chatbot import render_chatbot
+
+# Import page modules
+from pages import (
+    auth,
+    dashboard,
+    legal,
+    model_performance,
+    predict_mortality,
+    predict_sepsis,
+    settings,
+)
+from utils.audit_logger import AuditEventType, AuditLogger
+
+# Import compliance utilities
+from utils.encryption import DataEncryption
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 # Initialize session state
-if 'authenticated' not in st.session_state:
+if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-if 'user_id' not in st.session_state:
+if "user_id" not in st.session_state:
     st.session_state.user_id = None
-if 'session_id' not in st.session_state:
+if "session_id" not in st.session_state:
     import uuid
+
     st.session_state.session_id = str(uuid.uuid4())
-if 'compliance_accepted' not in st.session_state:
+if "compliance_accepted" not in st.session_state:
     st.session_state.compliance_accepted = False
-if 'audit_logger' not in st.session_state:
+if "audit_logger" not in st.session_state:
     st.session_state.audit_logger = AuditLogger()
-if 'encryptor' not in st.session_state:
+if "encryptor" not in st.session_state:
     st.session_state.encryptor = DataEncryption()
 
 # Page configuration
@@ -44,9 +53,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        'Get Help': 'https://github.com/mediai/support',
-        'Report a bug': 'https://github.com/mediai/issues',
-        'About': '''
+        "Get Help": "https://github.com/mediai/support",
+        "Report a bug": "https://github.com/mediai/issues",
+        "About": """
         # MediAI v1.0.0
 
         ICU Risk Prediction Platform
@@ -62,12 +71,13 @@ st.set_page_config(
         - ✅ Audit Logging
         - ✅ HIPAA Safeguards
         - ✅ GDPR Data Rights
-        '''
-    }
+        """,
+    },
 )
 
 # Custom CSS - Full styling from original design
-st.markdown("""
+st.markdown(
+    """
     <style>
     /* Global Styles */
     .main {
@@ -235,21 +245,29 @@ st.markdown("""
         opacity: 0.8;
     }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 def show_compliance_modal():
     """Show HIPAA/GDPR compliance notice"""
-    st.markdown('<div style="font-size: 2.5rem; font-weight: bold; color: white; text-align: center; padding: 2rem 0; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">🏥 MediAI - ICU Risk Prediction Platform</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div style="font-size: 2.5rem; font-weight: bold; color: white; text-align: center; padding: 2rem 0; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">🏥 MediAI - ICU Risk Prediction Platform</div>',
+        unsafe_allow_html=True,
+    )
 
-    st.markdown("""
+    st.markdown(
+        """
     <div class="card">
         <h2 style="color: #667eea; text-align: center;">Healthcare Data Compliance Notice</h2>
         <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">
             Please review and accept our data protection policies before proceeding
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     col1, col2 = st.columns(2)
 
@@ -258,37 +276,43 @@ def show_compliance_modal():
         st.markdown("**Health Insurance Portability and Accountability Act**")
         st.markdown("")
         st.markdown("**We protect your health information through:**")
-        st.markdown("""
+        st.markdown(
+            """
         - ✓ AES-256 Encryption for all PHI
         - ✓ Comprehensive Audit Logging
         - ✓ Role-Based Access Controls
         - ✓ Secure Data Transmission (TLS)
         - ✓ 7-Year Retention Policy
-        """)
+        """
+        )
 
     with col2:
         st.markdown("### 🇪🇺 GDPR Compliance")
         st.markdown("**General Data Protection Regulation**")
         st.markdown("")
         st.markdown("**We process your data with:**")
-        st.markdown("""
+        st.markdown(
+            """
         - ✓ Explicit Consent
         - ✓ Data Minimization
         - ✓ Purpose Limitation
         - ✓ Pseudonymization
         - ✓ Security by Design
-        """)
+        """
+        )
 
     st.markdown("---")
 
     # Important Note
-    st.warning("""
+    st.warning(
+        """
     ⚠️ **Important Note**
 
     This is a **demonstration platform** for educational and research purposes only.
     This system is **NOT approved for clinical use** and should not be used to make
     medical decisions. All predictions must be reviewed by qualified healthcare professionals.
-    """)
+    """
+    )
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -296,27 +320,30 @@ def show_compliance_modal():
 
     with col2:
         hipaa_consent = st.checkbox(
-            "✅ I have read and accept the HIPAA Privacy Policy",
-            key="hipaa_consent"
+            "✅ I have read and accept the HIPAA Privacy Policy", key="hipaa_consent"
         )
 
         gdpr_consent = st.checkbox(
             "✅ I have read and accept the GDPR Data Protection Policy",
-            key="gdpr_consent"
+            key="gdpr_consent",
         )
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        if st.button("Continue to Application", use_container_width=True, disabled=not (hipaa_consent and gdpr_consent)):
+        if st.button(
+            "Continue to Application",
+            use_container_width=True,
+            disabled=not (hipaa_consent and gdpr_consent),
+        ):
             st.session_state.compliance_accepted = True
 
             # Log consent
             audit = st.session_state.audit_logger
             audit.log_consent(
-                user_id=st.session_state.get('user_id', 'anonymous'),
+                user_id=st.session_state.get("user_id", "anonymous"),
                 patient_id=None,
                 consent_given=True,
-                ip_address='127.0.0.1'
+                ip_address="127.0.0.1",
             )
 
             st.rerun()
@@ -341,7 +368,10 @@ def main():
     # Sidebar with user info, navigation, and compliance status
     with st.sidebar:
         # Logo
-        st.image("https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI", width='stretch')
+        st.image(
+            "https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI",
+            width="stretch",
+        )
 
         # User info
         st.markdown("### 👤 User")
@@ -351,11 +381,30 @@ def main():
 
     # Define pages with st.Page
     pages = [
-        st.Page(dashboard.show_dashboard, title="Dashboard", icon="🏠", url_path="dashboard"),
-        st.Page(predict_sepsis.show_sepsis_prediction, title="Sepsis Prediction", icon="🔬", url_path="sepsis"),
-        st.Page(predict_mortality.show_mortality_prediction, title="Mortality Prediction", icon="💔", url_path="mortality"),
-        st.Page(model_performance.show_model_performance, title="Model Performance", icon="📊", url_path="performance"),
-        st.Page(settings.show_settings, title="Settings", icon="⚙️", url_path="settings"),
+        st.Page(
+            dashboard.show_dashboard, title="Dashboard", icon="🏠", url_path="dashboard"
+        ),
+        st.Page(
+            predict_sepsis.show_sepsis_prediction,
+            title="Sepsis Prediction",
+            icon="🔬",
+            url_path="sepsis",
+        ),
+        st.Page(
+            predict_mortality.show_mortality_prediction,
+            title="Mortality Prediction",
+            icon="💔",
+            url_path="mortality",
+        ),
+        st.Page(
+            model_performance.show_model_performance,
+            title="Model Performance",
+            icon="📊",
+            url_path="performance",
+        ),
+        st.Page(
+            settings.show_settings, title="Settings", icon="⚙️", url_path="settings"
+        ),
         st.Page(legal.show_legal, title="Legal", icon="📄", url_path="legal"),
     ]
 
@@ -391,8 +440,8 @@ def main():
             audit.log_event(
                 event_type=AuditEventType.LOGOUT,
                 user_id=st.session_state.user_id,
-                ip_address='127.0.0.1',
-                success=True
+                ip_address="127.0.0.1",
+                success=True,
             )
 
             st.session_state.authenticated = False
@@ -406,7 +455,8 @@ def main():
     st.markdown("---")
 
     # Footer with clickable compliance links
-    st.markdown("""
+    st.markdown(
+        """
     <div class="footer">
         <p>
             🏥 MediAI v1.0.0 |
@@ -415,7 +465,9 @@ def main():
             © 2025
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Legal document links (temporarily hidden)
     # st.markdown("""
