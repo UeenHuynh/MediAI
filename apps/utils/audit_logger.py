@@ -312,7 +312,7 @@ class AuditLogger:
             import streamlit as st
             if hasattr(st, 'session_state') and hasattr(st.session_state, 'session_id'):
                 return st.session_state.session_id
-        except:
+        except Exception:
             pass
         return None
 

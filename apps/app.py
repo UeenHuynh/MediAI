@@ -8,7 +8,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import requests
 import os
-from datetime import datetime
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -50,7 +49,7 @@ def check_api_health():
     try:
         response = requests.get(f"{API_URL}/health", timeout=5)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 

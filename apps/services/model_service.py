@@ -4,10 +4,9 @@ Load and run predictions with local ML models
 """
 
 import pickle
-import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 
 class ModelService:
@@ -400,6 +399,7 @@ class ModelService:
 
 # Global instance
 _model_service = None
+
 
 def get_model_service() -> ModelService:
     """Get or create model service instance"""

@@ -103,7 +103,7 @@ async def get_data_stats():
                 cursor.execute(f"SELECT COUNT(*) FROM {table}")
                 count = cursor.fetchone()[0]
                 stats[table.replace("raw.", "")] = count
-            except:
+            except Exception:
                 stats[table.replace("raw.", "")] = "N/A"
 
         cursor.close()
