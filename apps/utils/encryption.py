@@ -38,8 +38,10 @@ class DataEncryption:
             password: Encryption password (if None, uses ENCRYPTION_KEY env var)
             salt: Salt for key derivation (if None, generates new salt)
         """
-        self.password = password or os.getenv('ENCRYPTION_KEY', 'mediai-default-key-change-in-production')
-        self.salt = salt or os.getenv('ENCRYPTION_SALT', 'mediai-salt').encode()
+        self.password = password or os.getenv(
+            "ENCRYPTION_KEY", "mediai-default-key-change-in-production"
+        )
+        self.salt = salt or os.getenv("ENCRYPTION_SALT", "mediai-salt").encode()
         self.cipher = self._generate_cipher()
 
     def _generate_cipher(self) -> Fernet:
@@ -49,7 +51,7 @@ class DataEncryption:
             length=32,
             salt=self.salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
         key = base64.urlsafe_b64encode(kdf.derive(self.password.encode()))
         return Fernet(key)
@@ -130,7 +132,9 @@ class DataEncryption:
             logger.error("Dictionary decryption failed: %s", e)
             raise
 
-    def encrypt_phi_fields(self, patient_data: Dict[str, Any], phi_fields: list) -> Dict[str, Any]:
+    def encrypt_phi_fields(
+        self, patient_data: Dict[str, Any], phi_fields: list
+    ) -> Dict[str, Any]:
         """
         Encrypt specific PHI fields in patient data
 
@@ -167,10 +171,12 @@ class DataEncryption:
         decrypted_data = encrypted_data.copy()
 
         # Find all encrypted fields
-        encrypted_fields = [key for key in decrypted_data.keys() if key.endswith('_encrypted')]
+        encrypted_fields = [
+            key for key in decrypted_data.keys() if key.endswith("_encrypted")
+        ]
 
         for encrypted_field in encrypted_fields:
-            original_field = encrypted_field.replace('_encrypted', '')
+            original_field = encrypted_field.replace("_encrypted", "")
             encrypted_value = decrypted_data[encrypted_field]
 
             if encrypted_value is not None:
@@ -194,11 +200,13 @@ class DataEncryption:
         encrypted_data = patient_data.copy()
 
         # Encrypt patient_id and name if present
-        if 'patient_id' in encrypted_data and encrypted_data['patient_id'] is not None:
-            encrypted_data['patient_id'] = self.encrypt_string(str(encrypted_data['patient_id']))
+        if "patient_id" in encrypted_data and encrypted_data["patient_id"] is not None:
+            encrypted_data["patient_id"] = self.encrypt_string(
+                str(encrypted_data["patient_id"])
+            )
 
-        if 'name' in encrypted_data and encrypted_data['name'] is not None:
-            encrypted_data['name'] = self.encrypt_string(str(encrypted_data['name']))
+        if "name" in encrypted_data and encrypted_data["name"] is not None:
+            encrypted_data["name"] = self.encrypt_string(str(encrypted_data["name"]))
 
         return encrypted_data
 
@@ -215,15 +223,17 @@ class DataEncryption:
         decrypted_data = encrypted_data.copy()
 
         # Decrypt patient_id and name if present
-        if 'patient_id' in decrypted_data and decrypted_data['patient_id'] is not None:
+        if "patient_id" in decrypted_data and decrypted_data["patient_id"] is not None:
             try:
-                decrypted_data['patient_id'] = self.decrypt_string(decrypted_data['patient_id'])
+                decrypted_data["patient_id"] = self.decrypt_string(
+                    decrypted_data["patient_id"]
+                )
             except Exception:
                 pass  # Already decrypted or invalid
 
-        if 'name' in decrypted_data and decrypted_data['name'] is not None:
+        if "name" in decrypted_data and decrypted_data["name"] is not None:
             try:
-                decrypted_data['name'] = self.decrypt_string(decrypted_data['name'])
+                decrypted_data["name"] = self.decrypt_string(decrypted_data["name"])
             except Exception:
                 pass  # Already decrypted or invalid
 
@@ -240,6 +250,7 @@ class DataEncryption:
             Hexadecimal SHA-256 hash (64 characters)
         """
         import hashlib
+
         return hashlib.sha256(patient_id.encode()).hexdigest()
 
     @staticmethod
@@ -267,14 +278,14 @@ class DataEncryption:
 
 # Example usage for compliance
 PHI_FIELDS = [
-    'patient_id',
-    'name',
-    'mrn',  # Medical Record Number
-    'ssn',  # Social Security Number
-    'date_of_birth',
-    'address',
-    'phone',
-    'email'
+    "patient_id",
+    "name",
+    "mrn",  # Medical Record Number
+    "ssn",  # Social Security Number
+    "date_of_birth",
+    "address",
+    "phone",
+    "email",
 ]
 
 
@@ -286,22 +297,17 @@ def example_usage():
 
     # Example patient data with PHI
     patient_data = {
-        'patient_id': 'P-100234',
-        'name': 'Nguyễn Văn A',
-        'mrn': 'MRN-789012',
-        'age': 65,
-        'sepsis_score': 0.89,
-        'vitals': {
-            'hr': 115,
-            'bp': '90/60',
-            'spo2': 92
-        }
+        "patient_id": "P-100234",
+        "name": "Nguyễn Văn A",
+        "mrn": "MRN-789012",
+        "age": 65,
+        "sepsis_score": 0.89,
+        "vitals": {"hr": 115, "bp": "90/60", "spo2": 92},
     }
 
     # Encrypt PHI fields
     encrypted_data = encryptor.encrypt_phi_fields(
-        patient_data,
-        phi_fields=['patient_id', 'name', 'mrn']
+        patient_data, phi_fields=["patient_id", "name", "mrn"]
     )
 
     print("Encrypted data:", encrypted_data)
@@ -312,7 +318,7 @@ def example_usage():
     print("Decrypted data:", decrypted_data)
 
     # Mask for display
-    masked_id = DataEncryption.mask_phi('P-100234', visible_chars=4)
+    masked_id = DataEncryption.mask_phi("P-100234", visible_chars=4)
     print("Masked patient ID:", masked_id)  # Output: "***-0234"
 
 

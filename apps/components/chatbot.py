@@ -14,28 +14,32 @@ class MedicalChatbot:
     """Professional medical AI chatbot assistant"""
 
     def __init__(self):
-        self.history_file = Path(__file__).parent.parent / ".streamlit" / "chat_history.json"
-        self.templates_file = Path(__file__).parent.parent / ".streamlit" / "templates.json"
+        self.history_file = (
+            Path(__file__).parent.parent / ".streamlit" / "chat_history.json"
+        )
+        self.templates_file = (
+            Path(__file__).parent.parent / ".streamlit" / "templates.json"
+        )
         self._init_session_state()
         self._load_history()
         self._load_templates()
 
     def _init_session_state(self):
         """Initialize session state for chatbot"""
-        if 'chat_open' not in st.session_state:
+        if "chat_open" not in st.session_state:
             st.session_state.chat_open = False
-        if 'chat_messages' not in st.session_state:
+        if "chat_messages" not in st.session_state:
             st.session_state.chat_messages = []
-        if 'chat_history' not in st.session_state:
+        if "chat_history" not in st.session_state:
             st.session_state.chat_history = []
-        if 'current_context' not in st.session_state:
+        if "current_context" not in st.session_state:
             st.session_state.current_context = None
 
     def _load_history(self):
         """Load chat history from file"""
         try:
             if self.history_file.exists():
-                with open(self.history_file, 'r') as f:
+                with open(self.history_file, "r") as f:
                     st.session_state.chat_history = json.load(f)
         except Exception:
             st.session_state.chat_history = []
@@ -44,52 +48,55 @@ class MedicalChatbot:
         """Save chat history to file"""
         try:
             self.history_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.history_file, 'w') as f:
-                json.dump(st.session_state.chat_history[-100:], f, indent=2)  # Keep last 100
+            with open(self.history_file, "w") as f:
+                json.dump(
+                    st.session_state.chat_history[-100:], f, indent=2
+                )  # Keep last 100
         except Exception:
             pass
 
     def _load_templates(self):
         """Load clinical note templates"""
-        if 'templates' not in st.session_state:
+        if "templates" not in st.session_state:
             st.session_state.templates = {
                 "Sepsis Assessment": {
                     "prompt": "Assess sepsis risk for patient with: [vital signs]. Provide clinical interpretation and recommendations.",
                     "category": "Clinical Assessment",
-                    "icon": "🔬"
+                    "icon": "🔬",
                 },
                 "Mortality Risk": {
                     "prompt": "Evaluate mortality risk for ICU patient with: [clinical data]. Include risk stratification and intervention recommendations.",
                     "category": "Risk Assessment",
-                    "icon": "💔"
+                    "icon": "💔",
                 },
                 "SOFA Score Interpretation": {
                     "prompt": "Interpret SOFA score of [X] for patient. Explain organ dysfunction severity and prognosis.",
                     "category": "Clinical Scores",
-                    "icon": "📊"
+                    "icon": "📊",
                 },
                 "Treatment Protocol": {
                     "prompt": "Recommend treatment protocol for [condition]. Include evidence-based guidelines and monitoring parameters.",
                     "category": "Treatment",
-                    "icon": "💊"
+                    "icon": "💊",
                 },
                 "Lab Interpretation": {
                     "prompt": "Interpret lab results: [values]. Explain clinical significance and differential diagnosis.",
                     "category": "Diagnostics",
-                    "icon": "🧪"
+                    "icon": "🧪",
                 },
                 "Discharge Planning": {
                     "prompt": "Create discharge plan for patient recovering from [condition]. Include follow-up care and red flags.",
                     "category": "Care Planning",
-                    "icon": "🏥"
-                }
+                    "icon": "🏥",
+                },
             }
 
     def render(self):
         """Render the floating chatbot"""
 
         # Floating button CSS
-        st.markdown("""
+        st.markdown(
+            """
         <style>
         .chatbot-toggle {
             position: fixed;
@@ -292,7 +299,9 @@ class MedicalChatbot:
             line-height: 1.5;
         }
         </style>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
         # Toggle button
         if st.button("", key="chatbot_toggle", help="Open AI Assistant"):
@@ -312,15 +321,19 @@ class MedicalChatbot:
             col1, col2 = st.columns([3, 1])
             with col1:
                 st.markdown("### 🤖 MediAI Assistant")
-                st.markdown('<div class="chatbot-status"><span class="status-dot"></span>Active</div>',
-                           unsafe_allow_html=True)
+                st.markdown(
+                    '<div class="chatbot-status"><span class="status-dot"></span>Active</div>',
+                    unsafe_allow_html=True,
+                )
             with col2:
                 if st.button("✕", key="close_chat"):
                     st.session_state.chat_open = False
                     st.rerun()
 
             # Tabs
-            tab1, tab2, tab3, tab4 = st.tabs(["💬 Chat", "⚡ Quick", "📋 Templates", "📊 History"])
+            tab1, tab2, tab3, tab4 = st.tabs(
+                ["💬 Chat", "⚡ Quick", "📋 Templates", "📊 History"]
+            )
 
             with tab1:
                 self._render_chat_tab()
@@ -334,7 +347,7 @@ class MedicalChatbot:
             with tab4:
                 self._render_history()
 
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     def _render_chat_tab(self):
         """Render main chat interface"""
@@ -347,31 +360,37 @@ class MedicalChatbot:
         chat_container = st.container()
         with chat_container:
             for msg in st.session_state.chat_messages:
-                if msg['role'] == 'user':
-                    st.markdown(f"""
+                if msg["role"] == "user":
+                    st.markdown(
+                        f"""
                     <div class="chat-message">
                         <div class="message-user">
                             {msg['content']}
                             <div class="message-time">{msg['time']}</div>
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """,
+                        unsafe_allow_html=True,
+                    )
                 else:
-                    st.markdown(f"""
+                    st.markdown(
+                        f"""
                     <div class="chat-message">
                         <div class="message-assistant">
                             {msg['content']}
                             <div class="message-time">{msg['time']}</div>
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """,
+                        unsafe_allow_html=True,
+                    )
 
         # Input
         st.markdown("---")
         user_input = st.text_area(
             "Ask me anything about patient care, clinical guidelines, or MediAI features...",
             height=100,
-            key="chat_input"
+            key="chat_input",
         )
 
         col1, col2, col3 = st.columns([2, 1, 1])
@@ -389,13 +408,16 @@ class MedicalChatbot:
                 st.info("Voice input coming soon")
 
         # Disclaimer
-        st.markdown("""
+        st.markdown(
+            """
         <div class="disclaimer">
             ⚠️ <strong>Medical Disclaimer:</strong> This AI assistant provides general information only.
             Always verify critical decisions with qualified healthcare professionals.
             Not a substitute for professional medical advice.
         </div>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
     def _render_quick_actions(self):
         """Render quick action shortcuts"""
@@ -411,7 +433,7 @@ class MedicalChatbot:
             {"icon": "📋", "title": "Generate Report", "action": "report"},
             {"icon": "🔍", "title": "Explain Prediction", "action": "explain"},
             {"icon": "📚", "title": "Guidelines", "action": "guidelines"},
-            {"icon": "⚙️", "title": "Settings", "page": "Settings"}
+            {"icon": "⚙️", "title": "Settings", "page": "Settings"},
         ]
 
         for i in range(0, len(quick_actions), 2):
@@ -422,12 +444,12 @@ class MedicalChatbot:
                 if st.button(
                     f"{action['icon']} {action['title']}",
                     key=f"qa_{i}",
-                    use_container_width=True
+                    use_container_width=True,
                 ):
-                    if 'page' in action:
+                    if "page" in action:
                         st.switch_page(f"pages/{action['page']}.py")
                     else:
-                        self._handle_quick_action(action['action'])
+                        self._handle_quick_action(action["action"])
 
             if i + 1 < len(quick_actions):
                 with col2:
@@ -435,12 +457,12 @@ class MedicalChatbot:
                     if st.button(
                         f"{action['icon']} {action['title']}",
                         key=f"qa_{i+1}",
-                        use_container_width=True
+                        use_container_width=True,
                     ):
-                        if 'page' in action:
+                        if "page" in action:
                             st.switch_page(f"pages/{action['page']}.py")
                         else:
-                            self._handle_quick_action(action['action'])
+                            self._handle_quick_action(action["action"])
 
     def _render_templates(self):
         """Render template library"""
@@ -449,23 +471,29 @@ class MedicalChatbot:
         st.caption("Pre-built prompts for common scenarios")
 
         # Category filter
-        categories = list(set(t['category'] for t in st.session_state.templates.values()))
-        selected_category = st.selectbox("Filter by category", ["All"] + sorted(categories))
+        categories = list(
+            set(t["category"] for t in st.session_state.templates.values())
+        )
+        selected_category = st.selectbox(
+            "Filter by category", ["All"] + sorted(categories)
+        )
 
         # Display templates
         for name, template in st.session_state.templates.items():
-            if selected_category == "All" or template['category'] == selected_category:
+            if selected_category == "All" or template["category"] == selected_category:
                 with st.expander(f"{template['icon']} {name}"):
                     st.markdown(f"**Category:** {template['category']}")
-                    st.code(template['prompt'], language=None)
+                    st.code(template["prompt"], language=None)
 
                     if st.button("Use Template", key=f"use_{name}"):
-                        st.session_state.chat_messages.append({
-                            'role': 'user',
-                            'content': template['prompt'],
-                            'time': datetime.now().strftime("%H:%M")
-                        })
-                        self._send_message(template['prompt'])
+                        st.session_state.chat_messages.append(
+                            {
+                                "role": "user",
+                                "content": template["prompt"],
+                                "time": datetime.now().strftime("%H:%M"),
+                            }
+                        )
+                        self._send_message(template["prompt"])
                         st.rerun()
 
     def _render_history(self):
@@ -487,7 +515,7 @@ class MedicalChatbot:
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("Reuse", key=f"reuse_{i}"):
-                        self._send_message(entry['query'])
+                        self._send_message(entry["query"])
                         st.rerun()
                 with col2:
                     if st.button("Delete", key=f"del_{i}"):
@@ -504,29 +532,35 @@ class MedicalChatbot:
         """Send message and get response"""
 
         # Add user message
-        st.session_state.chat_messages.append({
-            'role': 'user',
-            'content': message,
-            'time': datetime.now().strftime("%H:%M")
-        })
+        st.session_state.chat_messages.append(
+            {
+                "role": "user",
+                "content": message,
+                "time": datetime.now().strftime("%H:%M"),
+            }
+        )
 
         # Generate response (mock for now - integrate with real AI)
         response = self._generate_response(message)
 
         # Add assistant message
-        st.session_state.chat_messages.append({
-            'role': 'assistant',
-            'content': response,
-            'time': datetime.now().strftime("%H:%M")
-        })
+        st.session_state.chat_messages.append(
+            {
+                "role": "assistant",
+                "content": response,
+                "time": datetime.now().strftime("%H:%M"),
+            }
+        )
 
         # Save to history
-        st.session_state.chat_history.append({
-            'query': message,
-            'response': response,
-            'time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'context': st.session_state.current_context
-        })
+        st.session_state.chat_history.append(
+            {
+                "query": message,
+                "response": response,
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "context": st.session_state.current_context,
+            }
+        )
         self._save_history()
 
     def _generate_response(self, message: str) -> str:
@@ -535,7 +569,7 @@ class MedicalChatbot:
         message_lower = message.lower()
 
         # Context-aware responses
-        if 'sepsis' in message_lower:
+        if "sepsis" in message_lower:
             return """
 **Sepsis Assessment Guidance:**
 
@@ -558,7 +592,7 @@ MediAI's sepsis prediction model uses 42 clinical features including:
 📍 Navigate to: Predict Sepsis page
             """
 
-        elif 'mortality' in message_lower:
+        elif "mortality" in message_lower:
             return """
 **Mortality Risk Assessment:**
 
@@ -581,7 +615,7 @@ Our mortality model evaluates 13 key factors:
 📍 Navigate to: Predict Mortality page
             """
 
-        elif 'model' in message_lower or 'performance' in message_lower:
+        elif "model" in message_lower or "performance" in message_lower:
             return """
 **Model Performance Metrics:**
 
@@ -602,7 +636,7 @@ View detailed metrics, ROC curves, and feature importance on the Model Performan
 📊 Navigate to: Model Performance page
             """
 
-        elif any(word in message_lower for word in ['help', 'how', 'guide']):
+        elif any(word in message_lower for word in ["help", "how", "guide"]):
             return """
 **MediAI Quick Guide:**
 
@@ -651,7 +685,7 @@ I understand you're asking about: "{message}"
         responses = {
             "report": "Report generation feature coming soon! You'll be able to generate PDF reports with predictions and explanations.",
             "explain": "To explain a prediction, navigate to the prediction page and submit your patient data. The results page will show risk factors and SHAP explanations.",
-            "guidelines": "Clinical guidelines are integrated into our prediction recommendations. Each risk assessment includes evidence-based guidance."
+            "guidelines": "Clinical guidelines are integrated into our prediction recommendations. Each risk assessment includes evidence-based guidance.",
         }
 
         st.info(responses.get(action, "Feature coming soon!"))

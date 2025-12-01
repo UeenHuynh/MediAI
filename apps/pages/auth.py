@@ -17,26 +17,31 @@ def hash_password(password: str) -> str:
 def show_auth_page():
     """Show authentication page (adapted from UI.md AuthPage)"""
 
-    st.markdown('<div class="main-header">🏥 MediAI Login</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="main-header">🏥 MediAI Login</div>', unsafe_allow_html=True
+    )
 
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        st.markdown("""
+        st.markdown(
+            """
         <div class="card">
             <h2 style="color: #667eea; text-align: center;">Sign In to MediAI</h2>
             <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">
                 ICU Risk Prediction Platform
             </p>
         </div>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
         # Tab selection
         auth_tab = st.radio(
             "Authentication Method",
             ["🔐 Login", "✍️ Register"],
             horizontal=True,
-            label_visibility="collapsed"
+            label_visibility="collapsed",
         )
 
         if auth_tab == "🔐 Login":
@@ -47,20 +52,25 @@ def show_auth_page():
         st.markdown("---")
 
         # Demo credentials
-        st.info("""
+        st.info(
+            """
         **📝 Demo Credentials:**
         - Username: `demo`
         - Password: `demo123`
 
         **Note:** This is a demonstration platform. Use demo credentials or create a new account.
-        """)
+        """
+        )
 
         # Compliance notice
-        st.markdown("""
+        st.markdown(
+            """
         <div class="alert-success">
             <strong>🔒 Secure Login:</strong> All authentication is encrypted and logged for security auditing.
         </div>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
 
 def show_login_form():
@@ -70,7 +80,9 @@ def show_login_form():
 
     with st.form("login_form"):
         username = st.text_input("Username", placeholder="Enter your username")
-        password = st.text_input("Password", type="password", placeholder="Enter your password")
+        password = st.text_input(
+            "Password", type="password", placeholder="Enter your password"
+        )
 
         st.checkbox("Remember me for 30 days")
 
@@ -86,8 +98,8 @@ def show_login_form():
                 audit = st.session_state.audit_logger
                 audit.log_login(
                     user_id=username,
-                    ip_address='127.0.0.1',  # TODO: Get real IP
-                    success=True
+                    ip_address="127.0.0.1",  # TODO: Get real IP
+                    success=True,
                 )
 
                 st.success(f"✅ Welcome back, {username}!")
@@ -96,19 +108,20 @@ def show_login_form():
                 # Log failed login
                 audit = st.session_state.audit_logger
                 audit.log_login(
-                    user_id=username or 'unknown',
-                    ip_address='127.0.0.1',
-                    success=False
+                    user_id=username or "unknown", ip_address="127.0.0.1", success=False
                 )
 
                 st.error("❌ Invalid username or password")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("""
+    st.markdown(
+        """
     <p style="text-align: center; color: #6b7280;">
         <a href="#" style="color: #667eea;">Forgot your password?</a>
     </p>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 def show_register_form():
@@ -122,14 +135,20 @@ def show_register_form():
         with col1:
             first_name = st.text_input("First Name", placeholder="John")
             username = st.text_input("Username", placeholder="johndoe")
-            password = st.text_input("Password", type="password", placeholder="Enter password")
+            password = st.text_input(
+                "Password", type="password", placeholder="Enter password"
+            )
 
         with col2:
             last_name = st.text_input("Last Name", placeholder="Doe")
             email = st.text_input("Email", placeholder="john.doe@hospital.com")
-            confirm_password = st.text_input("Confirm Password", type="password", placeholder="Re-enter password")
+            confirm_password = st.text_input(
+                "Confirm Password", type="password", placeholder="Re-enter password"
+            )
 
-        role = st.selectbox("Role", ["Clinician", "Nurse", "Researcher", "Administrator"])
+        role = st.selectbox(
+            "Role", ["Clinician", "Nurse", "Researcher", "Administrator"]
+        )
 
         st.markdown("---")
 
@@ -137,9 +156,7 @@ def show_register_form():
         hipaa = st.checkbox("I acknowledge HIPAA compliance requirements")
 
         submit = st.form_submit_button(
-            "Create Account",
-            use_container_width=True,
-            disabled=not (terms and hipaa)
+            "Create Account", use_container_width=True, disabled=not (terms and hipaa)
         )
 
         if submit:
@@ -155,7 +172,7 @@ def show_register_form():
             if len(password) < 8:
                 errors.append("Password must be at least 8 characters")
 
-            if '@' not in email:
+            if "@" not in email:
                 errors.append("Invalid email address")
 
             if errors:
@@ -163,8 +180,12 @@ def show_register_form():
                     st.error(f"❌ {error}")
             else:
                 # Register user (demo implementation)
-                if register_user(username, email, password, first_name, last_name, role):
-                    st.success(f"✅ Account created successfully! Welcome, {first_name}!")
+                if register_user(
+                    username, email, password, first_name, last_name, role
+                ):
+                    st.success(
+                        f"✅ Account created successfully! Welcome, {first_name}!"
+                    )
                     st.info("Please log in with your new credentials.")
                 else:
                     st.error("❌ Username or email already exists")
@@ -194,7 +215,9 @@ def validate_login(username: str, password: str) -> bool:
     return False
 
 
-def register_user(username: str, email: str, password: str, first_name: str, last_name: str, role: str) -> bool:
+def register_user(
+    username: str, email: str, password: str, first_name: str, last_name: str, role: str
+) -> bool:
     """
     Register new user
 
@@ -212,14 +235,14 @@ def register_user(username: str, email: str, password: str, first_name: str, las
     audit.log_event(
         event_type=AuditEventType.LOGIN,  # Use custom event in production
         user_id=username,
-        ip_address='127.0.0.1',
+        ip_address="127.0.0.1",
         success=True,
         details={
-            'action': 'user_registration',
-            'email': email,
-            'role': role,
-            'name': f"{first_name} {last_name}"
-        }
+            "action": "user_registration",
+            "email": email,
+            "role": role,
+            "name": f"{first_name} {last_name}",
+        },
     )
 
     return True

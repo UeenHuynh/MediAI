@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, validator
 
 class RiskLevel(str, Enum):
     """Risk level categories"""
+
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
@@ -20,6 +21,7 @@ class RiskLevel(str, Enum):
 # ============================================================================
 # SEPSIS PREDICTION SCHEMAS (42 features)
 # ============================================================================
+
 
 class SepsisFeatures(BaseModel):
     """
@@ -35,9 +37,13 @@ class SepsisFeatures(BaseModel):
     # Vitals (5 features)
     heart_rate: float = Field(..., ge=0, le=300, description="Heart rate (bpm)")
     sbp: float = Field(..., ge=40, le=250, description="Systolic blood pressure (mmHg)")
-    dbp: float = Field(..., ge=20, le=150, description="Diastolic blood pressure (mmHg)")
+    dbp: float = Field(
+        ..., ge=20, le=150, description="Diastolic blood pressure (mmHg)"
+    )
     temperature: float = Field(..., ge=32, le=42, description="Body temperature (°C)")
-    respiratory_rate: float = Field(..., ge=0, le=60, description="Respiratory rate (breaths/min)")
+    respiratory_rate: float = Field(
+        ..., ge=0, le=60, description="Respiratory rate (breaths/min)"
+    )
 
     # Laboratory Values (20 features)
     wbc: float = Field(..., ge=0, le=100, description="White blood cell count (10^9/L)")
@@ -53,9 +59,13 @@ class SepsisFeatures(BaseModel):
     pao2: Optional[float] = Field(None, ge=0, le=800, description="PaO2 (mmHg)")
     paco2: Optional[float] = Field(None, ge=0, le=150, description="PaCO2 (mmHg)")
     ph: Optional[float] = Field(None, ge=6.5, le=8.0, description="Arterial pH")
-    anion_gap: Optional[float] = Field(None, ge=0, le=50, description="Anion gap (mmol/L)")
+    anion_gap: Optional[float] = Field(
+        None, ge=0, le=50, description="Anion gap (mmol/L)"
+    )
     albumin: Optional[float] = Field(None, ge=0, le=10, description="Albumin (g/dL)")
-    troponin: Optional[float] = Field(None, ge=0, le=100, description="Troponin (ng/mL)")
+    troponin: Optional[float] = Field(
+        None, ge=0, le=100, description="Troponin (ng/mL)"
+    )
     bnp: Optional[float] = Field(None, ge=0, le=10000, description="BNP (pg/mL)")
     inr: Optional[float] = Field(None, ge=0, le=10, description="INR")
     ast: Optional[float] = Field(None, ge=0, le=10000, description="AST (U/L)")
@@ -63,39 +73,55 @@ class SepsisFeatures(BaseModel):
 
     # SOFA Scores (6 features)
     respiratory_sofa: int = Field(..., ge=0, le=4, description="Respiratory SOFA score")
-    cardiovascular_sofa: int = Field(..., ge=0, le=4, description="Cardiovascular SOFA score")
+    cardiovascular_sofa: int = Field(
+        ..., ge=0, le=4, description="Cardiovascular SOFA score"
+    )
     hepatic_sofa: int = Field(..., ge=0, le=4, description="Hepatic SOFA score")
     coagulation_sofa: int = Field(..., ge=0, le=4, description="Coagulation SOFA score")
     renal_sofa: int = Field(..., ge=0, le=4, description="Renal SOFA score")
-    neurological_sofa: int = Field(..., ge=0, le=4, description="Neurological SOFA score")
+    neurological_sofa: int = Field(
+        ..., ge=0, le=4, description="Neurological SOFA score"
+    )
 
     # Temporal Trends (6 features)
-    lactate_trend_12h: float = Field(..., description="Lactate change over 12h (mmol/L)")
+    lactate_trend_12h: float = Field(
+        ..., description="Lactate change over 12h (mmol/L)"
+    )
     hr_trend_6h: float = Field(..., description="Heart rate change over 6h (bpm)")
     wbc_trend_12h: float = Field(..., description="WBC change over 12h (10^9/L)")
     sbp_trend_6h: float = Field(..., description="SBP change over 6h (mmHg)")
-    temperature_trend_6h: float = Field(..., description="Temperature change over 6h (°C)")
-    rr_trend_6h: float = Field(..., description="Respiratory rate change over 6h (breaths/min)")
+    temperature_trend_6h: float = Field(
+        ..., description="Temperature change over 6h (°C)"
+    )
+    rr_trend_6h: float = Field(
+        ..., description="Respiratory rate change over 6h (breaths/min)"
+    )
 
     # Time Features (2 features)
     hour_of_admission: int = Field(..., ge=0, le=23, description="Hour of day (0-23)")
-    icu_los_so_far: float = Field(..., ge=0, description="ICU length of stay so far (hours)")
+    icu_los_so_far: float = Field(
+        ..., ge=0, description="ICU length of stay so far (hours)"
+    )
 
-    @validator('lactate')
+    @validator("lactate")
     def check_lactate(cls, v):
         if v > 10:
-            raise ValueError('Lactate >10 mmol/L is critically high. Please verify measurement.')
+            raise ValueError(
+                "Lactate >10 mmol/L is critically high. Please verify measurement."
+            )
         return v
 
 
 class SepsisPredictionRequest(BaseModel):
     """Request for sepsis prediction"""
+
     patient_id: str = Field(..., description="Patient identifier")
     features: SepsisFeatures
 
 
 class FeatureContribution(BaseModel):
     """Individual feature contribution to prediction"""
+
     feature: str
     value: float
     importance: float = Field(..., description="SHAP value (contribution to risk)")
@@ -103,6 +129,7 @@ class FeatureContribution(BaseModel):
 
 class PredictionDetail(BaseModel):
     """Prediction result details"""
+
     risk_score: float = Field(..., ge=0, le=1, description="Probability (0-1)")
     risk_level: RiskLevel
     recommendation: str
@@ -110,6 +137,7 @@ class PredictionDetail(BaseModel):
 
 class SepsisPredictionResponse(BaseModel):
     """Response from sepsis prediction"""
+
     patient_id: str
     prediction: PredictionDetail
     top_features: List[FeatureContribution] = Field(..., max_items=10)
@@ -119,6 +147,7 @@ class SepsisPredictionResponse(BaseModel):
 # ============================================================================
 # MORTALITY PREDICTION SCHEMAS (65 features)
 # ============================================================================
+
 
 class MortalityFeatures(BaseModel):
     """
@@ -178,7 +207,9 @@ class MortalityFeatures(BaseModel):
     bmi: float = Field(..., ge=10, le=100)
     admission_source: str = Field(..., description="Emergency/Transfer/Direct")
     comorbidity_count: int = Field(..., ge=0, le=20)
-    icu_los_24h: float = Field(..., ge=0, le=24, description="Always 24 for this cohort")
+    icu_los_24h: float = Field(
+        ..., ge=0, le=24, description="Always 24 for this cohort"
+    )
 
     # Diagnosis Flags (4 features)
     sepsis_flag: bool
@@ -189,12 +220,14 @@ class MortalityFeatures(BaseModel):
 
 class MortalityPredictionRequest(BaseModel):
     """Request for mortality prediction"""
+
     patient_id: str
     features: MortalityFeatures
 
 
 class MortalityPredictionResponse(BaseModel):
     """Response from mortality prediction"""
+
     patient_id: str
     prediction: PredictionDetail
     top_features: List[FeatureContribution] = Field(..., max_items=10)

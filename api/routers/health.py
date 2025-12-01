@@ -30,17 +30,17 @@ async def health_check(_db: Session = Depends(get_db)):
     except Exception:
         redis_status = "unhealthy"
 
-    overall_status = "healthy" if (db_status == "healthy" and redis_status == "healthy") else "degraded"
+    overall_status = (
+        "healthy"
+        if (db_status == "healthy" and redis_status == "healthy")
+        else "degraded"
+    )
 
     return {
         "status": overall_status,
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0",
-        "components": {
-            "database": db_status,
-            "redis": redis_status,
-            "api": "healthy"
-        }
+        "components": {"database": db_status, "redis": redis_status, "api": "healthy"},
     }
 
 

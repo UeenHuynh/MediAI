@@ -16,8 +16,7 @@ from routers import health, predictions
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -70,8 +69,7 @@ async def add_process_time_header(request: Request, call_next):
 async def global_exception_handler(_request: Request, exc: Exception):
     logger.error("Global exception: %s", str(exc), exc_info=True)
     return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error occurred"}
+        status_code=500, content={"detail": "Internal server error occurred"}
     )
 
 
@@ -88,15 +86,16 @@ async def root():
         "version": "1.0.0",
         "description": "ICU Risk Prediction API",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host=settings.API_HOST,
         port=settings.API_PORT,
-        reload=settings.DEBUG
+        reload=settings.DEBUG,
     )

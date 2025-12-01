@@ -24,8 +24,7 @@ prediction_service = PredictionService()
 
 @router.post("/predict/sepsis", response_model=SepsisPredictionResponse)
 async def predict_sepsis(
-    request: SepsisPredictionRequest,
-    db: Session = Depends(get_db)
+    request: SepsisPredictionRequest, db: Session = Depends(get_db)
 ):
     """
     Predict sepsis risk for ICU patient
@@ -55,8 +54,7 @@ async def predict_sepsis(
 
 @router.post("/predict/mortality", response_model=MortalityPredictionResponse)
 async def predict_mortality(
-    request: MortalityPredictionRequest,
-    db: Session = Depends(get_db)
+    request: MortalityPredictionRequest, db: Session = Depends(get_db)
 ):
     """
     Predict mortality risk for ICU patient
@@ -92,12 +90,12 @@ async def get_models_info():
             "version": "v1",
             "features": 42,
             "algorithm": "LightGBM",
-            "target": "sepsis_onset_within_6h"
+            "target": "sepsis_onset_within_6h",
         },
         "mortality_model": {
             "version": "v1",
             "features": 65,
             "algorithm": "LightGBM",
-            "target": "hospital_mortality"
-        }
+            "target": "hospital_mortality",
+        },
     }

@@ -16,6 +16,7 @@ from typing import Any, Dict, Optional
 
 class AuditEventType(Enum):
     """Types of auditable events"""
+
     # Authentication
     LOGIN = "login"
     LOGOUT = "logout"
@@ -61,14 +62,14 @@ class AuditLogger:
         Args:
             log_dir: Directory for audit logs (default: logs/audit/)
         """
-        self.log_dir = Path(log_dir or os.getenv('AUDIT_LOG_DIR', 'logs/audit'))
+        self.log_dir = Path(log_dir or os.getenv("AUDIT_LOG_DIR", "logs/audit"))
 
         # Try to create log directory, fallback to /tmp if permission denied
         try:
             self.log_dir.mkdir(parents=True, exist_ok=True)
         except (PermissionError, OSError):
             # Fallback to temp directory
-            self.log_dir = Path('/tmp/mediai_logs/audit')
+            self.log_dir = Path("/tmp/mediai_logs/audit")
             self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Create dated log file
@@ -79,12 +80,12 @@ class AuditLogger:
 
     def _setup_logger(self) -> logging.Logger:
         """Setup structured JSON logger with fallback to console"""
-        logger = logging.getLogger('mediai.audit')
+        logger = logging.getLogger("mediai.audit")
         logger.setLevel(logging.INFO)
         logger.handlers.clear()  # Remove existing handlers
 
         # JSON formatter
-        formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter("%(message)s")
 
         # Try to create file handler, fallback to console if permission denied
         try:
@@ -98,7 +99,11 @@ class AuditLogger:
             console_handler.setLevel(logging.INFO)
             console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
-            logger.warning("Could not create audit log file %s: %s. Using console logging.", self.log_file, e)
+            logger.warning(
+                "Could not create audit log file %s: %s. Using console logging.",
+                self.log_file,
+                e,
+            )
 
         logger.propagate = False
 
@@ -111,7 +116,7 @@ class AuditLogger:
         details: Optional[Dict[str, Any]] = None,
         patient_id: Optional[str] = None,
         ip_address: Optional[str] = None,
-        success: bool = True
+        success: bool = True,
     ):
         """
         Log an audit event
@@ -125,14 +130,14 @@ class AuditLogger:
             success: Whether action succeeded
         """
         audit_entry = {
-            'timestamp': datetime.utcnow().isoformat(),
-            'event_type': event_type.value,
-            'user_id': user_id,
-            'patient_id': patient_id,
-            'ip_address': ip_address,
-            'success': success,
-            'details': details or {},
-            'session_id': self._get_session_id()
+            "timestamp": datetime.utcnow().isoformat(),
+            "event_type": event_type.value,
+            "user_id": user_id,
+            "patient_id": patient_id,
+            "ip_address": ip_address,
+            "success": success,
+            "details": details or {},
+            "session_id": self._get_session_id(),
         }
 
         # Log as JSON
@@ -145,17 +150,19 @@ class AuditLogger:
             event_type=event_type,
             user_id=user_id,
             ip_address=ip_address,
-            success=success
+            success=success,
         )
 
-    def log_patient_access(self, user_id: str, patient_id: str, action: str, ip_address: str = None):
+    def log_patient_access(
+        self, user_id: str, patient_id: str, action: str, ip_address: str = None
+    ):
         """Log patient data access (PHI access tracking)"""
         self.log_event(
             event_type=AuditEventType.VIEW_PATIENT,
             user_id=user_id,
             patient_id=patient_id,
             ip_address=ip_address,
-            details={'action': action}
+            details={"action": action},
         )
 
     def log_prediction(
@@ -164,11 +171,12 @@ class AuditLogger:
         patient_id: str,
         model_type: str,
         risk_score: float,
-        ip_address: str = None
+        ip_address: str = None,
     ):
         """Log prediction request"""
         event_type = (
-            AuditEventType.PREDICT_SEPSIS if model_type == 'sepsis'
+            AuditEventType.PREDICT_SEPSIS
+            if model_type == "sepsis"
             else AuditEventType.PREDICT_MORTALITY
         )
 
@@ -177,22 +185,18 @@ class AuditLogger:
             user_id=user_id,
             patient_id=patient_id,
             ip_address=ip_address,
-            details={
-                'model_type': model_type,
-                'risk_score': risk_score
-            }
+            details={"model_type": model_type, "risk_score": risk_score},
         )
 
-    def log_data_export(self, user_id: str, export_type: str, record_count: int, ip_address: str = None):
+    def log_data_export(
+        self, user_id: str, export_type: str, record_count: int, ip_address: str = None
+    ):
         """Log data export for compliance tracking"""
         self.log_event(
             event_type=AuditEventType.EXPORT_DATA,
             user_id=user_id,
             ip_address=ip_address,
-            details={
-                'export_type': export_type,
-                'record_count': record_count
-            }
+            details={"export_type": export_type, "record_count": record_count},
         )
 
     def log_api_call(
@@ -201,7 +205,7 @@ class AuditLogger:
         endpoint: str,
         method: str,
         status_code: int,
-        ip_address: str = None
+        ip_address: str = None,
     ):
         """Log API call"""
         self.log_event(
@@ -210,44 +214,51 @@ class AuditLogger:
             ip_address=ip_address,
             success=200 <= status_code < 400,
             details={
-                'endpoint': endpoint,
-                'method': method,
-                'status_code': status_code
-            }
+                "endpoint": endpoint,
+                "method": method,
+                "status_code": status_code,
+            },
         )
 
-    def log_error(self, user_id: str, error_message: str, error_type: str, ip_address: str = None):
+    def log_error(
+        self, user_id: str, error_message: str, error_type: str, ip_address: str = None
+    ):
         """Log system error"""
         self.log_event(
             event_type=AuditEventType.ERROR,
             user_id=user_id,
             ip_address=ip_address,
             success=False,
-            details={
-                'error_message': error_message,
-                'error_type': error_type
-            }
+            details={"error_message": error_message, "error_type": error_type},
         )
 
-    def log_consent(self, user_id: str, patient_id: str, consent_given: bool, ip_address: str = None):
+    def log_consent(
+        self, user_id: str, patient_id: str, consent_given: bool, ip_address: str = None
+    ):
         """Log GDPR consent given/revoked"""
-        event_type = AuditEventType.CONSENT_GIVEN if consent_given else AuditEventType.CONSENT_REVOKED
+        event_type = (
+            AuditEventType.CONSENT_GIVEN
+            if consent_given
+            else AuditEventType.CONSENT_REVOKED
+        )
         self.log_event(
             event_type=event_type,
             user_id=user_id,
             patient_id=patient_id,
             ip_address=ip_address,
-            details={'consent_status': consent_given}
+            details={"consent_status": consent_given},
         )
 
-    def log_data_deletion(self, user_id: str, patient_id: str, reason: str, ip_address: str = None):
+    def log_data_deletion(
+        self, user_id: str, patient_id: str, reason: str, ip_address: str = None
+    ):
         """Log GDPR right to be forgotten"""
         self.log_event(
             event_type=AuditEventType.DATA_DELETION,
             user_id=user_id,
             patient_id=patient_id,
             ip_address=ip_address,
-            details={'reason': reason}
+            details={"reason": reason},
         )
 
     def get_user_activity(self, user_id: str, days: int = 30) -> list:
@@ -269,16 +280,16 @@ class AuditLogger:
             log_file = self.log_dir / f"audit_{date.strftime('%Y%m%d')}.log"
 
             if log_file.exists():
-                with open(log_file, 'r') as f:
+                with open(log_file, "r") as f:
                     for line in f:
                         try:
                             entry = json.loads(line)
-                            if entry.get('user_id') == user_id:
+                            if entry.get("user_id") == user_id:
                                 entries.append(entry)
                         except json.JSONDecodeError:
                             continue
 
-        return sorted(entries, key=lambda x: x['timestamp'], reverse=True)
+        return sorted(entries, key=lambda x: x["timestamp"], reverse=True)
 
     def get_patient_access_log(self, patient_id: str) -> list:
         """
@@ -294,23 +305,24 @@ class AuditLogger:
 
         # Search all log files in directory
         for log_file in sorted(self.log_dir.glob("audit_*.log"), reverse=True):
-            with open(log_file, 'r') as f:
+            with open(log_file, "r") as f:
                 for line in f:
                     try:
                         entry = json.loads(line)
-                        if entry.get('patient_id') == patient_id:
+                        if entry.get("patient_id") == patient_id:
                             entries.append(entry)
                     except json.JSONDecodeError:
                         continue
 
-        return sorted(entries, key=lambda x: x['timestamp'], reverse=True)
+        return sorted(entries, key=lambda x: x["timestamp"], reverse=True)
 
     @staticmethod
     def _get_session_id() -> Optional[str]:
         """Get current session ID (placeholder for Streamlit session)"""
         try:
             import streamlit as st
-            if hasattr(st, 'session_state') and hasattr(st.session_state, 'session_id'):
+
+            if hasattr(st, "session_state") and hasattr(st.session_state, "session_id"):
                 return st.session_state.session_id
         except Exception:
             pass
@@ -325,39 +337,39 @@ def example_usage():
     audit = AuditLogger()
 
     # Log user login
-    audit.log_login(user_id='user123', ip_address='192.168.1.1', success=True)
+    audit.log_login(user_id="user123", ip_address="192.168.1.1", success=True)
 
     # Log patient data access
     audit.log_patient_access(
-        user_id='user123',
-        patient_id='P-100234',
-        action='view_dashboard',
-        ip_address='192.168.1.1'
+        user_id="user123",
+        patient_id="P-100234",
+        action="view_dashboard",
+        ip_address="192.168.1.1",
     )
 
     # Log prediction
     audit.log_prediction(
-        user_id='user123',
-        patient_id='P-100234',
-        model_type='sepsis',
+        user_id="user123",
+        patient_id="P-100234",
+        model_type="sepsis",
         risk_score=0.89,
-        ip_address='192.168.1.1'
+        ip_address="192.168.1.1",
     )
 
     # Log data export
     audit.log_data_export(
-        user_id='user123',
-        export_type='patient_report',
+        user_id="user123",
+        export_type="patient_report",
         record_count=1,
-        ip_address='192.168.1.1'
+        ip_address="192.168.1.1",
     )
 
     # Get user activity
-    activity = audit.get_user_activity(user_id='user123', days=7)
+    activity = audit.get_user_activity(user_id="user123", days=7)
     print(f"User activity entries: {len(activity)}")
 
     # Get patient access log
-    access_log = audit.get_patient_access_log(patient_id='P-100234')
+    access_log = audit.get_patient_access_log(patient_id="P-100234")
     print(f"Patient access entries: {len(access_log)}")
 
 
