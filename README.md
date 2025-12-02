@@ -9,6 +9,8 @@
 [![Security: bcrypt](https://img.shields.io/badge/security-bcrypt-brightgreen.svg)](https://github.com/pyca/bcrypt/)
 [![Security: JWT](https://img.shields.io/badge/security-JWT-brightgreen.svg)](https://jwt.io/)
 [![Security Score](https://img.shields.io/badge/security%20score-85%25-success.svg)](https://github.com/UeenHuynh/MediAI/security)
+[![RESTful API](https://img.shields.io/badge/API-RESTful-blue.svg)](https://restfulapi.net/)
+[![OpenAPI 3.0](https://img.shields.io/badge/OpenAPI-3.0-brightgreen.svg)](https://swagger.io/specification/)
 
 > **End-to-end MLOps platform for ICU patient risk prediction with HIPAA/GDPR compliance**
 
