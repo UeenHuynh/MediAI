@@ -9,12 +9,10 @@ import os
 
 import streamlit as st
 
-# Import chatbot
-from components.chatbot import render_chatbot
-
 # Import page modules
 from pages import (
     auth,
+    chatbot,
     dashboard,
     legal,
     model_performance,
@@ -403,6 +401,9 @@ def main():
             url_path="performance",
         ),
         st.Page(
+            chatbot.show_chatbot, title="AI Assistant", icon="🤖", url_path="chatbot"
+        ),
+        st.Page(
             settings.show_settings, title="Settings", icon="⚙️", url_path="settings"
         ),
         st.Page(legal.show_legal, title="Legal", icon="📄", url_path="legal"),
@@ -447,9 +448,6 @@ def main():
             st.session_state.authenticated = False
             st.session_state.user_id = None
             st.rerun()
-
-    # Render chatbot (available on all pages)
-    render_chatbot()
 
     # Footer
     st.markdown("---")
