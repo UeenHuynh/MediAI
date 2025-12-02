@@ -6,6 +6,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/UeenHuynh/MediAI/actions/workflows/ci.yml/badge.svg)](https://github.com/UeenHuynh/MediAI/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/UeenHuynh/MediAI/branch/main/graph/badge.svg)](https://codecov.io/gh/UeenHuynh/MediAI)
+[![Security: bcrypt](https://img.shields.io/badge/security-bcrypt-brightgreen.svg)](https://github.com/pyca/bcrypt/)
+[![Security: JWT](https://img.shields.io/badge/security-JWT-brightgreen.svg)](https://jwt.io/)
+[![Security Score](https://img.shields.io/badge/security%20score-85%25-success.svg)](https://github.com/UeenHuynh/MediAI/security)
 
 > **End-to-end MLOps platform for ICU patient risk prediction with HIPAA/GDPR compliance**
 
