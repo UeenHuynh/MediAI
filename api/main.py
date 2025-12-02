@@ -12,7 +12,10 @@ from core.database import init_db
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from routers import health, predictions
+from routers import auth, health, predictions
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 # Configure logging
 logging.basicConfig(
@@ -33,6 +36,9 @@ async def lifespan(_app: FastAPI):
     logger.info("Shutting down MediAI API...")
 
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Initialize FastAPI app
 app = FastAPI(
     title="MediAI - ICU Risk Prediction API",
@@ -43,13 +49,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# Add rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS middleware - restricted permissions for security
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],  # Only allow necessary methods
+    allow_headers=["Content-Type", "Authorization"],  # Only allow necessary headers
 )
 
 
@@ -74,6 +84,7 @@ async def global_exception_handler(_request: Request, exc: Exception):
 
 
 # Include routers
+app.include_router(auth.router, tags=["Authentication"])
 app.include_router(health.router, tags=["Health"])
 app.include_router(predictions.router, prefix="/api/v1", tags=["Predictions"])
 

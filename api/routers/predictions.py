@@ -5,7 +5,8 @@ Prediction endpoints for sepsis and mortality models
 import logging
 
 from core.database import get_db
-from fastapi import APIRouter, Depends, HTTPException
+from core.security import User, get_current_active_user
+from fastapi import APIRouter, Depends, HTTPException, Request
 from models.schemas import (
     MortalityPredictionRequest,
     MortalityPredictionResponse,
@@ -13,18 +14,25 @@ from models.schemas import (
     SepsisPredictionResponse,
 )
 from services.prediction_service import PredictionService
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 # Initialize prediction service
 prediction_service = PredictionService()
 
 
 @router.post("/predict/sepsis", response_model=SepsisPredictionResponse)
+@limiter.limit("100/minute")
 async def predict_sepsis(
-    request: SepsisPredictionRequest, db: Session = Depends(get_db)
+    request_obj: Request,
+    request: SepsisPredictionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Predict sepsis risk for ICU patient
@@ -53,8 +61,12 @@ async def predict_sepsis(
 
 
 @router.post("/predict/mortality", response_model=MortalityPredictionResponse)
+@limiter.limit("100/minute")
 async def predict_mortality(
-    request: MortalityPredictionRequest, db: Session = Depends(get_db)
+    request_obj: Request,
+    request: MortalityPredictionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Predict mortality risk for ICU patient

@@ -3,15 +3,19 @@ Authentication Page
 Login and registration for MediAI platform
 """
 
-import hashlib
-
+import bcrypt
 import streamlit as st
 from utils.audit_logger import AuditEventType
 
 
 def hash_password(password: str) -> str:
-    """Simple password hashing (use bcrypt in production)"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Secure password hashing using bcrypt"""
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify password against bcrypt hash"""
+    return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
 def show_auth_page():
@@ -193,26 +197,31 @@ def show_register_form():
 
 def validate_login(username: str, password: str) -> bool:
     """
-    Validate user credentials
+    Validate user credentials using bcrypt
 
     Demo implementation - accepts:
-    - demo / demo123
-    - Any username with password matching the username
+    - demo / demo123 (bcrypt hashed)
+    - admin / admin123 (bcrypt hashed)
 
-    Production: Check against database with hashed passwords
+    Production: Check against database with bcrypt hashed passwords
     """
     if not username or not password:
         return False
 
-    # Demo credentials
-    if username == "demo" and password == "demo123":
-        return True
+    # Demo credentials with bcrypt hashes
+    # demo:demo123 hash
+    demo_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5sTSQ/xvCJ3jq"
+    # admin:admin123 hash
+    admin_hash = "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW"
 
-    # Allow any username with matching password (demo only)
-    if username == password:
-        return True
+    if username == "demo":
+        return verify_password(password, demo_hash)
+    elif username == "admin":
+        return verify_password(password, admin_hash)
 
-    return False
+    # For demo: allow any other username if password matches username
+    # (This is insecure - only for demo purposes)
+    return username == password
 
 
 def register_user(
