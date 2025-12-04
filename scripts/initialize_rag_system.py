@@ -75,7 +75,8 @@ def main():
         )
         logger.info(f"✓ RAG pipeline initialized with {llm_provider}")
     except Exception as e:
-        logger.warning(f"⚠ RAG pipeline initialization failed: {e}")
+        error_msg = str(e)
+        logger.warning(f"⚠ RAG pipeline initialization failed: {error_msg}")
         logger.info("Creating retrieval-only pipeline...")
         # Create a minimal pipeline without LLM for retrieval-only
         rag = type('obj', (object,), {
@@ -85,7 +86,7 @@ def main():
             'llm_api_key': None,
             'index_document': lambda text, source, metadata=None: 0,
             'retrieve': lambda query, **kwargs: [],
-            'get_stats': lambda: {'error': str(e)}
+            'get_stats': lambda: {'error': error_msg}
         })()
         logger.info("You can still test vector store and embeddings separately")
 
