@@ -12,7 +12,6 @@ import streamlit as st
 # Import page modules
 from pages import (
     auth,
-    chatbot,
     dashboard,
     legal,
     model_performance,
@@ -20,6 +19,12 @@ from pages import (
     predict_sepsis,
     settings,
 )
+
+# Try to import RAG chatbot, fallback to basic chatbot
+try:
+    from pages import chatbot_rag as chatbot
+except ImportError:
+    from pages import chatbot
 from utils.audit_logger import AuditEventType, AuditLogger
 
 # Import compliance utilities
@@ -368,7 +373,7 @@ def main():
         # Logo
         st.image(
             "https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI",
-            width="stretch",
+            use_container_width=True,
         )
 
         # User info

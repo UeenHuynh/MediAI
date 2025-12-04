@@ -1,0 +1,73 @@
+# ===================================================================
+# MediAI Advanced Chatbot - Additional Dependencies
+# ===================================================================
+# Install: pip install -r requirements.chatbot.txt
+# ===================================================================
+
+# -------------------------------------------------------------------
+# LAYER 6: LLM Providers
+# -------------------------------------------------------------------
+groq>=0.4.0                      # Groq API client (Primary LLM)
+transformers>=4.35.0             # HuggingFace transformers (Fallback)
+torch>=2.0.0                     # PyTorch for HuggingFace models
+accelerate>=0.25.0               # Fast model loading
+sentencepiece>=0.1.99            # Tokenizer for some models
+
+# -------------------------------------------------------------------
+# LAYER 4: Vector Store & Embeddings
+# -------------------------------------------------------------------
+qdrant-client>=1.7.0             # Qdrant Cloud client
+sentence-transformers==2.2.2     # Already in main requirements
+
+# -------------------------------------------------------------------
+# LAYER 3: Agentic Orchestration
+# -------------------------------------------------------------------
+langgraph>=0.0.20                # LangGraph state machine
+langchain>=0.1.0                 # LangChain core
+langchain-core>=0.1.0            # LangChain core abstractions
+langchain-community>=0.0.10      # Community integrations
+langchain-groq>=0.0.1            # Groq integration for LangChain
+
+# -------------------------------------------------------------------
+# LAYER 2: PII Masking
+# -------------------------------------------------------------------
+spacy>=3.7.0                     # NLP for NER
+# Run after install: python -m spacy download en_core_web_sm
+
+# -------------------------------------------------------------------
+# LAYER 1: Document Processing
+# -------------------------------------------------------------------
+PyMuPDF>=1.23.0                  # PDF processing (fitz)
+openpyxl>=3.1.0                  # Excel file support
+pillow>=10.0.0                   # Image processing
+python-magic>=0.4.27             # File type detection
+
+# -------------------------------------------------------------------
+# LAYER 3: External APIs
+# -------------------------------------------------------------------
+biopython>=1.83                  # PubMed E-utilities API
+xmltodict>=0.13.0                # XML parsing for PubMed responses
+requests>=2.31.0                 # Already in main requirements
+
+# -------------------------------------------------------------------
+# Utilities
+# -------------------------------------------------------------------
+ratelimit>=2.2.1                 # Rate limiting decorator
+tenacity>=8.2.3                  # Retry logic with exponential backoff
+python-dotenv>=1.0.0             # Already in main requirements
+pydantic>=2.5.0                  # Data validation
+tiktoken>=0.5.0                  # Token counting for LLMs
+
+# -------------------------------------------------------------------
+# Database (Supabase)
+# -------------------------------------------------------------------
+supabase>=2.3.0                  # Supabase Python client
+psycopg2-binary>=2.9.9           # Already in main requirements
+sqlalchemy>=2.0.25               # Already in main requirements
+
+# -------------------------------------------------------------------
+# Testing & Development
+# -------------------------------------------------------------------
+pytest>=7.4.0                    # Testing framework
+pytest-asyncio>=0.21.0           # Async testing
+httpx>=0.25.0                    # HTTP client for testing

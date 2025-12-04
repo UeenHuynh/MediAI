@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # Database Configuration
-    DATABASE_URL: str = "postgresql://postgres:postgres123@localhost:5432/mimic_iv"
+    DATABASE_URL: str = "postgresql://postgres:postgres123@localhost:5434/mimic_iv"
 
     # Redis Configuration
     REDIS_URL: str = "redis://localhost:6379/0"
