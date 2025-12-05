@@ -378,13 +378,7 @@ def show_chatbot():
     # Chat input
     st.markdown("---")
 
-    # Magic Prompt Generator Button
-    col_left, col_center, col_right = st.columns([1, 2, 1])
-    with col_center:
-        if st.button("✨ Magic Prompt Generator", use_container_width=True, type="secondary"):
-            st.session_state.show_magic_generator = True
-
-    # Show Magic Prompt Generator Dialog
+    # Show Magic Prompt Generator Dialog (if opened)
     if st.session_state.get("show_magic_generator", False):
         with st.container():
             st.markdown("---")
@@ -400,9 +394,20 @@ def show_chatbot():
             if st.button("✖️ Close Generator", use_container_width=True):
                 st.session_state.show_magic_generator = False
                 st.rerun()
+        st.markdown("---")
 
-    # User input (with magic prompt injection)
-    user_input = st.chat_input("💬 Ask a medical question...")
+    # Custom chat input with Magic Prompt button next to it
+    col_input, col_magic = st.columns([5, 1])
+
+    with col_input:
+        # User input (with magic prompt injection)
+        user_input = st.chat_input("💬 Ask a medical question...")
+
+    with col_magic:
+        st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)  # Align vertically
+        if st.button("✨", help="Magic Prompt Generator", use_container_width=True, type="secondary"):
+            st.session_state.show_magic_generator = True
+            st.rerun()
 
     # Check if there's a magic prompt to send
     if st.session_state.get("magic_prompt_to_send"):
