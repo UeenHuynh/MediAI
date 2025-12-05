@@ -160,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     # Skip if SONAR_TOKEN is not configured
-    if: ${{ secrets.SONAR_TOKEN != '' }}
+    if: secrets.SONAR_TOKEN != ''
     steps:
       - uses: actions/checkout@v3
         with:

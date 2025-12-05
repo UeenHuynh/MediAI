@@ -559,7 +559,7 @@ sonarqube:
   runs-on: ubuntu-latest
   needs: [test]
   # Skip if SONAR_TOKEN is not configured
-  if: ${{ secrets.SONAR_TOKEN != '' }}
+  if: secrets.SONAR_TOKEN != ''
   steps:
     - uses: actions/checkout@v3
       with:
@@ -585,7 +585,7 @@ sonarqube:
 ```
 
 **Key changes:**
-- Added `if: ${{ secrets.SONAR_TOKEN != '' }}` to skip job if secret not configured
+- Added `if: secrets.SONAR_TOKEN != ''` to skip job if secret not configured (note: NO `${{ }}` wrapper)
 - Added `continue-on-error: true` to both steps to prevent CI failure
 
 #### Option 3: Remove SonarQube Step (If Not Needed)
@@ -602,6 +602,68 @@ If you don't plan to use SonarQube, simply remove the entire job from the workfl
 - Use conditional job execution for optional services
 - Add `continue-on-error: true` for non-critical steps
 - Provide clear setup instructions for enabling optional features
+
+---
+
+## ⚠️ Error 13: GitHub Actions - Unrecognized named-value in if condition
+
+### Error Message:
+```
+(Line: 163, Col: 9): Unrecognized named-value: 'secrets'.
+Located at position 1 within expression: secrets.SONAR_TOKEN != ''
+```
+
+### Cause:
+In GitHub Actions, the `if` condition at the job level uses a different syntax than step-level conditions. The `${{ }}` expression wrapper should NOT be used in job-level `if` conditions - it's implicit.
+
+### Solution:
+
+```yaml
+# ❌ WRONG - Don't use ${{ }} in job-level if:
+sonarqube:
+  name: SonarQube Scan
+  if: ${{ secrets.SONAR_TOKEN != '' }}  # This causes the error
+
+# ✅ CORRECT - Use expression directly:
+sonarqube:
+  name: SonarQube Scan
+  if: secrets.SONAR_TOKEN != ''  # No ${{ }} wrapper needed
+```
+
+### Why This Happens:
+- **Job-level `if`**: Expression context is implicit, don't use `${{ }}`
+- **Step-level `if`**: Can use either syntax (with or without `${{ }}`)
+- **Other contexts**: Use `${{ }}` for `env:`, `with:`, etc.
+
+### Examples:
+
+```yaml
+# Job-level conditions (NO ${{ }}):
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    if: secrets.API_KEY != ''
+    if: github.event_name == 'push'
+
+# Step-level conditions (EITHER syntax works):
+steps:
+  - name: Deploy
+    if: success()  # Without wrapper
+  - name: Notify
+    if: ${{ failure() }}  # With wrapper (also valid)
+
+# Variable references (USE ${{ }}):
+env:
+  TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  BRANCH: ${{ github.ref }}
+```
+
+### Prevention:
+- Job `if`: Direct expression (no `${{ }}`)
+- Step `if`: Either syntax works
+- Everything else: Use `${{ }}`
+- Check GitHub Actions syntax documentation
+- Validate YAML before committing
 
 ---
 
