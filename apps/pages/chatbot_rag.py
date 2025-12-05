@@ -32,8 +32,14 @@ def initialize_rag_system():
 
         # Try to initialize RAG pipeline (may not have LLM key)
         try:
-            llm_provider = os.getenv("LLM_PROVIDER", "deepseek")
-            llm_api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+            llm_provider = os.getenv("LLM_PRIMARY_PROVIDER", "groq")
+            # Check for API keys in order: Groq, DeepSeek, OpenAI, Anthropic
+            llm_api_key = (
+                os.getenv("GROQ_API_KEY")
+                or os.getenv("DEEPSEEK_API_KEY")
+                or os.getenv("OPENAI_API_KEY")
+                or os.getenv("ANTHROPIC_API_KEY")
+            )
 
             if llm_api_key:
                 rag_pipeline = RAGPipeline(
@@ -102,7 +108,7 @@ class RetrievalOnlyPipeline:
 
         if not docs:
             return {
-                "answer": "❌ **No LLM API Key Configured**\n\nI found no relevant documents in my knowledge base.\n\n**To enable full RAG with AI-generated answers:**\n1. Get a DeepSeek API key from https://platform.deepseek.com/\n2. Add to .env file: `DEEPSEEK_API_KEY=your_key_here`\n3. Restart the application\n\n**Note:** You can still see the retrieved medical documents below.",
+                "answer": "❌ **No LLM API Key Configured**\n\nI found no relevant documents in my knowledge base.\n\n**To enable AI-powered answers:**\n\n1. **Get Groq API key:** https://console.groq.com/ (Recommended - Free tier: 30 req/min)\n2. Add to `.env.chatbot`: `GROQ_API_KEY=your_key_here`\n3. Restart app\n\n**Alternative providers:**\n- DeepSeek: https://platform.deepseek.com/\n- OpenAI: https://platform.openai.com/\n\n**Note:** You can still see retrieved medical documents below.",
                 "citations": [],
                 "confidence": 0.0,
                 "num_sources": 0,
@@ -126,8 +132,8 @@ class RetrievalOnlyPipeline:
             answer += "---\n\n"
 
         answer += "\n\n**💡 To enable AI-powered answers:**\n"
-        answer += "1. Get DeepSeek API key: https://platform.deepseek.com/\n"
-        answer += "2. Add to .env: `DEEPSEEK_API_KEY=your_key_here`\n"
+        answer += "1. Get **Groq API key**: https://console.groq.com/ (Free: 30 req/min)\n"
+        answer += "2. Add to `.env.chatbot`: `GROQ_API_KEY=your_key_here`\n"
         answer += "3. Restart app\n"
 
         citations = [
