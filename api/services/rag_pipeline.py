@@ -52,6 +52,8 @@ class RAGPipeline:
         # Map provider names to environment variable names
         provider_key_map = {
             "groq": "GROQ_API_KEY",
+            "grok": "XAI_API_KEY",  # xAI Grok (different from Groq!)
+            "xai": "XAI_API_KEY",  # Alternative name for xAI Grok
             "deepseek": "DEEPSEEK_API_KEY",
             "openai": "OPENAI_API_KEY",
             "anthropic": "ANTHROPIC_API_KEY",
@@ -72,10 +74,24 @@ class RAGPipeline:
                 from groq import Groq
 
                 self.llm_client = Groq(api_key=self.llm_api_key)
-                self.llm_model = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
+                self.llm_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
                 logger.info(f"Initialized Groq LLM client with model {self.llm_model}")
             except ImportError:
                 raise ImportError("groq package required. Install with: pip install groq")
+
+        elif self.llm_provider in ["grok", "xai"]:
+            # xAI Grok API (OpenAI-compatible, 2M context)
+            try:
+                import openai
+
+                self.llm_client = openai.OpenAI(
+                    api_key=self.llm_api_key,
+                    base_url="https://api.x.ai/v1",
+                )
+                self.llm_model = os.getenv("GROK_MODEL", "grok-4-1-fast-reasoning")
+                logger.info(f"Initialized xAI Grok LLM client with model {self.llm_model}")
+            except ImportError:
+                raise ImportError("openai package required for xAI Grok")
 
         elif self.llm_provider == "deepseek":
             # DeepSeek API (compatible with OpenAI API)
@@ -265,8 +281,8 @@ class RAGPipeline:
 
         # Generate response
         try:
-            if self.llm_provider in ["groq", "deepseek", "openai"]:
-                # Groq, DeepSeek, and OpenAI use same OpenAI-compatible API
+            if self.llm_provider in ["groq", "grok", "xai", "deepseek", "openai"]:
+                # Groq, xAI Grok, DeepSeek, and OpenAI use same OpenAI-compatible API
                 response = self.llm_client.chat.completions.create(
                     model=self.llm_model,
                     messages=[
