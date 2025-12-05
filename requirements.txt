@@ -26,6 +26,11 @@ httpx<0.28  # Pin to <0.28 for TestClient compatibility
 redis==5.0.1
 hiredis==2.3.2
 
+# Vector Database & RAG
+qdrant-client==1.7.0
+sentence-transformers==2.2.2
+biopython==1.83  # For PubMed API
+
 # UI Framework
 streamlit==1.32.0
 plotly==5.18.0

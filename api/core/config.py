@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     CACHE_TTL_SECONDS: int = 3600
     CACHE_MAX_SIZE: int = 1000
 
+    # Qdrant Configuration
+    QDRANT_URL: str = ""  # e.g., https://xyz.cloud.qdrant.io
+    QDRANT_API_KEY: str = ""
+    QDRANT_COLLECTION_NAME: str = "medical_knowledge"
+
     # Model Configuration
     MODEL_PATH: str = "./models"
     SEPSIS_MODEL_VERSION: str = "v1"
