@@ -100,11 +100,12 @@ async def get_data_stats():
 
         stats = {}
 
-        # Get row counts
+        # Get row counts - table names are hardcoded, no SQL injection risk
+        # nosec B608 - table names from trusted hardcoded list only
         tables = ["raw.patients", "raw.icustays", "raw.chartevents"]
         for table in tables:
             try:
-                cursor.execute(f"SELECT COUNT(*) FROM {table}")
+                cursor.execute(f"SELECT COUNT(*) FROM {table}")  # nosec B608
                 count = cursor.fetchone()[0]
                 stats[table.replace("raw.", "")] = count
             except Exception:
@@ -130,4 +131,5 @@ async def get_data_stats():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main_simple:app", host="0.0.0.0", port=8000, reload=True)
+    # nosec B104 - Bind to all interfaces required for development/Docker
+    uvicorn.run("main_simple:app", host="0.0.0.0", port=8000, reload=True)  # nosec B104

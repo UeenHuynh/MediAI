@@ -12,18 +12,24 @@ class Settings(BaseSettings):
     """Application settings"""
 
     # API Configuration
-    API_HOST: str = "0.0.0.0"
+    # nosec B104 - Bind to all interfaces required for Docker deployment
+    API_HOST: str = "0.0.0.0"  # nosec B104
     API_PORT: int = 8000
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
 
     # Database Configuration
-    DATABASE_URL: str = "postgresql://postgres:postgres123@localhost:5432/mimic_iv"
+    DATABASE_URL: str = "postgresql://postgres:postgres123@localhost:5434/mimic_iv"
 
     # Redis Configuration
     REDIS_URL: str = "redis://localhost:6379/0"
     CACHE_TTL_SECONDS: int = 3600
     CACHE_MAX_SIZE: int = 1000
+
+    # Qdrant Configuration
+    QDRANT_URL: str = ""  # e.g., https://xyz.cloud.qdrant.io
+    QDRANT_API_KEY: str = ""
+    QDRANT_COLLECTION_NAME: str = "medical_knowledge"
 
     # Model Configuration
     MODEL_PATH: str = "./models"

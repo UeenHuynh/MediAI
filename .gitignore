@@ -19,88 +19,80 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Virtual Environment
 venv/
-env/
 ENV/
+env/
 .venv
 
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.DS_Store
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+junit.xml
+coverage.xml
+.tox/
+.hypothesis/
 
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*.local
+*.log
 
 # Database
 *.db
-*.sqlite
 *.sqlite3
+*.sql
 
-# Data files
-data/raw/*
-data/processed/*
-data/sample/*
-!data/.gitkeep
+# Models & Data
+models/*.pkl
+models/*.joblib
+data/raw/
+data/processed/
+*.csv
+*.xlsx
+!data/seed/*.csv
 
-# MLflow
-mlruns/
-mlflow/
+# Cache
+.cache/
+*.cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# dbt
-dbt_project/target/
-dbt_project/dbt_packages/
-dbt_project/logs/
+# SonarQube
+.scannerwork/
+sonar-scanner.properties
 
-# Airflow
-airflow/logs/
-airflow/*.pid
-airflow/*.log
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
 
-# Docker
-.dockerignore
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Temporary files
+# Temporary
 tmp/
 temp/
 *.tmp
+*.bak
 
-# Coverage
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
-
-# pytest
-.pytest_cache/
-
-# Config
-config/data_path.txt
-kaggle.json
-
-# Development & Testing Files
-debug_*.py
-test_*.py
-inspect_*.py
-
-# Training Results
-results/
+# Reports
 bandit-report.json
+pylint-report.txt
+
+# Secrets (NEVER commit)
+*.pem
+*.key
+*_rsa
+*_rsa.pub
+credentials.json
+secrets.json

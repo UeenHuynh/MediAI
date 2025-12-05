@@ -52,19 +52,21 @@ class PredictionService:
         model_path = settings.MODEL_PATH
 
         # Load sepsis model
+        # nosec B301 - ML models are generated internally, not user-uploaded
         sepsis_model_file = os.path.join(model_path, "sepsis_model_v1.pkl")
         if os.path.exists(sepsis_model_file):
             with open(sepsis_model_file, "rb") as f:
-                self.models["sepsis"] = pickle.load(f)
+                self.models["sepsis"] = pickle.load(f)  # nosec B301
             logger.info("Sepsis model loaded")
         else:
             logger.warning("Sepsis model not found at %s", sepsis_model_file)
 
         # Load mortality model
+        # nosec B301 - ML models are generated internally, not user-uploaded
         mortality_model_file = os.path.join(model_path, "mortality_model_v1.pkl")
         if os.path.exists(mortality_model_file):
             with open(mortality_model_file, "rb") as f:
-                self.models["mortality"] = pickle.load(f)
+                self.models["mortality"] = pickle.load(f)  # nosec B301
             logger.info("Mortality model loaded")
         else:
             logger.warning("Mortality model not found at %s", mortality_model_file)
@@ -72,7 +74,8 @@ class PredictionService:
     def _get_cache_key(self, patient_id: str, features: Dict) -> str:
         """Generate cache key from patient_id and features"""
         features_str = json.dumps(features, sort_keys=True)
-        hash_str = hashlib.md5(features_str.encode()).hexdigest()
+        # Use SHA256 for cache key (more secure than MD5)
+        hash_str = hashlib.sha256(features_str.encode()).hexdigest()
         return f"prediction:{patient_id}:{hash_str}"
 
     def _get_from_cache(self, cache_key: str) -> Any:

@@ -69,7 +69,8 @@ class AuditLogger:
             self.log_dir.mkdir(parents=True, exist_ok=True)
         except (PermissionError, OSError):
             # Fallback to temp directory
-            self.log_dir = Path("/tmp/mediai_logs/audit")
+            # nosec B108 - /tmp fallback is needed for containers/restrictive environments
+            self.log_dir = Path("/tmp/mediai_logs/audit")  # nosec B108
             self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Create dated log file

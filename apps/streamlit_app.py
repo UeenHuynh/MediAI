@@ -6,13 +6,20 @@ Using st.navigation() API for clean multi-page navigation
 """
 
 import os
+from pathlib import Path
+
+# Load environment variables from root .env file
+from dotenv import load_dotenv
+
+# Load .env from project root (parent of apps/)
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 import streamlit as st
 
 # Import page modules
 from pages import (
     auth,
-    chatbot,
     dashboard,
     legal,
     model_performance,
@@ -20,6 +27,12 @@ from pages import (
     predict_sepsis,
     settings,
 )
+
+# Try to import RAG chatbot, fallback to basic chatbot
+try:
+    from pages import chatbot_rag as chatbot
+except ImportError:
+    from pages import chatbot
 from utils.audit_logger import AuditEventType, AuditLogger
 
 # Import compliance utilities
@@ -368,7 +381,7 @@ def main():
         # Logo
         st.image(
             "https://via.placeholder.com/300x100/667eea/FFFFFF?text=MediAI",
-            width="stretch",
+            use_container_width=True,
         )
 
         # User info

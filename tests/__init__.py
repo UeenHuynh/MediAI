@@ -1,3 +1,3 @@
 """
-Test suite for MediAI platform
+MediAI Test Suite
 """
