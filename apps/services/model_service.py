@@ -42,11 +42,13 @@ class ModelService:
             model_path = self.models_dir / "sepsis_lightgbm_v1.pkl"
             features_path = self.models_dir / "sepsis_feature_names.pkl"
 
+            # nosec B301 - ML models are generated internally, not user-uploaded
             with open(model_path, "rb") as f:
-                self.sepsis_model = pickle.load(f)
+                self.sepsis_model = pickle.load(f)  # nosec B301
 
+            # nosec B301 - Feature names are generated internally during training
             with open(features_path, "rb") as f:
-                self.sepsis_features = pickle.load(f)
+                self.sepsis_features = pickle.load(f)  # nosec B301
 
             print(f"✅ Sepsis model loaded with {len(self.sepsis_features)} features")
         except Exception as e:
@@ -60,11 +62,13 @@ class ModelService:
             model_path = self.models_dir / "mortality_lightgbm_v1.pkl"
             features_path = self.models_dir / "mortality_feature_names.pkl"
 
+            # nosec B301 - ML models are generated internally, not user-uploaded
             with open(model_path, "rb") as f:
-                self.mortality_model = pickle.load(f)
+                self.mortality_model = pickle.load(f)  # nosec B301
 
+            # nosec B301 - Feature names are generated internally during training
             with open(features_path, "rb") as f:
-                self.mortality_features = pickle.load(f)
+                self.mortality_features = pickle.load(f)  # nosec B301
 
             print(
                 f"✅ Mortality model loaded with {len(self.mortality_features)} features"

@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     """Application settings"""
 
     # API Configuration
-    API_HOST: str = "0.0.0.0"
+    # nosec B104 - Bind to all interfaces required for Docker deployment
+    API_HOST: str = "0.0.0.0"  # nosec B104
     API_PORT: int = 8000
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
