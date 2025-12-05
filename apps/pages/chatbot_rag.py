@@ -20,9 +20,9 @@ from api.services.embedding_service import MedicalEmbeddingService
 from api.services.rag_pipeline import RAGPipeline
 from api.services.safety_guardrails import SafetyGuardrails
 
-# Import magic prompt generator
+# Import prompt enhancer
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from components.magic_prompt_generator import show_magic_prompt_generator, show_magic_prompt_sidebar
+from utils.prompt_enhancer import PromptEnhancer
 
 
 @st.cache_resource
@@ -378,43 +378,48 @@ def show_chatbot():
     # Chat input
     st.markdown("---")
 
-    # Show Magic Prompt Generator Dialog (if opened)
-    if st.session_state.get("show_magic_generator", False):
-        with st.container():
-            st.markdown("---")
-            generated_prompt = show_magic_prompt_generator()
+    # Prompt enhancement toggle in sidebar
+    with st.sidebar:
+        st.markdown("### ⚙️ Prompt Settings")
+        auto_enhance = st.toggle(
+            "🚀 Auto-enhance prompts",
+            value=st.session_state.get("auto_enhance_prompts", True),
+            help="Automatically enhance short medical queries into detailed, structured prompts",
+            key="auto_enhance_prompts"
+        )
 
-            if generated_prompt:
-                # Store generated prompt to use as input
-                st.session_state.magic_prompt_to_send = generated_prompt
-                st.session_state.show_magic_generator = False
-                st.rerun()
-
-            # Close button
-            if st.button("✖️ Close Generator", use_container_width=True):
-                st.session_state.show_magic_generator = False
-                st.rerun()
-        st.markdown("---")
-
-    # Custom chat input with Magic Prompt button next to it
-    col_input, col_magic = st.columns([5, 1])
+    # Custom chat input with enhancement indicator
+    col_input, col_enhance = st.columns([5, 1])
 
     with col_input:
-        # User input (with magic prompt injection)
         user_input = st.chat_input("💬 Ask a medical question...")
 
-    with col_magic:
-        st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)  # Align vertically
-        if st.button("✨", help="Magic Prompt Generator", use_container_width=True, type="secondary"):
-            st.session_state.show_magic_generator = True
-            st.rerun()
-
-    # Check if there's a magic prompt to send
-    if st.session_state.get("magic_prompt_to_send"):
-        user_input = st.session_state.magic_prompt_to_send
-        st.session_state.magic_prompt_to_send = None
+    with col_enhance:
+        # Show enhancement status indicator
+        if st.session_state.get("auto_enhance_prompts", True):
+            st.markdown(
+                "<div style='margin-top: 8px; text-align: center;'>🚀</div>",
+                unsafe_allow_html=True,
+                help="Auto-enhancement enabled"
+            )
 
     if user_input:
+        # Store original query
+        original_query = user_input
+
+        # Auto-enhance if enabled
+        if st.session_state.get("auto_enhance_prompts", True):
+            enhanced_query, was_enhanced = PromptEnhancer.enhance_prompt(user_input)
+
+            if was_enhanced:
+                # Show enhancement notification
+                with st.container():
+                    st.info(f"🚀 **Prompt được tăng cường tự động**\n\n**Câu hỏi gốc:** {original_query}")
+                    user_input = enhanced_query
+            else:
+                user_input = original_query
+
+        # Continue with original flow
         # Add user message
         st.session_state.chat_messages.append({"role": "user", "content": user_input})
 
