@@ -51,6 +51,7 @@ class RAGPipeline:
 
         # Map provider names to environment variable names
         provider_key_map = {
+            "groq": "GROQ_API_KEY",
             "deepseek": "DEEPSEEK_API_KEY",
             "openai": "OPENAI_API_KEY",
             "anthropic": "ANTHROPIC_API_KEY",
@@ -65,7 +66,18 @@ class RAGPipeline:
 
     def _init_llm_client(self):
         """Initialize LLM client based on provider"""
-        if self.llm_provider == "deepseek":
+        if self.llm_provider == "groq":
+            # Groq API (fastest inference, free tier: 30 req/min)
+            try:
+                from groq import Groq
+
+                self.llm_client = Groq(api_key=self.llm_api_key)
+                self.llm_model = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
+                logger.info(f"Initialized Groq LLM client with model {self.llm_model}")
+            except ImportError:
+                raise ImportError("groq package required. Install with: pip install groq")
+
+        elif self.llm_provider == "deepseek":
             # DeepSeek API (compatible with OpenAI API)
             try:
                 import openai
@@ -253,7 +265,8 @@ class RAGPipeline:
 
         # Generate response
         try:
-            if self.llm_provider in ["deepseek", "openai"]:
+            if self.llm_provider in ["groq", "deepseek", "openai"]:
+                # Groq, DeepSeek, and OpenAI use same OpenAI-compatible API
                 response = self.llm_client.chat.completions.create(
                     model=self.llm_model,
                     messages=[
