@@ -6,6 +6,14 @@ Using st.navigation() API for clean multi-page navigation
 """
 
 import os
+from pathlib import Path
+
+# Load environment variables from root .env file
+from dotenv import load_dotenv
+
+# Load .env from project root (parent of apps/)
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 import streamlit as st
 
