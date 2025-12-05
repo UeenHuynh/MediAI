@@ -320,13 +320,26 @@ def show_chatbot():
 
                     # Show citations if available
                     if "citations" in message and message["citations"]:
-                        with st.expander("📚 Sources"):
+                        with st.expander("📚 Sources & References"):
                             for citation in message["citations"]:
-                                st.write(
-                                    f"**[{citation['id']}]** {citation['source']} "
-                                    f"(Category: {citation['category']}, "
-                                    f"Relevance: {citation['similarity']:.2%})"
-                                )
+                                # Format citation with PubMed link if available
+                                if "pmid" in citation:
+                                    # PubMed citation with clickable link
+                                    title = citation.get("title", "PubMed Article")
+                                    pmid = citation["pmid"]
+                                    url = citation.get("url", f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/")
+
+                                    st.markdown(
+                                        f"**[{citation['id']}]** 📄 [{title}]({url})"
+                                    )
+                                    st.caption(f"PMID: {pmid} | Relevance: {citation.get('similarity', 0):.2%}")
+                                else:
+                                    # Regular citation
+                                    st.write(
+                                        f"**[{citation['id']}]** {citation['source']} "
+                                        f"(Category: {citation['category']}, "
+                                        f"Relevance: {citation.get('similarity', 0):.2%})"
+                                    )
 
                     # Show confidence if available
                     if "confidence" in message:

@@ -178,7 +178,7 @@ class HybridRAGPipeline:
             logger.error(f"Qdrant search failed: {e}")
             return []
 
-    def _search_pubmed(self, query: str, max_results: int = 2) -> List[Dict[str, Any]]:
+    def _search_pubmed(self, query: str, max_results: int = 5) -> List[Dict[str, Any]]:
         """
         Search PubMed for latest medical research.
 
@@ -192,8 +192,9 @@ class HybridRAGPipeline:
         try:
             from Bio import Entrez
 
-            # Set email for PubMed API
-            Entrez.email = os.getenv("PUBMED_EMAIL", "noreply@mediai.com")
+            # Set email and API key for PubMed API
+            Entrez.email = os.getenv("NCBI_EMAIL", "noreply@mediai.com")
+            Entrez.api_key = os.getenv("NCBI_API_KEY")  # Use API key for higher rate limits
 
             # Search PubMed
             handle = Entrez.esearch(

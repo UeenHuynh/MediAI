@@ -264,14 +264,25 @@ class RAGPipeline:
 
         for idx, doc in enumerate(context_docs, 1):
             context_parts.append(f"[{idx}] {doc['content']}")
-            citations.append(
-                {
-                    "id": idx,
-                    "source": doc["source"],
-                    "category": doc["category"],
-                    "similarity": doc.get("hybrid_score", doc.get("similarity", 0)),
-                }
-            )
+
+            # Build citation with full metadata
+            citation = {
+                "id": idx,
+                "source": doc["source"],
+                "category": doc["category"],
+                "similarity": doc.get("hybrid_score", doc.get("similarity", 0)),
+            }
+
+            # Add PubMed-specific metadata if available
+            if "metadata" in doc and doc["metadata"]:
+                metadata = doc["metadata"]
+                if "pmid" in metadata:
+                    citation["pmid"] = metadata["pmid"]
+                    citation["url"] = f"https://pubmed.ncbi.nlm.nih.gov/{metadata['pmid']}/"
+                if "title" in metadata:
+                    citation["title"] = metadata["title"]
+
+            citations.append(citation)
 
         context_text = "\n\n".join(context_parts)
 
