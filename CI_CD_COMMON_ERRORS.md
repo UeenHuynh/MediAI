@@ -549,17 +549,17 @@ Without these secrets, the scanner fails because it doesn't know where to send t
    SONAR_HOST_URL: https://sonarcloud.io
    ```
 
-#### Option 2: Make SonarQube Optional (Recommended for Development)
+#### Option 2: Disable SonarQube Job (Recommended for Development)
 Update `.github/workflows/ci-cd.yml`:
 
 ```yaml
 # Job 4: SonarQube Analysis (Optional - requires SONAR_TOKEN secret)
+# DISABLED: Enable by setting SONAR_TOKEN and SONAR_HOST_URL secrets
 sonarqube:
   name: SonarQube Scan
   runs-on: ubuntu-latest
   needs: [test]
-  # Skip if SONAR_TOKEN is not configured
-  if: secrets.SONAR_TOKEN != ''
+  if: false  # Disabled until SonarQube credentials are configured
   steps:
     - uses: actions/checkout@v3
       with:
@@ -585,8 +585,9 @@ sonarqube:
 ```
 
 **Key changes:**
-- Added `if: secrets.SONAR_TOKEN != ''` to skip job if secret not configured (note: NO `${{ }}` wrapper)
-- Added `continue-on-error: true` to both steps to prevent CI failure
+- Set `if: false` to completely disable the job
+- Added clear comment about enabling it
+- When ready to enable: Change `if: false` to `if: true` or remove the line entirely
 
 #### Option 3: Remove SonarQube Step (If Not Needed)
 If you don't plan to use SonarQube, simply remove the entire job from the workflow file.
@@ -596,6 +597,8 @@ If you don't plan to use SonarQube, simply remove the entire job from the workfl
 - **CI/CD**: Other jobs (lint, security, test) provide sufficient quality checks
 - **Production**: Can enable SonarQube later by adding secrets
 - **Flexibility**: Doesn't block CI if SonarCloud isn't set up yet
+
+**Note**: Using `if: secrets.SONAR_TOKEN != ''` doesn't work reliably because GitHub Actions treats unset secrets as empty strings, making them indistinguishable from explicitly empty secrets. Using `if: false` is the most explicit and reliable way to disable the job.
 
 ### Prevention:
 - Document optional secrets in README
