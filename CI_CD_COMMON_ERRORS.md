@@ -518,6 +518,93 @@ def test_chatbot_imports():
 
 ---
 
+## 🔍 Error 12: SonarQube Scan Missing Configuration
+
+### Error Message:
+```
+Warning: Running this GitHub Action without SONAR_TOKEN is not recommended
+12:20:49.934 ERROR Failed to query server version: Expected URL scheme 'http' or 'https' but no scheme was found for /api/v...
+12:20:49.935 INFO  EXECUTION FAILURE
+Error: Action failed: The process '/opt/hostedtoolcache/sonar-scanner-cli/7.3.0.5189/linux-x64/bin/sonar-scanner' failed with exit code 1
+```
+
+### Cause:
+SonarQube scan action requires two GitHub secrets to be configured:
+1. **SONAR_TOKEN**: Authentication token for SonarCloud or self-hosted SonarQube
+2. **SONAR_HOST_URL**: URL of the SonarQube server (e.g., https://sonarcloud.io)
+
+Without these secrets, the scanner fails because it doesn't know where to send the analysis results.
+
+### Solution:
+
+#### Option 1: Configure SonarCloud (Free for Public Repos)
+1. Go to https://sonarcloud.io and sign in with GitHub
+2. Create a new organization and project
+3. Generate a token in SonarCloud settings
+4. Add GitHub secrets:
+   ```
+   Repository → Settings → Secrets → Actions → New secret
+
+   SONAR_TOKEN: <your-sonarcloud-token>
+   SONAR_HOST_URL: https://sonarcloud.io
+   ```
+
+#### Option 2: Make SonarQube Optional (Recommended for Development)
+Update `.github/workflows/ci-cd.yml`:
+
+```yaml
+# Job 4: SonarQube Analysis (Optional - requires SONAR_TOKEN secret)
+sonarqube:
+  name: SonarQube Scan
+  runs-on: ubuntu-latest
+  needs: [test]
+  # Skip if SONAR_TOKEN is not configured
+  if: ${{ secrets.SONAR_TOKEN != '' }}
+  steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Download Coverage Report
+      uses: actions/download-artifact@v4
+      with:
+        name: test-results-3.11
+      continue-on-error: true
+
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      with:
+        args: >
+          -Dsonar.projectKey=mediai-chatbot
+          -Dsonar.python.coverage.reportPaths=coverage.xml
+          -Dsonar.python.version=3.11
+      continue-on-error: true
+```
+
+**Key changes:**
+- Added `if: ${{ secrets.SONAR_TOKEN != '' }}` to skip job if secret not configured
+- Added `continue-on-error: true` to both steps to prevent CI failure
+
+#### Option 3: Remove SonarQube Step (If Not Needed)
+If you don't plan to use SonarQube, simply remove the entire job from the workflow file.
+
+### Why This Approach:
+- **Development**: SonarQube is optional during development
+- **CI/CD**: Other jobs (lint, security, test) provide sufficient quality checks
+- **Production**: Can enable SonarQube later by adding secrets
+- **Flexibility**: Doesn't block CI if SonarCloud isn't set up yet
+
+### Prevention:
+- Document optional secrets in README
+- Use conditional job execution for optional services
+- Add `continue-on-error: true` for non-critical steps
+- Provide clear setup instructions for enabling optional features
+
+---
+
 ## 🔗 References
 
 - **Flake8 Error Codes:** https://flake8.pycqa.org/en/latest/user/error-codes.html
