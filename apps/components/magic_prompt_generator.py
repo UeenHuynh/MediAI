@@ -27,17 +27,13 @@ def show_magic_prompt_generator() -> Optional[str]:
     # Get categories
     categories = MagicPromptTemplates.get_categories()
 
-    # Category selection with emojis (value already contains emoji)
-    category_options = list(categories.values())
-    category_display_to_key = {v: k for k, v in categories.items()}
-
-    selected_category_display = st.selectbox(
+    # Category selection with emojis
+    selected_category = st.selectbox(
         "🏥 Select Category",
-        options=category_options,
+        options=list(categories.keys()),
+        format_func=lambda x: categories[x],
         help="Choose the clinical area for your question"
     )
-
-    selected_category = category_display_to_key[selected_category_display]
 
     # Get templates for selected category
     templates = MagicPromptTemplates.get_templates_by_category(selected_category)
