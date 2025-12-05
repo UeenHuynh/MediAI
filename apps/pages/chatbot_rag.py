@@ -20,6 +20,10 @@ from api.services.embedding_service import MedicalEmbeddingService
 from api.services.rag_pipeline import RAGPipeline
 from api.services.safety_guardrails import SafetyGuardrails
 
+# Import magic prompt generator
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from components.magic_prompt_generator import show_magic_prompt_generator, show_magic_prompt_sidebar
+
 
 @st.cache_resource
 def initialize_rag_system():
@@ -374,8 +378,36 @@ def show_chatbot():
     # Chat input
     st.markdown("---")
 
-    # User input
+    # Magic Prompt Generator Button
+    col_left, col_center, col_right = st.columns([1, 2, 1])
+    with col_center:
+        if st.button("✨ Magic Prompt Generator", use_container_width=True, type="secondary"):
+            st.session_state.show_magic_generator = True
+
+    # Show Magic Prompt Generator Dialog
+    if st.session_state.get("show_magic_generator", False):
+        with st.container():
+            st.markdown("---")
+            generated_prompt = show_magic_prompt_generator()
+
+            if generated_prompt:
+                # Store generated prompt to use as input
+                st.session_state.magic_prompt_to_send = generated_prompt
+                st.session_state.show_magic_generator = False
+                st.rerun()
+
+            # Close button
+            if st.button("✖️ Close Generator", use_container_width=True):
+                st.session_state.show_magic_generator = False
+                st.rerun()
+
+    # User input (with magic prompt injection)
     user_input = st.chat_input("💬 Ask a medical question...")
+
+    # Check if there's a magic prompt to send
+    if st.session_state.get("magic_prompt_to_send"):
+        user_input = st.session_state.magic_prompt_to_send
+        st.session_state.magic_prompt_to_send = None
 
     if user_input:
         # Add user message
