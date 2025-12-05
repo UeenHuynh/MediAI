@@ -27,11 +27,9 @@ def show_magic_prompt_generator() -> Optional[str]:
     # Get categories
     categories = MagicPromptTemplates.get_categories()
 
-    # Category selection with emojis
-    category_options = [f"{emoji} {name}" for emoji, name in categories.items()]
-    category_display_to_key = {f"{emoji} {name}": key for key, (emoji, name) in
-                                [(k, (v.split()[0], ' '.join(v.split()[1:])))
-                                 for k, v in categories.items()]}
+    # Category selection with emojis (value already contains emoji)
+    category_options = list(categories.values())
+    category_display_to_key = {v: k for k, v in categories.items()}
 
     selected_category_display = st.selectbox(
         "🏥 Select Category",
