@@ -286,8 +286,12 @@ class HybridRAGPipeline:
             from scholarly import scholarly
             logger.info("✓ Scholarly imported successfully")
 
+            # Enhance query with medical keywords for better relevance
+            enhanced_query = f"{query} medical treatment clinical"
+            logger.info(f"Enhanced Scholar query: '{enhanced_query}'")
+
             # Search Google Scholar
-            search_query = scholarly.search_pubs(query)
+            search_query = scholarly.search_pubs(enhanced_query)
 
             scholar_results = []
             for i, article in enumerate(search_query):
