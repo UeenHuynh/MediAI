@@ -90,9 +90,9 @@ class HybridRAGPipeline:
             results.extend(qdrant_results)
             logger.info(f"Qdrant search returned {len(qdrant_results)} results")
 
-        # Tier 3: PubMed API (fallback)
-        if use_pubmed and len(results) < 3:
-            pubmed_results = self._search_pubmed(query, max_results=2)
+        # Tier 3: PubMed API (always search for latest research)
+        if use_pubmed:
+            pubmed_results = self._search_pubmed(query, max_results=5)
             results.extend(pubmed_results)
             logger.info(f"PubMed search returned {len(pubmed_results)} results")
 
