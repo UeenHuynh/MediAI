@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from api.core.vector_store import VectorStore
 from api.services.document_processor import MedicalDocumentProcessor
 from api.services.embedding_service import MedicalEmbeddingService
+from api.services.hybrid_rag import HybridRAGPipeline
 from api.services.rag_pipeline import RAGPipeline
 from api.services.safety_guardrails import SafetyGuardrails
 
@@ -34,6 +35,9 @@ def initialize_rag_system():
         embedding_service = MedicalEmbeddingService(provider="sentence-transformers")
         safety = SafetyGuardrails()
 
+        # Initialize Hybrid RAG Pipeline (with PubMed support)
+        hybrid_rag = HybridRAGPipeline()
+
         # Try to initialize RAG pipeline (may not have LLM key)
         try:
             llm_provider = os.getenv("LLM_PRIMARY_PROVIDER", "groq")
@@ -50,18 +54,21 @@ def initialize_rag_system():
                     vector_store=vector_store,
                     embedding_service=embedding_service,
                     llm_provider=llm_provider,
+                    hybrid_rag=hybrid_rag,
                 )
             else:
-                # Create a retrieval-only version
+                # Create a retrieval-only version with hybrid RAG
                 rag_pipeline = RetrievalOnlyPipeline(
                     vector_store=vector_store,
                     embedding_service=embedding_service,
+                    hybrid_rag=hybrid_rag,
                 )
         except Exception as llm_error:
-            # Fallback to retrieval-only
+            # Fallback to retrieval-only with hybrid RAG
             rag_pipeline = RetrievalOnlyPipeline(
                 vector_store=vector_store,
                 embedding_service=embedding_service,
+                hybrid_rag=hybrid_rag,
             )
 
         return rag_pipeline, safety, None
@@ -73,13 +80,27 @@ def initialize_rag_system():
 class RetrievalOnlyPipeline:
     """Retrieval-only pipeline when LLM is not available"""
 
-    def __init__(self, vector_store, embedding_service):
+    def __init__(self, vector_store, embedding_service, hybrid_rag=None):
         self.vector_store = vector_store
         self.embedding_service = embedding_service
         self.document_processor = MedicalDocumentProcessor()
+        self.hybrid_rag = hybrid_rag
 
     def retrieve(self, query, top_k=5, category=None, use_hybrid=True, use_query_expansion=True):
-        """Retrieve relevant documents"""
+        """Retrieve relevant documents using HybridRAG if available"""
+        # Use HybridRAG pipeline if available (includes PubMed + Scholar)
+        if self.hybrid_rag:
+            return self.hybrid_rag.retrieve(
+                query=query,
+                top_k=top_k,
+                use_cag=True,
+                use_qdrant=True,
+                use_pubmed=True,  # Enable PubMed search
+                use_scholar=True,  # Enable Google Scholar search
+                score_threshold=0.5,
+            )
+
+        # Fallback to legacy retrieval
         # Generate query embedding
         if use_query_expansion:
             query_embeddings = self.embedding_service.embed_with_expansion(query)
@@ -421,6 +442,7 @@ def show_chatbot():
         original_query = user_input
 
         # Auto-enhance if enabled
+        enhanced_query_for_search = user_input  # Query to use for RAG search
         if st.session_state.get("auto_enhance_prompts", True):
             enhanced_query, was_enhanced = PromptEnhancer.enhance_prompt(user_input)
 
@@ -429,12 +451,17 @@ def show_chatbot():
                 with st.container():
                     st.info(f"🚀 **Prompt được tăng cường tự động**\n\n**Câu hỏi gốc:** {original_query}")
                     user_input = enhanced_query
+                    # Use original query for better PubMed/Scholar search results
+                    enhanced_query_for_search = original_query
             else:
                 user_input = original_query
 
         # Continue with original flow
         # Add user message
         st.session_state.chat_messages.append({"role": "user", "content": user_input})
+
+        # Store search query in session state for RAG
+        st.session_state.last_search_query = enhanced_query_for_search
 
         # Generate response using RAG
         response = generate_rag_response(

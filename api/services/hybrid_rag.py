@@ -58,6 +58,7 @@ class HybridRAGPipeline:
         use_cag: bool = True,
         use_qdrant: bool = True,
         use_pubmed: bool = False,
+        use_scholar: bool = False,
         score_threshold: float = 0.5,
     ) -> List[Dict[str, Any]]:
         """
@@ -95,6 +96,12 @@ class HybridRAGPipeline:
             pubmed_results = self._search_pubmed(query, max_results=5)
             results.extend(pubmed_results)
             logger.info(f"PubMed search returned {len(pubmed_results)} results")
+
+        # Tier 4: Google Scholar (optional, slower)
+        if use_scholar:
+            scholar_results = self._search_scholar(query, max_results=3)
+            results.extend(scholar_results)
+            logger.info(f"Google Scholar returned {len(scholar_results)} results")
 
         # Deduplicate and rank
         results = self._deduplicate_results(results)
@@ -189,12 +196,15 @@ class HybridRAGPipeline:
         Returns:
             List of PubMed articles
         """
+        logger.info(f"=== PubMed search called with query: '{query}', max_results: {max_results}")
         try:
             from Bio import Entrez
+            logger.info("✓ Biopython imported successfully")
 
             # Set email and API key for PubMed API
             Entrez.email = os.getenv("NCBI_EMAIL", "noreply@mediai.com")
             Entrez.api_key = os.getenv("NCBI_API_KEY")  # Use API key for higher rate limits
+            logger.info(f"✓ Entrez configured - Email: {Entrez.email}, API key: {'SET' if Entrez.api_key else 'NOT SET'}")
 
             # Search PubMed
             handle = Entrez.esearch(
@@ -205,8 +215,10 @@ class HybridRAGPipeline:
 
             # Get article IDs
             id_list = search_results["IdList"]
+            logger.info(f"✓ PubMed search returned {len(id_list)} article IDs: {id_list[:3]}...")
 
             if not id_list:
+                logger.warning("No PubMed articles found for query")
                 return []
 
             # Fetch article details
@@ -247,14 +259,82 @@ class HybridRAGPipeline:
                     logger.error(f"Error parsing PubMed article: {e}")
                     continue
 
+            logger.info(f"✓ Successfully formatted {len(pubmed_results)} PubMed articles")
             return pubmed_results
 
         except ImportError:
-            logger.warning("Biopython not installed. PubMed search disabled.")
+            logger.warning("❌ Biopython not installed. PubMed search disabled.")
             return []
 
         except Exception as e:
-            logger.error(f"PubMed search failed: {e}")
+            logger.error(f"❌ PubMed search failed: {e}")
+            return []
+
+    def _search_scholar(self, query: str, max_results: int = 3) -> List[Dict[str, Any]]:
+        """
+        Search Google Scholar for medical research.
+
+        Args:
+            query: User query
+            max_results: Maximum number of results
+
+        Returns:
+            List of Scholar articles
+        """
+        logger.info(f"=== Google Scholar search called with query: '{query}', max_results: {max_results}")
+        try:
+            from scholarly import scholarly
+            logger.info("✓ Scholarly imported successfully")
+
+            # Search Google Scholar
+            search_query = scholarly.search_pubs(query)
+
+            scholar_results = []
+            for i, article in enumerate(search_query):
+                if i >= max_results:
+                    break
+
+                try:
+                    title = article.get('bib', {}).get('title', '')
+                    abstract = article.get('bib', {}).get('abstract', '')
+                    authors = article.get('bib', {}).get('author', [])
+                    year = article.get('bib', {}).get('pub_year', '')
+                    venue = article.get('bib', {}).get('venue', '')
+                    url = article.get('pub_url', '') or article.get('eprint_url', '')
+
+                    # Format authors
+                    author_str = ', '.join(authors[:3]) if authors else 'Unknown'
+                    if len(authors) > 3:
+                        author_str += ' et al.'
+
+                    scholar_results.append({
+                        "content": f"{title}\n\n{abstract}" if abstract else title,
+                        "source": f"Google Scholar ({author_str}, {year})",
+                        "category": "research",
+                        "score": 0.75,  # Default score for Scholar
+                        "tier": "scholar",
+                        "metadata": {
+                            "title": title,
+                            "authors": author_str,
+                            "year": year,
+                            "venue": venue,
+                            "url": url,
+                        },
+                    })
+
+                except Exception as e:
+                    logger.error(f"Error parsing Scholar article: {e}")
+                    continue
+
+            logger.info(f"✓ Successfully formatted {len(scholar_results)} Scholar articles")
+            return scholar_results
+
+        except ImportError:
+            logger.warning("❌ scholarly not installed. Google Scholar search disabled.")
+            return []
+
+        except Exception as e:
+            logger.error(f"❌ Google Scholar search failed: {e}")
             return []
 
     def _deduplicate_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -306,7 +386,7 @@ class HybridRAGPipeline:
             Sorted results by score
         """
         # Sort by score (descending) and tier priority
-        tier_priority = {"cag": 3, "qdrant": 2, "pubmed": 1}
+        tier_priority = {"cag": 4, "qdrant": 3, "pubmed": 2, "scholar": 1}
 
         sorted_results = sorted(
             results,
