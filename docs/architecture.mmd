@@ -1,0 +1,122 @@
+graph TB
+    subgraph "User Interface Layer"
+        UI[Streamlit Web App]
+        Dashboard[Dashboard & Analytics]
+        Chat[Medical Chatbot Interface]
+    end
+
+    subgraph "Application Layer"
+        Auth[Authentication & Authorization]
+        Session[Session Management]
+        Audit[Audit Logger]
+    end
+
+    subgraph "Medical AI Chatbot - RAG Pipeline"
+        Safety[Safety Guardrails]
+        Enhance[Auto Prompt Enhancement]
+        
+        subgraph "Hybrid RAG System"
+            CAG[CAG Cache<br/>Static Medical Knowledge]
+            Qdrant[Qdrant Vector Store<br/>Semantic Search]
+            PubMed[PubMed API<br/>Latest Research]
+            Scholar[Google Scholar<br/>Academic Papers]
+        end
+        
+        LLM[LLM Provider<br/>Groq/DeepSeek/OpenAI]
+        Response[Response Generation<br/>with Citations]
+    end
+
+    subgraph "ML Prediction Models"
+        SepsisModel[Sepsis Prediction Model<br/>XGBoost]
+        MortalityModel[Mortality Prediction Model<br/>Random Forest]
+        Features[Feature Engineering]
+        Explainer[SHAP Explainer]
+    end
+
+    subgraph "Data Processing Layer"
+        Embeddings[Medical Embeddings<br/>BioBERT]
+        DocProcessor[Document Processor<br/>Medical Text Analysis]
+        VectorStore[Vector Database<br/>Qdrant Cloud]
+    end
+
+    subgraph "External Medical APIs"
+        NCBI[NCBI E-utilities<br/>PubMed/MedLine]
+        Scholar_API[Scholarly Library<br/>Google Scholar]
+    end
+
+    subgraph "Data Storage"
+        ModelCache[Model Cache<br/>Pickle Files]
+        ChatHistory[Chat History<br/>JSON Storage]
+        AuditLog[Audit Logs<br/>Encrypted]
+    end
+
+    subgraph "Security & Compliance"
+        Encryption[AES Encryption]
+        HIPAA[HIPAA Compliance]
+        Guardrails[Medical Safety Checks]
+    end
+
+    %% User Flow
+    UI --> Auth
+    UI --> Dashboard
+    UI --> Chat
+
+    %% Chat Flow
+    Chat --> Safety
+    Safety --> Enhance
+    Enhance --> CAG
+    Enhance --> Qdrant
+    Enhance --> PubMed
+    Enhance --> Scholar
+    
+    CAG --> Response
+    Qdrant --> Response
+    PubMed --> Response
+    Scholar --> Response
+    
+    Response --> LLM
+    LLM --> Safety
+    Safety --> Chat
+
+    %% Prediction Flow
+    Dashboard --> SepsisModel
+    Dashboard --> MortalityModel
+    SepsisModel --> Features
+    MortalityModel --> Features
+    Features --> Explainer
+    Explainer --> Dashboard
+
+    %% Data Processing
+    DocProcessor --> Embeddings
+    Embeddings --> VectorStore
+    VectorStore --> Qdrant
+
+    %% External APIs
+    PubMed --> NCBI
+    Scholar --> Scholar_API
+
+    %% Storage
+    SepsisModel --> ModelCache
+    MortalityModel --> ModelCache
+    Chat --> ChatHistory
+    Auth --> AuditLog
+
+    %% Security
+    Auth --> Encryption
+    AuditLog --> Encryption
+    Safety --> Guardrails
+    Guardrails --> HIPAA
+
+    classDef userLayer fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef appLayer fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef aiLayer fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef mlLayer fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef dataLayer fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef securityLayer fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+
+    class UI,Dashboard,Chat userLayer
+    class Auth,Session,Audit appLayer
+    class Safety,Enhance,CAG,Qdrant,PubMed,Scholar,LLM,Response aiLayer
+    class SepsisModel,MortalityModel,Features,Explainer mlLayer
+    class Embeddings,DocProcessor,VectorStore,NCBI,Scholar_API dataLayer
+    class Encryption,HIPAA,Guardrails securityLayer
