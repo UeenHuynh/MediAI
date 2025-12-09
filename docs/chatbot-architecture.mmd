@@ -1,0 +1,97 @@
+flowchart TD
+    Start([User Query: shock]) --> SafetyCheck{Safety Check}
+    
+    SafetyCheck -->|Emergency| EmergencyResp[🚨 Emergency Response<br/>Call 911 + Guidelines]
+    SafetyCheck -->|Unsafe| BlockResp[🚫 Blocked Response<br/>Safety Message]
+    SafetyCheck -->|Safe| AutoEnhance{Auto-Enhance<br/>Enabled?}
+    
+    AutoEnhance -->|Yes| PatternMatch[Pattern Matching<br/>15+ Medical Patterns<br/>sepsis, shock, labs...]
+    AutoEnhance -->|No| OriginalQuery[Use Original Query]
+    
+    PatternMatch --> EnhancedPrompt[Enhanced Prompt<br/>Detailed Medical Context<br/>500-1000 words]
+    PatternMatch --> SearchQuery[Original Query<br/>For Search APIs]
+    OriginalQuery --> SearchQuery
+    
+    EnhancedPrompt --> LLMInput[LLM Input]
+    SearchQuery --> Tier1
+    
+    subgraph RetrievalTiers[4-Tier Hybrid Retrieval]
+        Tier1[Tier 1: CAG Cache<br/>Static Knowledge<br/>Priority: 4]
+        Tier2[Tier 2: Qdrant<br/>BioBERT Embeddings<br/>Priority: 3]
+        Tier3[Tier 3: PubMed<br/>NCBI E-utilities<br/>Priority: 2]
+        Tier4[Tier 4: Scholar<br/>Google Scholar<br/>Priority: 1]
+    end
+    
+    Tier1 --> Results1[CAG Results<br/>Guidelines & Protocols]
+    Tier2 --> Results2[Qdrant Results<br/>Semantic Search]
+    Tier3 --> Results3[PubMed Results<br/>2-3 papers + PMID]
+    Tier4 --> Results4[Scholar Results<br/>1-2 papers filtered]
+    
+    Results1 --> Aggregate[Aggregate & Rank<br/>Deduplication<br/>Tier-based Scoring]
+    Results2 --> Aggregate
+    Results3 --> Aggregate
+    Results4 --> Aggregate
+    
+    Aggregate --> TopK[Select Top-3<br/>Truncate to 1000 chars each]
+    
+    TopK --> TokenCheck{Token Count<br/>< 12K?}
+    TokenCheck -->|No| ReduceK[Reduce to Top-2<br/>Re-check tokens]
+    TokenCheck -->|Yes| BuildContext[Build Context Prompt<br/>System + User + Sources]
+    ReduceK --> BuildContext
+    
+    BuildContext --> LLMInput
+    LLMInput --> LLM[Groq LLM<br/>llama-3.3-70b-versatile<br/>Temp: 0.3]
+    
+    LLM --> GenerateAnswer[Generate Answer<br/>with citations refs]
+    
+    GenerateAnswer --> ExtractCitations[Extract Citations<br/>PMID + URLs + Titles]
+    
+    ExtractCitations --> AddDisclaimer[Add Medical Disclaimer<br/>HIPAA Compliance]
+    
+    AddDisclaimer --> PostSafety{Post Safety<br/>Check}
+    PostSafety -->|Issues| FixResponse[Add Missing Disclaimer<br/>Or 911 Reference]
+    PostSafety -->|Pass| Display
+    FixResponse --> Display
+    
+    Display[Display Response<br/>+ Sources Expander<br/>Clickable PMID Links]
+    
+    EmergencyResp --> Display
+    BlockResp --> Display
+    
+    Display --> End([End])
+    
+    classDef startStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
+    classDef decisionStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef emergencyStyle fill:#ffebee,stroke:#d32f2f,stroke-width:3px,color:#000
+    classDef blockStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    classDef enhanceStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef promptStyle fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px,color:#000
+    classDef queryStyle fill:#c5cae9,stroke:#3949ab,stroke-width:2px,color:#000
+    classDef tier1Style fill:#c8e6c9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef tier2Style fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    classDef tier3Style fill:#ffccbc,stroke:#e64a19,stroke-width:2px,color:#000
+    classDef tier4Style fill:#b3e5fc,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef aggregateStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef topkStyle fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px,color:#000
+    classDef tokenStyle fill:#ffccbc,stroke:#d84315,stroke-width:2px,color:#000
+    classDef llmStyle fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px,color:#000
+    classDef displayStyle fill:#c8e6c9,stroke:#388e3c,stroke-width:3px,color:#000
+    classDef endStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
+    
+    class Start startStyle
+    class SafetyCheck,AutoEnhance,TokenCheck,PostSafety decisionStyle
+    class EmergencyResp emergencyStyle
+    class BlockResp blockStyle
+    class PatternMatch,OriginalQuery enhanceStyle
+    class EnhancedPrompt promptStyle
+    class SearchQuery queryStyle
+    class Tier1,Results1 tier1Style
+    class Tier2,Results2 tier2Style
+    class Tier3,Results3 tier3Style
+    class Tier4,Results4 tier4Style
+    class Aggregate aggregateStyle
+    class TopK topkStyle
+    class TokenCheck tokenStyle
+    class LLM,LLMInput,GenerateAnswer llmStyle
+    class Display,BuildContext,ExtractCitations,AddDisclaimer,FixResponse displayStyle
+    class End endStyle

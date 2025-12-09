@@ -1,7 +1,13 @@
 """
-UI Components for MediAI
+UI Components for MediAI Application
 """
 
-from .chatbot import render_chatbot
+from .magic_prompt_generator import (
+    show_magic_prompt_generator,
+    show_magic_prompt_sidebar,
+)
 
-__all__ = ["render_chatbot"]
+__all__ = [
+    "show_magic_prompt_generator",
+    "show_magic_prompt_sidebar",
+]

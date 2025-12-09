@@ -1,0 +1,214 @@
+graph TB
+    subgraph PresentationLayer[PRESENTATION LAYER]
+        UI[Streamlit Web App<br/>Port 8501]
+        Auth[Authentication<br/>bcrypt + JWT]
+        Dashboard[Dashboard<br/>Charts & Metrics]
+        SepsisUI[Sepsis Prediction<br/>42 Features]
+        MortalityUI[Mortality Prediction<br/>13 Features]
+        ChatbotUI[Medical Chatbot<br/>RAG System]
+    end
+    
+    subgraph ApplicationLayer[APPLICATION LAYER - FastAPI]
+        APIGateway[FastAPI Gateway<br/>Port 8000]
+        
+        subgraph Routers
+            HealthRouter[Health Check]
+            PredictRouter[Prediction Routes]
+            PatientRouter[Patient Data]
+        end
+        
+        subgraph Middleware
+            CORS[CORS Policy]
+            ErrorHandler[Error Handler]
+            RateLimit[Rate Limiter<br/>100 req/min]
+            Validator[Pydantic Validator]
+        end
+        
+        subgraph Services
+            PredictionSvc[Prediction Service]
+            CacheSvc[Cache Service]
+            DBSvc[Database Service]
+            AuditSvc[Audit Service]
+        end
+    end
+    
+    subgraph MedicalChatbot[MEDICAL AI CHATBOT]
+        SafetyGuard[Safety Guardrails]
+        PromptEnhance[Prompt Enhancement]
+        
+        subgraph Tier1[Tier 1 CAG Cache]
+            CAGStore[Static Knowledge<br/>Priority: 4]
+        end
+        
+        subgraph Tier2[Tier 2 Vector DB]
+            QdrantEmbed[BioBERT Embeddings]
+            QdrantSearch[Vector Search<br/>Priority: 3]
+        end
+        
+        subgraph Tier3[Tier 3 PubMed]
+            NCBIApi[NCBI API<br/>Priority: 2]
+        end
+        
+        subgraph Tier4[Tier 4 Scholar]
+            ScholarAPI[Google Scholar<br/>Priority: 1]
+        end
+        
+        RAGAggregator[Context Aggregation]
+        LLMEngine[Groq LLM<br/>llama-3.3-70b]
+        CitationBuilder[Citation Builder]
+    end
+    
+    subgraph MLModels[ML MODELS]
+        subgraph SepsisModelGroup[Sepsis Model]
+            SepsisModel[LightGBM<br/>AUROC: 0.89]
+            SepsisSHAP[SHAP Explainer]
+        end
+        
+        subgraph MortalityModelGroup[Mortality Model]
+            MortalityModel[LightGBM<br/>AUROC: 0.65]
+            MortSHAP[SHAP Explainer]
+        end
+        
+        FeatureEng[Feature Engineering]
+        ModelCache[Model Cache]
+    end
+    
+    subgraph DataProcessing[DATA PROCESSING]
+        BioBERT[BioBERT Encoder]
+        DocLoader[Document Loader]
+        TextSplitter[Text Chunker]
+        VectorStore[Qdrant Vector DB]
+    end
+    
+    subgraph DataStorage[DATA STORAGE]
+        subgraph PostgreSQL16[PostgreSQL 16]
+            PostgreSQL[(MIMIC-IV Data)]
+        end
+        
+        subgraph Redis72[Redis 7.2]
+            RedisCache[(LRU Cache)]
+        end
+        
+        subgraph FileStorage[File Storage]
+            ModelFiles[(Model Files)]
+            AuditLogs[(Audit Logs)]
+        end
+    end
+    
+    subgraph ExternalAPIs[EXTERNAL APIs]
+        NCBI[NCBI E-utilities]
+        ScholarExt[Google Scholar]
+        QdrantCloud[Qdrant Cloud]
+        Supabase[Supabase]
+    end
+    
+    subgraph Security[SECURITY & COMPLIANCE]
+        Encryption[AES-256-GCM]
+        HIPAA[HIPAA Compliance]
+        GDPR[GDPR Controls]
+    end
+    
+    subgraph DevOps[DEVOPS & TESTING]
+        Docker[Docker Compose]
+        GHActions[GitHub Actions]
+        TestRunner[pytest]
+    end
+    
+    UI --> Auth
+    UI --> Dashboard
+    UI --> SepsisUI
+    UI --> MortalityUI
+    UI --> ChatbotUI
+    
+    SepsisUI --> APIGateway
+    MortalityUI --> APIGateway
+    ChatbotUI --> APIGateway
+    
+    APIGateway --> CORS
+    CORS --> ErrorHandler
+    ErrorHandler --> RateLimit
+    RateLimit --> Validator
+    
+    Validator --> HealthRouter
+    Validator --> PredictRouter
+    Validator --> PatientRouter
+    
+    PredictRouter --> PredictionSvc
+    PredictionSvc --> CacheSvc
+    CacheSvc --> RedisCache
+    
+    ChatbotUI --> SafetyGuard
+    SafetyGuard --> PromptEnhance
+    PromptEnhance --> CAGStore
+    PromptEnhance --> QdrantEmbed
+    PromptEnhance --> NCBIApi
+    PromptEnhance --> ScholarAPI
+    
+    CAGStore --> RAGAggregator
+    QdrantSearch --> RAGAggregator
+    NCBIApi --> RAGAggregator
+    ScholarAPI --> RAGAggregator
+    
+    QdrantEmbed --> QdrantSearch
+    
+    RAGAggregator --> LLMEngine
+    LLMEngine --> CitationBuilder
+    CitationBuilder --> ChatbotUI
+    
+    PredictionSvc --> FeatureEng
+    FeatureEng --> SepsisModel
+    FeatureEng --> MortalityModel
+    SepsisModel --> SepsisSHAP
+    MortalityModel --> MortSHAP
+    SepsisSHAP --> PredictionSvc
+    MortSHAP --> PredictionSvc
+    
+    SepsisModel --> ModelCache
+    MortalityModel --> ModelCache
+    ModelCache --> ModelFiles
+    
+    DocLoader --> TextSplitter
+    TextSplitter --> BioBERT
+    BioBERT --> VectorStore
+    VectorStore --> QdrantSearch
+    
+    PredictionSvc --> DBSvc
+    DBSvc --> PostgreSQL
+    
+    Auth --> AuditSvc
+    AuditSvc --> AuditLogs
+    AuditSvc --> HIPAA
+    
+    NCBIApi --> NCBI
+    ScholarAPI --> ScholarExt
+    VectorStore --> QdrantCloud
+    DBSvc --> Supabase
+    
+    Auth --> Encryption
+    AuditLogs --> Encryption
+    SafetyGuard --> HIPAA
+    SafetyGuard --> GDPR
+    
+    GHActions --> TestRunner
+    Docker --> APIGateway
+    Docker --> UI
+    Docker --> PostgreSQL
+    Docker --> RedisCache
+    
+    classDef uiStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef apiStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef aiStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef mlStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef dataStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    classDef storageStyle fill:#e0f2f1,stroke:#00796b,stroke-width:2px,color:#000
+    classDef securityStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    classDef devopsStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,color:#000
+    
+    class UI,Auth,Dashboard,SepsisUI,MortalityUI,ChatbotUI uiStyle
+    class APIGateway,HealthRouter,PredictRouter,PatientRouter,CORS,ErrorHandler,RateLimit,Validator,PredictionSvc,CacheSvc,DBSvc,AuditSvc apiStyle
+    class SafetyGuard,PromptEnhance,CAGStore,QdrantEmbed,QdrantSearch,NCBIApi,ScholarAPI,RAGAggregator,LLMEngine,CitationBuilder aiStyle
+    class SepsisModel,MortalityModel,SepsisSHAP,MortSHAP,FeatureEng,ModelCache mlStyle
+    class BioBERT,DocLoader,TextSplitter,VectorStore dataStyle
+    class PostgreSQL,RedisCache,ModelFiles,AuditLogs storageStyle
+    class Encryption,HIPAA,GDPR securityStyle
+    class Docker,GHActions,TestRunner devopsStyle

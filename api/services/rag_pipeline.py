@@ -12,6 +12,7 @@ import numpy as np
 from ..core.vector_store import VectorStore
 from .document_processor import MedicalDocumentProcessor
 from .embedding_service import MedicalEmbeddingService
+from .hybrid_rag import HybridRAGPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class RAGPipeline:
         document_processor: Optional[MedicalDocumentProcessor] = None,
         llm_api_key: Optional[str] = None,
         llm_provider: str = "deepseek",
+        hybrid_rag: Optional[HybridRAGPipeline] = None,
     ):
         """
         Initialize RAG pipeline
@@ -38,6 +40,7 @@ class RAGPipeline:
             document_processor: Document processor instance
             llm_api_key: API key for LLM (DeepSeek, OpenAI, etc.)
             llm_provider: LLM provider ('deepseek', 'openai', 'anthropic')
+            hybrid_rag: Hybrid RAG pipeline instance for PubMed support
         """
         self.vector_store = vector_store or VectorStore()
         self.embedding_service = embedding_service or MedicalEmbeddingService(
@@ -46,6 +49,7 @@ class RAGPipeline:
         self.document_processor = (
             document_processor or MedicalDocumentProcessor()
         )
+        self.hybrid_rag = hybrid_rag or HybridRAGPipeline()
 
         self.llm_provider = llm_provider
 
@@ -198,7 +202,7 @@ class RAGPipeline:
         use_query_expansion: bool = True,
     ) -> List[Dict]:
         """
-        Retrieve relevant documents for a query
+        Retrieve relevant documents for a query using HybridRAG
 
         Args:
             query: User query
@@ -210,6 +214,21 @@ class RAGPipeline:
         Returns:
             List of relevant documents with metadata
         """
+        # Use HybridRAG pipeline (includes PubMed + Scholar)
+        if self.hybrid_rag:
+            documents = self.hybrid_rag.retrieve(
+                query=query,
+                top_k=top_k,
+                use_cag=True,
+                use_qdrant=True,
+                use_pubmed=True,  # Enable PubMed search
+                use_scholar=True,  # Enable Google Scholar search
+                score_threshold=0.5,
+            )
+            logger.info(f"Retrieved {len(documents)} documents via HybridRAG for query: {query[:50]}...")
+            return documents
+
+        # Fallback to legacy retrieval
         # Generate query embedding
         if use_query_expansion:
             query_embeddings = self.embedding_service.embed_with_expansion(query)
@@ -263,15 +282,30 @@ class RAGPipeline:
         citations = []
 
         for idx, doc in enumerate(context_docs, 1):
-            context_parts.append(f"[{idx}] {doc['content']}")
-            citations.append(
-                {
-                    "id": idx,
-                    "source": doc["source"],
-                    "category": doc["category"],
-                    "similarity": doc.get("hybrid_score", doc.get("similarity", 0)),
-                }
-            )
+            # Truncate content to max 1000 chars to avoid token limits
+            content = doc['content']
+            if len(content) > 1000:
+                content = content[:1000] + "..."
+            context_parts.append(f"[{idx}] {content}")
+
+            # Build citation with full metadata
+            citation = {
+                "id": idx,
+                "source": doc["source"],
+                "category": doc["category"],
+                "similarity": doc.get("hybrid_score", doc.get("similarity", 0)),
+            }
+
+            # Add PubMed-specific metadata if available
+            if "metadata" in doc and doc["metadata"]:
+                metadata = doc["metadata"]
+                if "pmid" in metadata:
+                    citation["pmid"] = metadata["pmid"]
+                    citation["url"] = f"https://pubmed.ncbi.nlm.nih.gov/{metadata['pmid']}/"
+                if "title" in metadata:
+                    citation["title"] = metadata["title"]
+
+            citations.append(citation)
 
         context_text = "\n\n".join(context_parts)
 
