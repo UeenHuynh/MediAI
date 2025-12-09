@@ -1,127 +1,81 @@
-graph TB
-    subgraph "Input Layer - Query Processing"
-        UserQuery[User Query<br/>'shock']
-        SafetyCheck{Safety<br/>Guardrails}
-        Emergency{Emergency<br/>Detection?}
-        AutoEnhance{Auto-Enhance<br/>Enabled?}
+flowchart TD
+    Start([User Query: 'shock']) --> SafetyCheck{Safety Check}
+    
+    SafetyCheck -->|Emergency| EmergencyResp[🚨 Emergency Response<br/>Call 911 + Guidelines]
+    SafetyCheck -->|Unsafe| BlockResp[🚫 Blocked Response<br/>Safety Message]
+    SafetyCheck -->|Safe| AutoEnhance{Auto-Enhance<br/>Enabled?}
+    
+    AutoEnhance -->|Yes| PatternMatch[Pattern Matching<br/>15+ Medical Patterns<br/>sepsis, shock, labs...]
+    AutoEnhance -->|No| OriginalQuery[Use Original Query]
+    
+    PatternMatch --> EnhancedPrompt[Enhanced Prompt<br/>Detailed Medical Context<br/>500-1000 words]
+    PatternMatch --> SearchQuery[Original Query<br/>For Search APIs]
+    OriginalQuery --> SearchQuery
+    
+    EnhancedPrompt --> LLMInput[LLM Input]
+    SearchQuery --> Tier1
+    
+    subgraph RetrievalTiers["🔍 4-Tier Hybrid Retrieval"]
+        Tier1[Tier 1: CAG Cache<br/>Static Knowledge<br/>Priority: 4]
+        Tier2[Tier 2: Qdrant<br/>BioBERT Embeddings<br/>Priority: 3]
+        Tier3[Tier 3: PubMed<br/>NCBI E-utilities<br/>Priority: 2]
+        Tier4[Tier 4: Scholar<br/>Google Scholar<br/>Priority: 1]
     end
-
-    subgraph "Prompt Enhancement System"
-        PatternMatch[Pattern Matching<br/>15+ Medical Patterns]
-        Enhanced[Enhanced Prompt<br/>Detailed Medical Context]
-        Original[Original Query<br/>For Search]
-    end
-
-    subgraph "Tier 1: CAG - Static Cache"
-        CAG_Check[Check CAG Cache]
-        CAG_Results[Static Medical Knowledge<br/>Guidelines, Protocols]
-    end
-
-    subgraph "Tier 2: Qdrant - Semantic Search"
-        Qdrant_Embed[Generate Embeddings<br/>BioBERT]
-        Qdrant_Search[Vector Similarity Search]
-        Qdrant_Results[Relevant Documents<br/>Score > 0.5]
-    end
-
-    subgraph "Tier 3: PubMed - Latest Research"
-        PubMed_Query[NCBI E-utilities API]
-        PubMed_Filter[Medical Keywords Filter]
-        PubMed_Results[Recent Papers<br/>with PMID]
-    end
-
-    subgraph "Tier 4: Google Scholar - Academic Papers"
-        Scholar_Query[Scholarly Library]
-        Scholar_Enhance[Add Medical Keywords<br/>'medical treatment clinical']
-        Scholar_Filter[Relevance Filter<br/>Medical Terms Check]
-        Scholar_Results[Academic Papers<br/>Filtered by Domain]
-    end
-
-    subgraph "Context Aggregation"
-        Dedup[Deduplicate Results]
-        Rank[Tier-based Ranking<br/>CAG=4, Qdrant=3<br/>PubMed=2, Scholar=1]
-        TopK[Select Top 3<br/>Token Limit Control]
-        Truncate[Truncate to 1000 chars<br/>per document]
-    end
-
-    subgraph "LLM Generation"
-        BuildPrompt[Build Context Prompt<br/>System + User + Context]
-        LLM[Groq/DeepSeek LLM<br/>llama-3.3-70b]
-        TokenCheck{Token Count<br/>< 12K?}
-    end
-
-    subgraph "Output Processing"
-        Generate[Generate Answer<br/>with [1], [2], [3] refs]
-        Citations[Build Citations Metadata<br/>PMID, URLs, Titles]
-        Disclaimer[Add Medical Disclaimer]
-        Display[Display Response<br/>+ 📚 Sources Expander]
-    end
-
-    %% Flow
-    UserQuery --> SafetyCheck
-    SafetyCheck -->|Unsafe| Emergency
-    SafetyCheck -->|Safe| AutoEnhance
-    Emergency -->|Yes| Display
     
-    AutoEnhance -->|Yes| PatternMatch
-    AutoEnhance -->|No| Original
-    PatternMatch --> Enhanced
-    PatternMatch --> Original
+    Tier1 --> Results1[CAG Results<br/>Guidelines & Protocols]
+    Tier2 --> Results2[Qdrant Results<br/>Semantic Search]
+    Tier3 --> Results3[PubMed Results<br/>2-3 papers + PMID]
+    Tier4 --> Results4[Scholar Results<br/>1-2 papers filtered]
     
-    Enhanced --> CAG_Check
-    Original --> CAG_Check
-    Original --> Qdrant_Embed
-    Original --> PubMed_Query
-    Original --> Scholar_Query
+    Results1 --> Aggregate[Aggregate & Rank<br/>Deduplication<br/>Tier-based Scoring]
+    Results2 --> Aggregate
+    Results3 --> Aggregate
+    Results4 --> Aggregate
     
-    CAG_Check --> CAG_Results
+    Aggregate --> TopK[Select Top-3<br/>Truncate to 1000 chars each]
     
-    Qdrant_Embed --> Qdrant_Search
-    Qdrant_Search --> Qdrant_Results
+    TopK --> TokenCheck{Token Count<br/>< 12K?}
+    TokenCheck -->|No| ReduceK[Reduce to Top-2<br/>Re-check tokens]
+    TokenCheck -->|Yes| BuildContext[Build Context Prompt<br/>System + User + [1][2][3]]
+    ReduceK --> BuildContext
     
-    PubMed_Query --> PubMed_Filter
-    PubMed_Filter --> PubMed_Results
+    BuildContext --> LLMInput
+    LLMInput --> LLM[Groq LLM<br/>llama-3.3-70b-versatile<br/>Temp: 0.3]
     
-    Scholar_Query --> Scholar_Enhance
-    Scholar_Enhance --> Scholar_Filter
-    Scholar_Filter --> Scholar_Results
+    LLM --> GenerateAnswer[Generate Answer<br/>with [1], [2], [3] refs]
     
-    CAG_Results --> Dedup
-    Qdrant_Results --> Dedup
-    PubMed_Results --> Dedup
-    Scholar_Results --> Dedup
+    GenerateAnswer --> ExtractCitations[Extract Citations<br/>PMID + URLs + Titles]
     
-    Dedup --> Rank
-    Rank --> TopK
-    TopK --> Truncate
+    ExtractCitations --> AddDisclaimer[Add Medical Disclaimer<br/>HIPAA Compliance]
     
-    Truncate --> BuildPrompt
-    Enhanced --> BuildPrompt
-    BuildPrompt --> TokenCheck
-    TokenCheck -->|No| TopK
-    TokenCheck -->|Yes| LLM
+    AddDisclaimer --> PostSafety{Post Safety<br/>Check}
+    PostSafety -->|Issues| FixResponse[Add Missing Disclaimer<br/>Or 911 Reference]
+    PostSafety -->|Pass| Display
+    FixResponse --> Display
     
-    LLM --> Generate
-    Generate --> Citations
-    Citations --> Disclaimer
-    Disclaimer --> Display
-
-    %% Styling
-    classDef inputClass fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
-    classDef enhanceClass fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
-    classDef tier1Class fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    classDef tier2Class fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
-    classDef tier3Class fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    classDef tier4Class fill:#e0f2f1,stroke:#00695c,stroke-width:2px
-    classDef contextClass fill:#fff9c4,stroke:#f57f17,stroke-width:2px
-    classDef llmClass fill:#ffebee,stroke:#c62828,stroke-width:2px
-    classDef outputClass fill:#e8eaf6,stroke:#283593,stroke-width:2px
-
-    class UserQuery,SafetyCheck,Emergency,AutoEnhance inputClass
-    class PatternMatch,Enhanced,Original enhanceClass
-    class CAG_Check,CAG_Results tier1Class
-    class Qdrant_Embed,Qdrant_Search,Qdrant_Results tier2Class
-    class PubMed_Query,PubMed_Filter,PubMed_Results tier3Class
-    class Scholar_Query,Scholar_Enhance,Scholar_Filter,Scholar_Results tier4Class
-    class Dedup,Rank,TopK,Truncate contextClass
-    class BuildPrompt,LLM,TokenCheck llmClass
-    class Generate,Citations,Disclaimer,Display outputClass
+    Display[Display Response<br/>+ 📚 Sources Expander<br/>Clickable PMID Links]
+    
+    EmergencyResp --> Display
+    BlockResp --> Display
+    
+    Display --> End([End])
+    
+    style Start fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+    style SafetyCheck fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style EmergencyResp fill:#ffebee,stroke:#d32f2f,stroke-width:3px
+    style BlockResp fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    style AutoEnhance fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style PatternMatch fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style EnhancedPrompt fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px
+    style SearchQuery fill:#c5cae9,stroke:#3949ab,stroke-width:2px
+    style RetrievalTiers fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
+    style Tier1 fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style Tier2 fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+    style Tier3 fill:#ffccbc,stroke:#e64a19,stroke-width:2px
+    style Tier4 fill:#b3e5fc,stroke:#0277bd,stroke-width:2px
+    style Aggregate fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style TopK fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px
+    style TokenCheck fill:#ffccbc,stroke:#d84315,stroke-width:2px
+    style LLM fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px
+    style Display fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+    style End fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
