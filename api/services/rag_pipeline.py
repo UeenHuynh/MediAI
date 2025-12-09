@@ -282,7 +282,11 @@ class RAGPipeline:
         citations = []
 
         for idx, doc in enumerate(context_docs, 1):
-            context_parts.append(f"[{idx}] {doc['content']}")
+            # Truncate content to max 1000 chars to avoid token limits
+            content = doc['content']
+            if len(content) > 1000:
+                content = content[:1000] + "..."
+            context_parts.append(f"[{idx}] {content}")
 
             # Build citation with full metadata
             citation = {

@@ -464,6 +464,7 @@ def show_chatbot():
         st.session_state.last_search_query = enhanced_query_for_search
 
         # Generate response using RAG
+        # Use fewer documents when prompt is enhanced to avoid token limit
         response = generate_rag_response(
             user_input, rag_pipeline, safety, st.session_state.rag_enabled
         )
@@ -530,8 +531,9 @@ def generate_rag_response(
     if use_rag and rag_pipeline:
         try:
             # Use RAG pipeline
+            # Reduce top_k to 3 to avoid token limits with enhanced prompts
             result = rag_pipeline.query(
-                question=user_input, top_k=5, include_citations=True
+                question=user_input, top_k=3, include_citations=True
             )
 
             # Process response through safety guardrails

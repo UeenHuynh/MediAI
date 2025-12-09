@@ -287,16 +287,31 @@ class HybridRAGPipeline:
             logger.info("✓ Scholarly imported successfully")
 
             # Enhance query with medical keywords for better relevance
-            enhanced_query = f"{query} medical treatment clinical"
+            enhanced_query = f"{query} medical treatment clinical patient therapy"
             logger.info(f"Enhanced Scholar query: '{enhanced_query}'")
+
+            # Define medical keywords to filter results
+            medical_keywords = {
+                'medical', 'clinical', 'patient', 'treatment', 'therapy', 'diagnosis',
+                'disease', 'syndrome', 'hospital', 'care', 'health', 'medicine',
+                'sepsis', 'shock', 'infection', 'antibiotic', 'drug', 'procedure'
+            }
 
             # Search Google Scholar
             search_query = scholarly.search_pubs(enhanced_query)
 
             scholar_results = []
-            for i, article in enumerate(search_query):
-                if i >= max_results:
+            attempts = 0
+            max_attempts = max_results * 3  # Try up to 3x to find relevant papers
+
+            for article in search_query:
+                if len(scholar_results) >= max_results:
                     break
+                if attempts >= max_attempts:
+                    logger.warning(f"Reached max attempts ({max_attempts}) for Scholar search")
+                    break
+
+                attempts += 1
 
                 try:
                     title = article.get('bib', {}).get('title', '')
@@ -306,10 +321,20 @@ class HybridRAGPipeline:
                     venue = article.get('bib', {}).get('venue', '')
                     url = article.get('pub_url', '') or article.get('eprint_url', '')
 
+                    # Filter: Check if title or abstract contains medical keywords
+                    text_to_check = f"{title} {abstract}".lower()
+                    has_medical_keyword = any(keyword in text_to_check for keyword in medical_keywords)
+
+                    if not has_medical_keyword:
+                        logger.info(f"Skipping non-medical paper: {title[:50]}...")
+                        continue
+
                     # Format authors
                     author_str = ', '.join(authors[:3]) if authors else 'Unknown'
                     if len(authors) > 3:
                         author_str += ' et al.'
+
+                    logger.info(f"✓ Found relevant paper: {title[:60]}... by {author_str}")
 
                     scholar_results.append({
                         "content": f"{title}\n\n{abstract}" if abstract else title,
