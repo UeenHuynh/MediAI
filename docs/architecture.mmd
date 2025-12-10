@@ -12,9 +12,9 @@ graph TB
         APIGateway[FastAPI 0.109+<br/>Uvicorn ASGI Server<br/>Port 8000<br/>OpenAPI 3.0]
 
         subgraph Routers
-            HealthRouter[/health<br/>Health Check Endpoint]
-            PredictRouter[/predict/sepsis<br/>/predict/mortality<br/>ML Inference]
-            PatientRouter[/patients/*<br/>Patient CRUD APIs]
+            HealthRouter["GET /health<br/>Health Check Endpoint"]
+            PredictRouter["POST /predict/sepsis<br/>POST /predict/mortality<br/>ML Inference"]
+            PatientRouter["CRUD /patients/*<br/>Patient CRUD APIs"]
         end
 
         subgraph Middleware
