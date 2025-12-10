@@ -1,117 +1,119 @@
 graph TB
     subgraph PresentationLayer[PRESENTATION LAYER]
-        UI[Streamlit Web App<br/>Port 8501]
-        Auth[Authentication<br/>bcrypt + JWT]
-        Dashboard[Dashboard<br/>Charts & Metrics]
-        SepsisUI[Sepsis Prediction<br/>42 Features]
-        MortalityUI[Mortality Prediction<br/>13 Features]
-        ChatbotUI[Medical Chatbot<br/>RAG System]
+        UI[Streamlit 1.31+<br/>Port 8501<br/>Multi-page Navigation]
+        Auth[Authentication<br/>bcrypt + PyJWT<br/>Session State]
+        Dashboard[Dashboard<br/>Plotly 5.18 Charts<br/>Pandas DataFrames]
+        SepsisUI[Sepsis Prediction<br/>42 Features Form<br/>st.form + Validation]
+        MortalityUI[Mortality Prediction<br/>13 Features Form<br/>Real-time Inference]
+        ChatbotUI[Medical Chatbot<br/>st.chat_message<br/>RAG System]
     end
-    
-    subgraph ApplicationLayer[APPLICATION LAYER - FastAPI]
-        APIGateway[FastAPI Gateway<br/>Port 8000]
-        
+
+    subgraph ApplicationLayer[APPLICATION LAYER]
+        APIGateway[FastAPI 0.109+<br/>Uvicorn ASGI Server<br/>Port 8000<br/>OpenAPI 3.0]
+
         subgraph Routers
-            HealthRouter[Health Check]
-            PredictRouter[Prediction Routes]
-            PatientRouter[Patient Data]
+            HealthRouter[/health<br/>Health Check Endpoint]
+            PredictRouter[/predict/sepsis<br/>/predict/mortality<br/>ML Inference]
+            PatientRouter[/patients/*<br/>Patient CRUD APIs]
         end
-        
+
         subgraph Middleware
-            CORS[CORS Policy]
-            ErrorHandler[Error Handler]
-            RateLimit[Rate Limiter<br/>100 req/min]
-            Validator[Pydantic Validator]
+            CORS[CORS Middleware<br/>fastapi.middleware.cors<br/>Whitelist Origins]
+            ErrorHandler[Exception Handler<br/>Custom HTTP Errors<br/>400/500 Responses]
+            RateLimit[Rate Limiter<br/>100 req/min per IP<br/>slowapi]
+            Validator[Pydantic 2.5<br/>Schema Validation<br/>Type Enforcement]
         end
-        
+
         subgraph Services
-            PredictionSvc[Prediction Service]
-            CacheSvc[Cache Service]
-            DBSvc[Database Service]
-            AuditSvc[Audit Service]
+            PredictionSvc[Model Inference<br/>Pickle Model Loading<br/>SHAP Explanations]
+            CacheSvc[Redis Integration<br/>redis-py 5.0<br/>LRU Caching]
+            DBSvc[Database Layer<br/>SQLAlchemy 2.0<br/>Async Support]
+            AuditSvc[Audit Logger<br/>JSON Logging<br/>HIPAA Compliance]
         end
     end
     
     subgraph MedicalChatbot[MEDICAL AI CHATBOT]
-        SafetyGuard[Safety Guardrails]
-        PromptEnhance[Prompt Enhancement]
-        
-        subgraph Tier1[Tier 1 CAG Cache]
-            CAGStore[Static Knowledge<br/>Priority: 4]
+        SafetyGuard[Safety Guardrails<br/>Regex Pattern Matching<br/>Emergency Detection]
+        PromptEnhance[Auto Enhancement<br/>15+ Medical Patterns<br/>Python Regex]
+
+        subgraph Tier1[Tier 1: CAG Cache]
+            CAGStore[Static Knowledge<br/>JSON Files<br/>Guidelines & Protocols<br/>Priority: 4]
         end
-        
-        subgraph Tier2[Tier 2 Vector DB]
-            QdrantEmbed[BioBERT Embeddings]
-            QdrantSearch[Vector Search<br/>Priority: 3]
+
+        subgraph Tier2[Tier 2: Vector DB]
+            QdrantEmbed[BioBERT Embeddings<br/>sentence-transformers<br/>768-dim vectors]
+            QdrantSearch[Semantic Search<br/>Cosine Similarity > 0.5<br/>Priority: 3]
         end
-        
-        subgraph Tier3[Tier 3 PubMed]
-            NCBIApi[NCBI API<br/>Priority: 2]
+
+        subgraph Tier3[Tier 3: PubMed]
+            NCBIApi[NCBI E-utilities API<br/>Biopython 1.86<br/>Entrez.esearch<br/>10 req/sec with API key<br/>Priority: 2]
         end
-        
-        subgraph Tier4[Tier 4 Scholar]
-            ScholarAPI[Google Scholar<br/>Priority: 1]
+
+        subgraph Tier4[Tier 4: Scholar]
+            ScholarAPI[Google Scholar<br/>scholarly 1.7.11<br/>18 Medical Keywords Filter<br/>Priority: 1]
         end
-        
-        RAGAggregator[Context Aggregation]
-        LLMEngine[Groq LLM<br/>llama-3.3-70b]
-        CitationBuilder[Citation Builder]
+
+        RAGAggregator[Context Aggregation<br/>Deduplication<br/>Tier-based Ranking<br/>Top-K=3, Max 1000 chars]
+        LLMEngine[Groq API<br/>llama-3.3-70b-versatile<br/>Temp: 0.3<br/>Max Tokens: 12K]
+        CitationBuilder[Citation Builder<br/>PMID Links<br/>Metadata Extraction]
+    end
+
+    subgraph MLModels[ML PREDICTION MODELS]
+        subgraph SepsisModelGroup[Sepsis Early Warning]
+            SepsisModel[LightGBM 4.2<br/>Gradient Boosting<br/>42 Features<br/>AUROC: 0.89]
+            SepsisSHAP[SHAP 0.44<br/>TreeExplainer<br/>Feature Importance]
+        end
+
+        subgraph MortalityModelGroup[Mortality Risk]
+            MortalityModel[LightGBM 4.2<br/>Binary Classifier<br/>13 Features<br/>AUROC: 0.65]
+            MortSHAP[SHAP TreeExplainer<br/>Risk Factors]
+        end
+
+        FeatureEng[Feature Engineering<br/>Pandas 2.1<br/>NumPy 1.26<br/>scikit-learn Scalers]
+        ModelCache[Model Persistence<br/>Pickle Files<br/>Feature Names Cache]
     end
     
-    subgraph MLModels[ML MODELS]
-        subgraph SepsisModelGroup[Sepsis Model]
-            SepsisModel[LightGBM<br/>AUROC: 0.89]
-            SepsisSHAP[SHAP Explainer]
-        end
-        
-        subgraph MortalityModelGroup[Mortality Model]
-            MortalityModel[LightGBM<br/>AUROC: 0.65]
-            MortSHAP[SHAP Explainer]
-        end
-        
-        FeatureEng[Feature Engineering]
-        ModelCache[Model Cache]
+    subgraph DataProcessing[DATA PROCESSING LAYER]
+        BioBERT[BioBERT Encoder<br/>dmis-lab/biobert-base-cased-v1.2<br/>transformers 4.36<br/>768-dim Medical Embeddings]
+        DocLoader[Document Loader<br/>PDF, MD, TXT<br/>langchain.document_loaders<br/>Recursive Character Splitter]
+        TextSplitter[Text Chunker<br/>500 tokens overlap<br/>1000 chars per chunk<br/>Markdown-aware]
+        VectorStore[Qdrant Vector DB<br/>qdrant-client 1.16<br/>Cosine Similarity<br/>Hybrid Search]
     end
-    
-    subgraph DataProcessing[DATA PROCESSING]
-        BioBERT[BioBERT Encoder]
-        DocLoader[Document Loader]
-        TextSplitter[Text Chunker]
-        VectorStore[Qdrant Vector DB]
-    end
-    
+
     subgraph DataStorage[DATA STORAGE]
-        subgraph PostgreSQL16[PostgreSQL 16]
-            PostgreSQL[(MIMIC-IV Data)]
+        subgraph PostgreSQL16[PostgreSQL 16 Database]
+            PostgreSQL[(MIMIC-IV Dataset<br/>73K ICU Stays<br/>psycopg2-binary<br/>Async SQLAlchemy)]
         end
-        
-        subgraph Redis72[Redis 7.2]
-            RedisCache[(LRU Cache)]
+
+        subgraph Redis72[Redis 7.2 Cache]
+            RedisCache[(LRU Cache<br/>256MB Limit<br/>1hr TTL<br/>redis-py 5.0)]
         end
-        
-        subgraph FileStorage[File Storage]
-            ModelFiles[(Model Files)]
-            AuditLogs[(Audit Logs)]
+
+        subgraph FileStorage[File System Storage]
+            ModelFiles[(Pickle Models<br/>sepsis_lightgbm_v1.pkl<br/>mortality_lightgbm_v1.pkl<br/>Feature Names)]
+            AuditLogs[(JSON Audit Logs<br/>7-Year Retention<br/>Tamper-Evident<br/>HIPAA Compliant)]
         end
     end
-    
-    subgraph ExternalAPIs[EXTERNAL APIs]
-        NCBI[NCBI E-utilities]
-        ScholarExt[Google Scholar]
-        QdrantCloud[Qdrant Cloud]
-        Supabase[Supabase]
+
+    subgraph ExternalAPIs[EXTERNAL SERVICES]
+        NCBI[NCBI E-utilities API<br/>pubmed.ncbi.nlm.nih.gov<br/>Biopython Entrez<br/>Medical Literature]
+        ScholarExt[Google Scholar API<br/>scholarly Library<br/>Academic Papers<br/>Rate Limited]
+        QdrantCloud[Qdrant Cloud<br/>cc4894e9-...<br/>1GB Free Tier<br/>Vector Database SaaS]
+        Supabase[Supabase PostgreSQL<br/>mwavbkqfyybmxnnelazx<br/>Database as a Service<br/>Optional Backend]
     end
-    
+
     subgraph Security[SECURITY & COMPLIANCE]
-        Encryption[AES-256-GCM]
-        HIPAA[HIPAA Compliance]
-        GDPR[GDPR Controls]
+        Encryption[AES-256-GCM<br/>cryptography 42.0<br/>PBKDF2 Key Derivation<br/>Fernet Symmetric]
+        HIPAA[HIPAA Compliance<br/>Audit Trail 7-Year<br/>PHI Encryption<br/>Access Controls]
+        GDPR[GDPR Controls<br/>Right to Erasure<br/>Data Portability<br/>Consent Management]
     end
-    
-    subgraph DevOps[DEVOPS & TESTING]
-        Docker[Docker Compose]
-        GHActions[GitHub Actions]
-        TestRunner[pytest]
+
+    subgraph DevOps[DEVOPS & CI/CD]
+        Docker[Docker 24.0<br/>Docker Compose 2.23<br/>Multi-container Setup<br/>postgres:16 + redis:7.2]
+        GHActions[GitHub Actions<br/>ci.yml + cd.yml<br/>Automated Testing<br/>SonarQube Scan]
+        TestRunner[pytest 7.4<br/>34 Tests, 27% Coverage<br/>pytest-cov<br/>pytest-asyncio]
+        Linting[Code Quality<br/>flake8 PEP 8<br/>black formatter<br/>isort + mypy]
+        SecurityScan[Security Tools<br/>bandit -r apps/ api/<br/>safety check<br/>detect-secrets]
     end
     
     UI --> Auth
@@ -190,10 +192,16 @@ graph TB
     SafetyGuard --> GDPR
     
     GHActions --> TestRunner
+    GHActions --> Linting
+    GHActions --> SecurityScan
     Docker --> APIGateway
     Docker --> UI
     Docker --> PostgreSQL
     Docker --> RedisCache
+
+    TestRunner --> PredictionSvc
+    Linting --> APIGateway
+    SecurityScan --> Auth
     
     classDef uiStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef apiStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
@@ -211,4 +219,7 @@ graph TB
     class BioBERT,DocLoader,TextSplitter,VectorStore dataStyle
     class PostgreSQL,RedisCache,ModelFiles,AuditLogs storageStyle
     class Encryption,HIPAA,GDPR securityStyle
-    class Docker,GHActions,TestRunner devopsStyle
+    class Docker,GHActions,TestRunner,Linting,SecurityScan devopsStyle
+    class NCBI,ScholarExt,QdrantCloud,Supabase externalStyle
+
+    classDef externalStyle fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
