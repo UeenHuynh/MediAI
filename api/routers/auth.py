@@ -1,5 +1,6 @@
 """
 Authentication endpoints for JWT token generation
+Prefix: /api/v1/auth
 """
 
 from datetime import timedelta
@@ -46,14 +47,14 @@ def authenticate_user(username: str, password: str):
     return user
 
 
-@router.post("/token", response_model=Token)
+@router.post("/login", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     OAuth2 compatible token login, get an access token for future requests
 
     Example:
     ```bash
-    curl -X POST "http://localhost:8000/token" \\
+    curl -X POST "http://localhost:8000/api/v1/auth/login" \\
       -H "Content-Type: application/x-www-form-urlencoded" \\
       -d "username=demo&password=demo123"
     ```
@@ -72,14 +73,14 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/users/me", response_model=User)
+@router.get("/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     """
     Get current user info
 
     Requires authentication header:
     ```bash
-    curl -X GET "http://localhost:8000/users/me" \\
+    curl -X GET "http://localhost:8000/api/v1/auth/me" \\
       -H "Authorization: Bearer <your_token>"
     ```
     """
