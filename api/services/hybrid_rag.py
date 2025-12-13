@@ -97,11 +97,11 @@ class HybridRAGPipeline:
             results.extend(pubmed_results)
             logger.info(f"PubMed search returned {len(pubmed_results)} results")
 
-        # Tier 4: Google Scholar (optional, slower)
+        # Tier 4: Semantic Scholar (optional, API-based)
         if use_scholar:
             scholar_results = self._search_scholar(query, max_results=3)
             results.extend(scholar_results)
-            logger.info(f"Google Scholar returned {len(scholar_results)} results")
+            logger.info(f"Semantic Scholar returned {len(scholar_results)} results")
 
         # Deduplicate and rank
         results = self._deduplicate_results(results)
@@ -272,98 +272,177 @@ class HybridRAGPipeline:
 
     def _search_scholar(self, query: str, max_results: int = 3) -> List[Dict[str, Any]]:
         """
-        Search Google Scholar for medical research.
+        Search Semantic Scholar for medical research papers.
+
+        Uses Semantic Scholar API with medical field filtering for high-quality results.
+        Rate limit: 100 requests per 5 minutes (free tier), 10,000 with API key.
 
         Args:
             query: User query
             max_results: Maximum number of results
 
         Returns:
-            List of Scholar articles
+            List of Semantic Scholar papers with enriched metadata
         """
-        logger.info(f"=== Google Scholar search called with query: '{query}', max_results: {max_results}")
+        logger.info(f"=== Semantic Scholar search: query='{query}', max={max_results}")
+
         try:
-            from scholarly import scholarly
-            logger.info("✓ Scholarly imported successfully")
+            import requests
 
-            # Enhance query with medical keywords for better relevance
-            enhanced_query = f"{query} medical treatment clinical patient therapy"
-            logger.info(f"Enhanced Scholar query: '{enhanced_query}'")
+            # Semantic Scholar API endpoint
+            url = "https://api.semanticscholar.org/graph/v1/paper/search"
 
-            # Define medical keywords to filter results
-            medical_keywords = {
-                'medical', 'clinical', 'patient', 'treatment', 'therapy', 'diagnosis',
-                'disease', 'syndrome', 'hospital', 'care', 'health', 'medicine',
-                'sepsis', 'shock', 'infection', 'antibiotic', 'drug', 'procedure'
+            # Enhance query with medical context
+            enhanced_query = f"{query} medicine clinical treatment patient"
+
+            # API parameters with medical field filter
+            params = {
+                "query": enhanced_query,
+                "fields": "title,abstract,authors,year,citationCount,url,tldr,publicationTypes,fieldsOfStudy",
+                "limit": max_results * 2,  # Get extra to filter for quality
+                "fieldsOfStudy": "Medicine",  # Filter to medical papers only
+                "minCitationCount": 5,  # Quality threshold
             }
 
-            # Search Google Scholar
-            search_query = scholarly.search_pubs(enhanced_query)
+            # Optional API key for higher rate limits
+            headers = {}
+            api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
+            if api_key:
+                headers["x-api-key"] = api_key
+                logger.info("✓ Using Semantic Scholar API key")
+
+            # Make API request with timeout
+            response = requests.get(
+                url,
+                params=params,
+                headers=headers,
+                timeout=10,
+            )
+
+            if response.status_code != 200:
+                logger.error(f"Semantic Scholar API error: {response.status_code}")
+                return []
+
+            data = response.json()
+            papers = data.get("data", [])
+
+            logger.info(f"✓ Semantic Scholar returned {len(papers)} papers")
+
+            # Define medical keywords for additional filtering
+            medical_keywords = {
+                'medical', 'clinical', 'patient', 'treatment', 'therapy',
+                'diagnosis', 'disease', 'syndrome', 'hospital', 'care',
+                'sepsis', 'shock', 'infection', 'antibiotic', 'intensive care'
+            }
 
             scholar_results = []
-            attempts = 0
-            max_attempts = max_results * 3  # Try up to 3x to find relevant papers
 
-            for article in search_query:
+            for paper in papers:
                 if len(scholar_results) >= max_results:
                     break
-                if attempts >= max_attempts:
-                    logger.warning(f"Reached max attempts ({max_attempts}) for Scholar search")
-                    break
-
-                attempts += 1
 
                 try:
-                    title = article.get('bib', {}).get('title', '')
-                    abstract = article.get('bib', {}).get('abstract', '')
-                    authors = article.get('bib', {}).get('author', [])
-                    year = article.get('bib', {}).get('pub_year', '')
-                    venue = article.get('bib', {}).get('venue', '')
-                    url = article.get('pub_url', '') or article.get('eprint_url', '')
+                    # Extract paper details
+                    title = paper.get("title", "Untitled")
+                    abstract = paper.get("abstract", "")
 
-                    # Filter: Check if title or abstract contains medical keywords
-                    text_to_check = f"{title} {abstract}".lower()
-                    has_medical_keyword = any(keyword in text_to_check for keyword in medical_keywords)
+                    # Use TL;DR if available (AI-generated summary)
+                    tldr = paper.get("tldr", {})
+                    summary = tldr.get("text", "") if tldr else ""
+
+                    # Additional relevance check
+                    text_to_check = f"{title} {abstract} {summary}".lower()
+                    has_medical_keyword = any(
+                        keyword in text_to_check
+                        for keyword in medical_keywords
+                    )
 
                     if not has_medical_keyword:
-                        logger.info(f"Skipping non-medical paper: {title[:50]}...")
+                        logger.debug(f"Skipping non-medical: {title[:50]}")
                         continue
 
-                    # Format authors
-                    author_str = ', '.join(authors[:3]) if authors else 'Unknown'
-                    if len(authors) > 3:
-                        author_str += ' et al.'
+                    # Extract authors
+                    authors = paper.get("authors", [])
+                    if authors:
+                        author_names = [a.get("name", "") for a in authors[:3]]
+                        author_str = ", ".join([
+                            name.split()[-1] if ' ' in name else name
+                            for name in author_names if name
+                        ])
+                        if len(authors) > 3:
+                            author_str += " et al."
+                    else:
+                        author_str = "Unknown"
 
-                    logger.info(f"✓ Found relevant paper: {title[:60]}... by {author_str}")
+                    # Other metadata
+                    year = paper.get("year") or "N/A"
+                    citation_count = paper.get("citationCount", 0)
+                    url = paper.get("url", "")
+                    pub_types = paper.get("publicationTypes", [])
+
+                    # Calculate relevance score based on citations and recency
+                    base_score = 0.75
+                    if citation_count > 50:
+                        base_score += 0.1
+                    if year and isinstance(year, int) and year >= 2020:
+                        base_score += 0.05
+                    if "Review" in pub_types or "Meta-Analysis" in pub_types:
+                        base_score += 0.05
+
+                    score = min(base_score, 0.95)  # Cap at 0.95
+
+                    # Build content with TL;DR if available
+                    content_parts = [title]
+                    if summary:
+                        content_parts.append(f"\nSummary: {summary}")
+                    elif abstract:
+                        # Truncate abstract to 500 chars
+                        truncated_abstract = abstract[:500]
+                        if len(abstract) > 500:
+                            truncated_abstract += "..."
+                        content_parts.append(f"\n{truncated_abstract}")
+
+                    content = "\n".join(content_parts)
+
+                    logger.info(
+                        f"✓ Added paper: {title[:50]}... "
+                        f"({year}, {citation_count} citations)"
+                    )
 
                     scholar_results.append({
-                        "content": f"{title}\n\n{abstract}" if abstract else title,
-                        "source": f"Google Scholar ({author_str}, {year})",
+                        "content": content,
+                        "source": f"Semantic Scholar ({author_str}, {year})",
                         "category": "research",
-                        "score": 0.75,  # Default score for Scholar
+                        "score": score,
                         "tier": "scholar",
                         "metadata": {
                             "title": title,
                             "authors": author_str,
                             "year": year,
-                            "venue": venue,
                             "url": url,
-                        },
+                            "citation_count": citation_count,
+                            "publication_types": pub_types,
+                            "has_tldr": bool(summary),
+                        }
                     })
 
                 except Exception as e:
-                    logger.error(f"Error parsing Scholar article: {e}")
+                    logger.error(f"Error parsing Semantic Scholar paper: {e}")
                     continue
 
-            logger.info(f"✓ Successfully formatted {len(scholar_results)} Scholar articles")
+            logger.info(f"✓ Formatted {len(scholar_results)} Semantic Scholar papers")
             return scholar_results
 
         except ImportError:
-            logger.warning("❌ scholarly not installed. Google Scholar search disabled.")
+            logger.error("❌ 'requests' library not installed")
+            return []
+
+        except requests.exceptions.Timeout:
+            logger.error("❌ Semantic Scholar API timeout")
             return []
 
         except Exception as e:
-            logger.error(f"❌ Google Scholar search failed: {e}")
+            logger.error(f"❌ Semantic Scholar search failed: {e}", exc_info=True)
             return []
 
     def _deduplicate_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

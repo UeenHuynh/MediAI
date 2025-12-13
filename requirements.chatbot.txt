@@ -20,18 +20,22 @@ qdrant-client>=1.7.0             # Qdrant Cloud client
 sentence-transformers==2.2.2     # Already in main requirements
 
 # -------------------------------------------------------------------
-# LAYER 3: Agentic Orchestration
+# LAYER 3: Agentic Orchestration & LangChain
 # -------------------------------------------------------------------
 langgraph>=0.0.20                # LangGraph state machine
 langchain>=0.1.0                 # LangChain core
 langchain-core>=0.1.0            # LangChain core abstractions
 langchain-community>=0.0.10      # Community integrations
 langchain-groq>=0.0.1            # Groq integration for LangChain
+langchain-openai>=0.0.5          # OpenAI integration for fallback
+langchain-aws>=0.1.0             # AWS Bedrock integration for fallback
 
 # -------------------------------------------------------------------
-# LAYER 2: PII Masking
+# LAYER 2: PII Masking & Privacy
 # -------------------------------------------------------------------
-spacy>=3.7.0                     # NLP for NER
+presidio-analyzer>=2.2.33        # Microsoft Presidio PII detection
+presidio-anonymizer>=2.2.33      # Microsoft Presidio PII anonymization
+spacy>=3.7.0                     # NLP for NER (used by Presidio)
 # Run after install: python -m spacy download en_core_web_sm
 
 # -------------------------------------------------------------------
