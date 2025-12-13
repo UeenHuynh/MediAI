@@ -7,14 +7,20 @@ from datetime import timedelta
 
 from core.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
+    REFRESH_TOKEN_EXPIRE_DAYS,
     Token,
     User,
     create_access_token,
+    create_refresh_token,
     get_current_active_user,
     verify_password,
+    oauth2_scheme,
+    SECRET_KEY,
+    ALGORITHM,
 )
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import JWTError, jwt
 
 router = APIRouter()
 
@@ -24,7 +30,7 @@ DEMO_USERS = {
         "username": "demo",
         "full_name": "Demo User",
         "email": "demo@mediai.com",
-        "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5sTSQ/xvCJ3jq",  # demo123
+        "hashed_password": "$2b$12$5UzdnZkrsAfid.BCSJpk8uBdtRbz2UWChXMQPLgH1aTR9RloOp1Ci",  # demo123
         "disabled": False,
     },
     "admin": {
@@ -42,9 +48,14 @@ def authenticate_user(username: str, password: str):
     user = DEMO_USERS.get(username)
     if not user:
         return False
-    if not verify_password(password, user["hashed_password"]):
-        return False
-    return user
+    # In a real app, verify_password handles the check
+    # For this demo, we can just check if hashed passwords match or verify
+    try:
+        if verify_password(password, user["hashed_password"]):
+            return user
+    except Exception:
+        pass
+    return False
 
 
 @router.post("/login", response_model=Token)
@@ -66,11 +77,69 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Create Access Token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user["username"]}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    
+    # Create Refresh Token
+    refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    refresh_token = create_refresh_token(
+        data={"sub": user["username"]}, expires_delta=refresh_token_expires
+    )
+    
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "refresh_token": refresh_token
+    }
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_token(token: str = Body(..., embed=True)):
+    """
+    Refresh access token using refresh token via body
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        token_type: str = payload.get("type")
+        
+        if username is None or token_type != "refresh":
+            raise credentials_exception
+            
+        # Verify user still exists
+        user = DEMO_USERS.get(username)
+        if not user:
+             raise credentials_exception
+             
+    except JWTError:
+        raise credentials_exception
+        
+    # Create new Access Token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": username}, expires_delta=access_token_expires
+    )
+    
+    # Optionally rotate refresh token
+    refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    new_refresh_token = create_refresh_token(
+        data={"sub": username}, expires_delta=refresh_token_expires
+    )
+
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer", 
+        "refresh_token": new_refresh_token
+    }
 
 
 @router.get("/me", response_model=User)
