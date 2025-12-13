@@ -33,6 +33,14 @@ from tenacity import (
     wait_exponential,
 )
 
+# Import callbacks
+from api.services.langchain_callbacks import (
+    MedicalChatbotCallbackHandler,
+    PIIDetectionCallbackHandler,
+    get_callback_handler,
+    get_pii_callback,
+)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -116,6 +124,7 @@ class ProductionMedicalChatbot:
         memory_max_tokens: int = 500,
         temperature: float = 0.3,
         enable_pii_redaction: bool = True,
+        enable_callbacks: bool = True,
     ):
         """
         Initialize the medical chatbot.
@@ -126,6 +135,7 @@ class ProductionMedicalChatbot:
             memory_max_tokens: Maximum tokens for conversation summary
             temperature: LLM temperature (0.0-1.0)
             enable_pii_redaction: Enable PII detection and redaction
+            enable_callbacks: Enable LangChain callbacks for monitoring
 
         Raises:
             ValueError: If provider is unsupported
@@ -137,6 +147,15 @@ class ProductionMedicalChatbot:
         self.max_tokens = max_token_limit
         self.temperature = temperature
         self.enable_pii_redaction = enable_pii_redaction
+        self.enable_callbacks = enable_callbacks
+
+        # Initialize callbacks for monitoring
+        self.callback_handler = None
+        self.pii_callback = None
+        if self.enable_callbacks:
+            self.callback_handler = get_callback_handler()
+            self.pii_callback = get_pii_callback()
+            logger.info("LangChain callbacks enabled")
 
         # Initialize LLM (vendor-agnostic)
         try:
@@ -169,12 +188,14 @@ class ProductionMedicalChatbot:
             ("human", self._get_user_template()),
         ])
 
-        # Create LLM chain
+        # Create LLM chain with callbacks
+        callbacks = [self.callback_handler] if self.callback_handler else []
         self.chain = LLMChain(
             llm=self.llm,
             prompt=self.prompt,
             memory=self.memory,
             verbose=False,
+            callbacks=callbacks,
         )
 
         logger.info("ProductionMedicalChatbot initialized successfully")
@@ -458,6 +479,14 @@ Provide a structured response following the system guidelines with proper citati
             if pii_entities:
                 logger.info(f"Query contained PII: {len(pii_entities)} entities redacted")
 
+                # Log PII detection event for compliance
+                if self.pii_callback:
+                    self.pii_callback.log_pii_detection(
+                        query=question,
+                        entities_detected=pii_entities,
+                        redacted_query=redacted_question
+                    )
+
             # Step 2: Check token budget
             safe_context = self._check_token_budget(retrieved_context)
 
@@ -507,6 +536,46 @@ Provide a structured response following the system guidelines with proper citati
             return self.memory.buffer
         except AttributeError:
             return ""
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """
+        Get LangChain usage metrics.
+
+        Returns:
+            Dictionary with token usage, costs, latency, errors
+        """
+        if self.callback_handler:
+            return self.callback_handler.get_metrics()
+        return {}
+
+    def get_pii_summary(self) -> Dict[str, Any]:
+        """
+        Get PII detection summary.
+
+        Returns:
+            Dictionary with PII detection statistics
+        """
+        if self.pii_callback:
+            return self.pii_callback.get_pii_summary()
+        return {}
+
+    def print_metrics(self) -> None:
+        """Print metrics summary to console."""
+        if self.callback_handler:
+            self.callback_handler.print_summary()
+
+        if self.pii_callback:
+            pii_summary = self.pii_callback.get_pii_summary()
+            if pii_summary["total_events"] > 0:
+                print("\n" + "=" * 60)
+                print("PII DETECTION SUMMARY")
+                print("=" * 60)
+                print(f"Total Events:     {pii_summary['total_events']}")
+                print(f"Total Entities:   {pii_summary['total_entities']}")
+                print("Entity Types:")
+                for entity_type, count in pii_summary["entity_type_counts"].items():
+                    print(f"  - {entity_type}: {count}")
+                print("=" * 60 + "\n")
 
 
 # Module-level utility functions
