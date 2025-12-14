@@ -360,26 +360,33 @@ def show_chatbot():
 
                     # Show citations if available
                     if "citations" in message and message["citations"]:
-                        with st.expander("📚 Sources & References"):
+                        with st.expander("📚 Sources & References", expanded=True):
                             for citation in message["citations"]:
+                                # Get citation number/id (LangChain uses "number", legacy uses "id")
+                                cite_num = citation.get("number", citation.get("id", "?"))
+                                source = citation.get("source", "Unknown Source")
+
                                 # Format citation with PubMed link if available
-                                if "pmid" in citation:
-                                    # PubMed citation with clickable link
-                                    title = citation.get("title", "PubMed Article")
+                                if citation.get("pmid"):
                                     pmid = citation["pmid"]
                                     url = citation.get("url", f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/")
-
-                                    st.markdown(
-                                        f"**[{citation['id']}]** 📄 [{title}]({url})"
-                                    )
-                                    st.caption(f"PMID: {pmid} | Relevance: {citation.get('similarity', 0):.2%}")
+                                    st.markdown(f"**[{cite_num}]** 📄 [{source}]({url})")
+                                    st.caption(f"PMID: {pmid}")
+                                elif citation.get("url"):
+                                    # Citation with URL (Semantic Scholar, etc.)
+                                    url = citation["url"]
+                                    st.markdown(f"**[{cite_num}]** 🔗 [{source}]({url})")
                                 else:
-                                    # Regular citation
-                                    st.write(
-                                        f"**[{citation['id']}]** {citation['source']} "
-                                        f"(Category: {citation['category']}, "
-                                        f"Relevance: {citation.get('similarity', 0):.2%})"
-                                    )
+                                    # Regular citation without link
+                                    st.markdown(f"**[{cite_num}]** 📚 {source}")
+                                    if citation.get("category"):
+                                        st.caption(f"Category: {citation['category']}")
+
+                                # Show relevance score if available
+                                if citation.get("similarity"):
+                                    st.caption(f"Relevance: {citation['similarity']:.2%}")
+
+                                st.divider()
 
                     # Show confidence if available
                     if "confidence" in message:
