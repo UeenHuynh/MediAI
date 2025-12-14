@@ -485,12 +485,15 @@ The MediAI chatbot is a Retrieval-Augmented Generation (RAG) system designed for
 
 ### Key Features
 
-✅ **Auto Prompt Enhancement** - Automatically expands short queries into detailed medical prompts  
-✅ **Hybrid RAG System** - 4-tier retrieval combining multiple knowledge sources  
-✅ **PubMed Integration** - Latest medical research with NCBI API  
-✅ **Google Scholar Search** - Academic papers with medical keyword filtering  
-✅ **Safety Guardrails** - Emergency detection and medical disclaimers  
-✅ **Source Citations** - Clickable links to PubMed articles with PMID  
+✅ **LangChain Integration** - Production-ready chatbot with modern LCEL API
+✅ **PII Redaction** - HIPAA-aware privacy protection with Microsoft Presidio
+✅ **Auto Prompt Enhancement** - Automatically expands short queries into detailed medical prompts
+✅ **Hybrid RAG System** - 4-tier retrieval combining multiple knowledge sources
+✅ **PubMed Integration** - Latest medical research with NCBI API
+✅ **Semantic Scholar API** - Academic papers with TL;DR summaries
+✅ **Safety Guardrails** - Emergency detection and medical disclaimers
+✅ **Source Citations** - Clickable links to PubMed articles with PMID
+✅ **Monitoring & Callbacks** - Token usage, cost tracking, and latency metrics  
 
 ### Architecture Layers
 
@@ -519,10 +522,11 @@ The MediAI chatbot is a Retrieval-Augmented Generation (RAG) system designed for
 - Returns: Title, abstract, PMID, authors
 - Priority: 2/4
 
-**Tier 4: Google Scholar**
-- Academic papers via scholarly library
-- Medical keyword filtering (18 terms)
-- Relevance check on title/abstract
+**Tier 4: Semantic Scholar API**
+- Academic papers via official Semantic Scholar API
+- Medical field filtering with citation counts
+- TL;DR summaries when available
+- Returns: Title, abstract, authors, year, citations, URL
 - Priority: 1/4
 
 #### 3. Context Aggregation
@@ -593,29 +597,137 @@ Enhanced Prompt:
 Truy vấn gốc: shock"
 ```
 
-### Google Scholar Medical Filtering
+### LangChain Integration (NEW)
 
-**Challenge**: Scholar returns irrelevant papers (Vietnamese papers about random topics)
+**Production-Ready Medical Chatbot with Modern LCEL API**
 
-**Solution**:
 ```python
-# 1. Enhance query with medical keywords
-enhanced_query = f"{query} medical treatment clinical patient therapy"
+from api.services.langchain_medical_bot import create_medical_chatbot
 
-# 2. Define medical keyword set (18 terms)
-medical_keywords = {
-    'medical', 'clinical', 'patient', 'treatment', 'therapy', 'diagnosis',
-    'disease', 'syndrome', 'hospital', 'care', 'health', 'medicine',
-    'sepsis', 'shock', 'infection', 'antibiotic', 'drug', 'procedure'
+# Auto-detect LLM provider from environment
+bot = create_medical_chatbot(
+    provider=None,  # Groq, OpenAI, or Bedrock
+    enable_pii_redaction=True,
+    enable_callbacks=True
+)
+
+# Query with context from 4-tier RAG
+result = bot.query(
+    question="Patient has septic shock, what should I do?",
+    retrieved_context=rag_context,
+    source_docs=docs
+)
+
+# Response with citations and PII detection
+print(result["answer"])           # Medical response
+print(result["citations"])         # [{"number": "1", "source": "...", "pmid": "..."}]
+print(result["pii_detected"])      # [{"type": "PERSON", "score": 0.9}]
+```
+
+**Features**:
+- ✅ Vendor-agnostic LLM (Groq/OpenAI/AWS Bedrock)
+- ✅ LCEL (LangChain Expression Language) pipe syntax
+- ✅ Automatic PII redaction with Presidio
+- ✅ Conversation memory with summarization
+- ✅ Token budget management
+- ✅ Retry logic with exponential backoff
+- ✅ Structured output with Pydantic models
+
+### PII Redaction with Microsoft Presidio (NEW)
+
+**HIPAA-Aware Privacy Protection**
+
+```python
+from api.services.pii_redaction_service import PIIRedactionService
+
+service = PIIRedactionService()
+
+# Redact PII from medical notes
+result = service.redact_pii(
+    "Patient John Doe (DOB: 01/15/1980, MRN: MR-123456) has sepsis"
+)
+
+print(result.redacted_text)
+# "Patient <PERSON> (DOB: <DATE_TIME>, MRN: <MRN>) has sepsis"
+
+print(result.entities_found)
+# [{"type": "PERSON", "score": 0.95}, {"type": "DATE_TIME", "score": 0.9}, ...]
+```
+
+**Supported Entities** (15+):
+- PERSON, EMAIL, PHONE, SSN, CREDIT_CARD
+- MEDICAL_LICENSE, US_PASSPORT, US_DRIVER_LICENSE
+- LOCATION, DATE_TIME, IBAN_CODE
+- Custom medical patterns: PATIENT_ID, MRN
+
+**Medical Pattern Examples**:
+- `PATIENT-123456` → Detected as PATIENT_ID
+- `MRN: MR-9876543210` → Detected as MRN
+- `John Doe` → Detected as PERSON with 95% confidence
+
+### Monitoring & Callbacks (NEW)
+
+**Track Token Usage, Costs, and Latency**
+
+```python
+# Callbacks are automatically enabled
+bot = create_medical_chatbot(enable_callbacks=True)
+
+# After queries, get metrics
+metrics = bot.get_metrics()
+
+print(metrics)
+# {
+#     "total_llm_calls": 5,
+#     "total_tokens": 3200,
+#     "total_cost_usd": 0.00032,
+#     "average_latency_ms": 875.4,
+#     "errors": 0
+# }
+
+# PII detection summary
+pii_summary = bot.get_pii_summary()
+# {
+#     "total_events": 3,
+#     "total_entities": 7,
+#     "entity_type_counts": {"PERSON": 3, "MRN": 2, "DATE_TIME": 2}
+# }
+```
+
+**Callback Features**:
+- ✅ Token tracking (prompt + completion)
+- ✅ Cost estimation per provider
+- ✅ Latency monitoring (ms)
+- ✅ Error tracking with retry counts
+- ✅ PII detection audit trail
+
+### Semantic Scholar Integration
+
+**Official API with TL;DR Summaries**
+
+```python
+# Enhanced with Semantic Scholar API
+url = "https://api.semanticscholar.org/graph/v1/paper/search"
+
+params = {
+    "query": f"{query} medicine clinical",
+    "fields": "title,abstract,authors,year,citationCount,url,tldr",
+    "fieldsOfStudy": "Medicine",
+    "minCitationCount": 5,
+    "limit": 3
 }
 
-# 3. Filter results by checking title/abstract
-text_to_check = f"{title} {abstract}".lower()
-has_medical_keyword = any(keyword in text_to_check for keyword in medical_keywords)
-
-if not has_medical_keyword:
-    continue  # Skip non-medical papers
+# Use TL;DR for quick summaries
+if paper.get("tldr"):
+    content += f"\nSummary: {paper['tldr']['text']}"
 ```
+
+**Improvements over Google Scholar**:
+- ✅ Official API (no web scraping)
+- ✅ Medicine field filtering
+- ✅ Citation count filtering (>5 citations)
+- ✅ TL;DR summaries when available
+- ✅ Structured data with URLs and metadata
 
 ### Safety Guardrails
 
