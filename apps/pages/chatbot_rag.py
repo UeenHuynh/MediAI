@@ -21,6 +21,12 @@ from api.services.hybrid_rag import HybridRAGPipeline
 from api.services.rag_pipeline import RAGPipeline
 from api.services.safety_guardrails import SafetyGuardrails
 
+# Import LangChain integration
+from api.services.langchain_medical_bot import (
+    ProductionMedicalChatbot,
+    create_medical_chatbot,
+)
+
 # Import prompt enhancer
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.prompt_enhancer import PromptEnhancer
@@ -37,6 +43,19 @@ def initialize_rag_system():
 
         # Initialize Hybrid RAG Pipeline (with PubMed support)
         hybrid_rag = HybridRAGPipeline()
+
+        # Try to initialize LangChain Medical Chatbot (production-ready)
+        langchain_bot = None
+        try:
+            # Auto-detect provider and create chatbot with PII protection
+            langchain_bot = create_medical_chatbot(
+                provider=None,  # Auto-detect from env
+                enable_pii_redaction=True,
+            )
+            st.session_state.langchain_enabled = True
+        except Exception as langchain_error:
+            # LangChain not available, will use fallback
+            st.session_state.langchain_enabled = False
 
         # Try to initialize RAG pipeline (may not have LLM key)
         try:
@@ -71,10 +90,10 @@ def initialize_rag_system():
                 hybrid_rag=hybrid_rag,
             )
 
-        return rag_pipeline, safety, None
+        return rag_pipeline, safety, langchain_bot, None
 
     except Exception as e:
-        return None, None, str(e)
+        return None, None, None, str(e)
 
 
 class RetrievalOnlyPipeline:
@@ -203,8 +222,8 @@ def show_chatbot():
         unsafe_allow_html=True,
     )
 
-    # Initialize RAG system
-    rag_pipeline, safety, error = initialize_rag_system()
+    # Initialize RAG system with LangChain integration
+    rag_pipeline, safety, langchain_bot, error = initialize_rag_system()
 
     if error:
         st.error(
@@ -298,9 +317,9 @@ def show_chatbot():
                 st.session_state.chat_messages.append(
                     {"role": "user", "content": template_text}
                 )
-                # Generate response using RAG
+                # Generate response using RAG with LangChain
                 response = generate_rag_response(
-                    template_text, rag_pipeline, safety, rag_enabled
+                    template_text, rag_pipeline, safety, langchain_bot, rag_enabled
                 )
                 st.session_state.chat_messages.append(
                     {"role": "assistant", "content": response["answer"]}
@@ -341,26 +360,33 @@ def show_chatbot():
 
                     # Show citations if available
                     if "citations" in message and message["citations"]:
-                        with st.expander("📚 Sources & References"):
+                        with st.expander("📚 Sources & References", expanded=True):
                             for citation in message["citations"]:
+                                # Get citation number/id (LangChain uses "number", legacy uses "id")
+                                cite_num = citation.get("number", citation.get("id", "?"))
+                                source = citation.get("source", "Unknown Source")
+
                                 # Format citation with PubMed link if available
-                                if "pmid" in citation:
-                                    # PubMed citation with clickable link
-                                    title = citation.get("title", "PubMed Article")
+                                if citation.get("pmid"):
                                     pmid = citation["pmid"]
                                     url = citation.get("url", f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/")
-
-                                    st.markdown(
-                                        f"**[{citation['id']}]** 📄 [{title}]({url})"
-                                    )
-                                    st.caption(f"PMID: {pmid} | Relevance: {citation.get('similarity', 0):.2%}")
+                                    st.markdown(f"**[{cite_num}]** 📄 [{source}]({url})")
+                                    st.caption(f"PMID: {pmid}")
+                                elif citation.get("url"):
+                                    # Citation with URL (Semantic Scholar, etc.)
+                                    url = citation["url"]
+                                    st.markdown(f"**[{cite_num}]** 🔗 [{source}]({url})")
                                 else:
-                                    # Regular citation
-                                    st.write(
-                                        f"**[{citation['id']}]** {citation['source']} "
-                                        f"(Category: {citation['category']}, "
-                                        f"Relevance: {citation.get('similarity', 0):.2%})"
-                                    )
+                                    # Regular citation without link
+                                    st.markdown(f"**[{cite_num}]** 📚 {source}")
+                                    if citation.get("category"):
+                                        st.caption(f"Category: {citation['category']}")
+
+                                # Show relevance score if available
+                                if citation.get("similarity"):
+                                    st.caption(f"Relevance: {citation['similarity']:.2%}")
+
+                                st.divider()
 
                     # Show confidence if available
                     if "confidence" in message:
@@ -463,10 +489,10 @@ def show_chatbot():
         # Store search query in session state for RAG
         st.session_state.last_search_query = enhanced_query_for_search
 
-        # Generate response using RAG
+        # Generate response using RAG with LangChain if available
         # Use fewer documents when prompt is enhanced to avoid token limit
         response = generate_rag_response(
-            user_input, rag_pipeline, safety, st.session_state.rag_enabled
+            user_input, rag_pipeline, safety, langchain_bot, st.session_state.rag_enabled
         )
 
         # Add assistant message with metadata
@@ -494,19 +520,31 @@ def show_chatbot():
 
 
 def generate_rag_response(
-    user_input: str, rag_pipeline, safety: SafetyGuardrails, use_rag: bool = True
+    user_input: str,
+    rag_pipeline,
+    safety: SafetyGuardrails,
+    langchain_bot: ProductionMedicalChatbot = None,
+    use_rag: bool = True
 ) -> dict:
     """
-    Generate AI response using RAG pipeline with safety checks
+    Generate AI response using RAG pipeline with LangChain integration.
+
+    Flow:
+    1. Safety check (emergency, unsafe queries)
+    2. Retrieve relevant documents (HybridRAG)
+    3. Use LangChain bot if available (with PII redaction)
+    4. Fallback to original RAG pipeline if needed
+    5. Post-safety processing
 
     Args:
         user_input: User query
         rag_pipeline: RAG pipeline instance
         safety: Safety guardrails instance
+        langchain_bot: LangChain ProductionMedicalChatbot (optional)
         use_rag: Whether to use RAG (vs. basic mode)
 
     Returns:
-        Response dictionary with answer, citations, confidence
+        Response dictionary with answer, citations, confidence, pii_detected
     """
     # Safety check
     query_safety = safety.process_query(user_input)
@@ -530,18 +568,59 @@ def generate_rag_response(
     # Generate response
     if use_rag and rag_pipeline:
         try:
-            # Use RAG pipeline
-            # Reduce top_k to 3 to avoid token limits with enhanced prompts
-            result = rag_pipeline.query(
-                question=user_input, top_k=3, include_citations=True
-            )
+            # Use LangChain bot if available (production-ready with PII redaction)
+            if langchain_bot:
+                # Step 1: Retrieve documents using HybridRAG
+                retrieved_docs = rag_pipeline.retrieve(
+                    query=user_input,
+                    top_k=3,  # Reduce to avoid token limits
+                    use_hybrid=True,
+                )
 
-            # Process response through safety guardrails
-            result["answer"] = safety.process_response(
-                result["answer"], query_safety, is_demo=True
-            )
+                # Step 2: Format context for LangChain
+                context_text = "\n\n".join([
+                    f"[{i+1}] {doc.get('content', '')[:1000]}"
+                    for i, doc in enumerate(retrieved_docs)
+                ])
 
-            return result
+                # Step 3: Query LangChain bot with retrieved context
+                langchain_result = langchain_bot.query(
+                    question=user_input,
+                    retrieved_context=context_text,
+                    source_docs=retrieved_docs,
+                )
+
+                # Step 4: Process response through safety guardrails
+                answer = safety.process_response(
+                    langchain_result["answer"],
+                    query_safety,
+                    is_demo=True
+                )
+
+                # Step 5: Build result with LangChain metadata
+                result = {
+                    "answer": answer,
+                    "citations": langchain_result.get("citations", []),
+                    "confidence": 0.8,  # LangChain responses are high confidence
+                    "pii_detected": langchain_result.get("pii_detected", []),
+                    "langchain_used": True,
+                }
+
+                return result
+
+            else:
+                # Fallback to original RAG pipeline
+                result = rag_pipeline.query(
+                    question=user_input, top_k=3, include_citations=True
+                )
+
+                # Process response through safety guardrails
+                result["answer"] = safety.process_response(
+                    result["answer"], query_safety, is_demo=True
+                )
+                result["langchain_used"] = False
+
+                return result
 
         except Exception as e:
             # Fallback error response
@@ -549,13 +628,19 @@ def generate_rag_response(
                 "answer": f"I encountered an error processing your query: {str(e)}\n\nPlease try rephrasing your question or contact support if the issue persists.",
                 "citations": [],
                 "confidence": 0.0,
+                "langchain_used": False,
             }
     else:
         # Basic mode (fallback)
         response = "RAG mode is disabled. This is a basic response mode.\n\nPlease enable RAG mode for evidence-based answers with source citations."
         response = safety.add_disclaimer(response, is_demo=True)
 
-        return {"answer": response, "citations": [], "confidence": 0.0}
+        return {
+            "answer": response,
+            "citations": [],
+            "confidence": 0.0,
+            "langchain_used": False,
+        }
 
 
 def _save_chat_history(question: str, answer: str):

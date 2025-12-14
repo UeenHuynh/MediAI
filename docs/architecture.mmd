@@ -11,20 +11,20 @@ graph TB
     subgraph ApplicationLayer[APPLICATION LAYER]
         APIGateway[FastAPI 0.109+<br/>Uvicorn ASGI Server<br/>Port 8000<br/>OpenAPI 3.0]
 
-        subgraph Routers
-            HealthRouter["GET /health<br/>Health Check Endpoint"]
-            PredictRouter["POST /predict/sepsis<br/>POST /predict/mortality<br/>ML Inference"]
-            PatientRouter["CRUD /patients/*<br/>Patient CRUD APIs"]
+        subgraph Routers[Routers]
+            HealthRouter[Health Check Endpoint<br/>GET /health]
+            PredictRouter[ML Inference<br/>POST /predict/sepsis<br/>POST /predict/mortality]
+            PatientRouter[Patient CRUD APIs<br/>REST /patients]
         end
 
-        subgraph Middleware
+        subgraph Middleware[Middleware]
             CORS[CORS Middleware<br/>fastapi.middleware.cors<br/>Whitelist Origins]
             ErrorHandler[Exception Handler<br/>Custom HTTP Errors<br/>400/500 Responses]
             RateLimit[Rate Limiter<br/>100 req/min per IP<br/>slowapi]
             Validator[Pydantic 2.5<br/>Schema Validation<br/>Type Enforcement]
         end
 
-        subgraph Services
+        subgraph Services[Services]
             PredictionSvc[Model Inference<br/>Pickle Model Loading<br/>SHAP Explanations]
             CacheSvc[Redis Integration<br/>redis-py 5.0<br/>LRU Caching]
             DBSvc[Database Layer<br/>SQLAlchemy 2.0<br/>Async Support]
@@ -37,12 +37,12 @@ graph TB
         PromptEnhance[Auto Enhancement<br/>15+ Medical Patterns<br/>Python Regex]
 
         subgraph Tier1[Tier 1: CAG Cache]
-            CAGStore[Static Knowledge<br/>JSON Files<br/>Guidelines & Protocols<br/>Priority: 4]
+            CAGStore[Static Knowledge<br/>JSON Files<br/>Guidelines and Protocols<br/>Priority: 4]
         end
 
         subgraph Tier2[Tier 2: Vector DB]
             QdrantEmbed[BioBERT Embeddings<br/>sentence-transformers<br/>768-dim vectors]
-            QdrantSearch[Semantic Search<br/>Cosine Similarity > 0.5<br/>Priority: 3]
+            QdrantSearch[Semantic Search<br/>Cosine Similarity 0.5+<br/>Priority: 3]
         end
 
         subgraph Tier3[Tier 3: PubMed]
@@ -53,7 +53,7 @@ graph TB
             ScholarAPI[Google Scholar<br/>scholarly 1.7.11<br/>18 Medical Keywords Filter<br/>Priority: 1]
         end
 
-        RAGAggregator[Context Aggregation<br/>Deduplication<br/>Tier-based Ranking<br/>Top-K=3, Max 1000 chars]
+        RAGAggregator[Context Aggregation<br/>Deduplication<br/>Tier-based Ranking<br/>Top-K=3 Max 1000 chars]
         LLMEngine[Groq API<br/>llama-3.3-70b-versatile<br/>Temp: 0.3<br/>Max Tokens: 12K]
         CitationBuilder[Citation Builder<br/>PMID Links<br/>Metadata Extraction]
     end
@@ -75,7 +75,7 @@ graph TB
     
     subgraph DataProcessing[DATA PROCESSING LAYER]
         BioBERT[BioBERT Encoder<br/>dmis-lab/biobert-base-cased-v1.2<br/>transformers 4.36<br/>768-dim Medical Embeddings]
-        DocLoader[Document Loader<br/>PDF, MD, TXT<br/>langchain.document_loaders<br/>Recursive Character Splitter]
+        DocLoader[Document Loader<br/>PDF MD TXT<br/>langchain.document_loaders<br/>Recursive Character Splitter]
         TextSplitter[Text Chunker<br/>500 tokens overlap<br/>1000 chars per chunk<br/>Markdown-aware]
         VectorStore[Qdrant Vector DB<br/>qdrant-client 1.16<br/>Cosine Similarity<br/>Hybrid Search]
     end
@@ -98,47 +98,53 @@ graph TB
     subgraph ExternalAPIs[EXTERNAL SERVICES]
         NCBI[NCBI E-utilities API<br/>pubmed.ncbi.nlm.nih.gov<br/>Biopython Entrez<br/>Medical Literature]
         ScholarExt[Google Scholar API<br/>scholarly Library<br/>Academic Papers<br/>Rate Limited]
-        QdrantCloud[Qdrant Cloud<br/>cc4894e9-...<br/>1GB Free Tier<br/>Vector Database SaaS]
-        Supabase[Supabase PostgreSQL<br/>mwavbkqfyybmxnnelazx<br/>Database as a Service<br/>Optional Backend]
+        QdrantCloud[Qdrant Cloud<br/>Vector Database SaaS<br/>1GB Free Tier]
+        Supabase[Supabase PostgreSQL<br/>Database as a Service<br/>Optional Backend]
     end
 
-    subgraph Security[SECURITY & COMPLIANCE]
+    subgraph Security[SECURITY AND COMPLIANCE]
         Encryption[AES-256-GCM<br/>cryptography 42.0<br/>PBKDF2 Key Derivation<br/>Fernet Symmetric]
         HIPAA[HIPAA Compliance<br/>Audit Trail 7-Year<br/>PHI Encryption<br/>Access Controls]
         GDPR[GDPR Controls<br/>Right to Erasure<br/>Data Portability<br/>Consent Management]
     end
 
-    subgraph DevOps[DEVOPS & CI/CD]
+    subgraph DevOps[DEVOPS AND CI/CD]
         Docker[Docker 24.0<br/>Docker Compose 2.23<br/>Multi-container Setup<br/>postgres:16 + redis:7.2]
         GHActions[GitHub Actions<br/>ci.yml + cd.yml<br/>Automated Testing<br/>SonarQube Scan]
-        TestRunner[pytest 7.4<br/>34 Tests, 27% Coverage<br/>pytest-cov<br/>pytest-asyncio]
+        TestRunner[pytest 7.4<br/>34 Tests 27% Coverage<br/>pytest-cov<br/>pytest-asyncio]
         Linting[Code Quality<br/>flake8 PEP 8<br/>black formatter<br/>isort + mypy]
-        SecurityScan[Security Tools<br/>bandit -r apps/ api/<br/>safety check<br/>detect-secrets]
+        SecurityScan[Security Tools<br/>bandit<br/>safety check<br/>detect-secrets]
     end
     
+    %% Presentation Layer Connections
     UI --> Auth
     UI --> Dashboard
     UI --> SepsisUI
     UI --> MortalityUI
     UI --> ChatbotUI
     
+    %% UI to API
     SepsisUI --> APIGateway
     MortalityUI --> APIGateway
     ChatbotUI --> APIGateway
     
+    %% API Gateway Flow
     APIGateway --> CORS
     CORS --> ErrorHandler
     ErrorHandler --> RateLimit
     RateLimit --> Validator
     
+    %% Router Connections
     Validator --> HealthRouter
     Validator --> PredictRouter
     Validator --> PatientRouter
     
+    %% Prediction Service Flow
     PredictRouter --> PredictionSvc
     PredictionSvc --> CacheSvc
     CacheSvc --> RedisCache
     
+    %% Chatbot RAG Flow
     ChatbotUI --> SafetyGuard
     SafetyGuard --> PromptEnhance
     PromptEnhance --> CAGStore
@@ -146,6 +152,7 @@ graph TB
     PromptEnhance --> NCBIApi
     PromptEnhance --> ScholarAPI
     
+    %% RAG Aggregation
     CAGStore --> RAGAggregator
     QdrantSearch --> RAGAggregator
     NCBIApi --> RAGAggregator
@@ -153,10 +160,12 @@ graph TB
     
     QdrantEmbed --> QdrantSearch
     
+    %% LLM Response
     RAGAggregator --> LLMEngine
     LLMEngine --> CitationBuilder
     CitationBuilder --> ChatbotUI
     
+    %% ML Model Flow
     PredictionSvc --> FeatureEng
     FeatureEng --> SepsisModel
     FeatureEng --> MortalityModel
@@ -165,32 +174,39 @@ graph TB
     SepsisSHAP --> PredictionSvc
     MortSHAP --> PredictionSvc
     
+    %% Model Storage
     SepsisModel --> ModelCache
     MortalityModel --> ModelCache
     ModelCache --> ModelFiles
     
+    %% Data Processing Flow
     DocLoader --> TextSplitter
     TextSplitter --> BioBERT
     BioBERT --> VectorStore
     VectorStore --> QdrantSearch
     
+    %% Database Connections
     PredictionSvc --> DBSvc
     DBSvc --> PostgreSQL
     
+    %% Audit Flow
     Auth --> AuditSvc
     AuditSvc --> AuditLogs
     AuditSvc --> HIPAA
     
+    %% External API Connections
     NCBIApi --> NCBI
     ScholarAPI --> ScholarExt
     VectorStore --> QdrantCloud
     DBSvc --> Supabase
     
+    %% Security Connections
     Auth --> Encryption
     AuditLogs --> Encryption
     SafetyGuard --> HIPAA
     SafetyGuard --> GDPR
     
+    %% DevOps Connections
     GHActions --> TestRunner
     GHActions --> Linting
     GHActions --> SecurityScan
@@ -203,6 +219,7 @@ graph TB
     Linting --> APIGateway
     SecurityScan --> Auth
     
+    %% Style Definitions - Define ALL styles BEFORE using them
     classDef uiStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef apiStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
     classDef aiStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
@@ -211,7 +228,9 @@ graph TB
     classDef storageStyle fill:#e0f2f1,stroke:#00796b,stroke-width:2px,color:#000
     classDef securityStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
     classDef devopsStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,color:#000
+    classDef externalStyle fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
     
+    %% Apply Styles
     class UI,Auth,Dashboard,SepsisUI,MortalityUI,ChatbotUI uiStyle
     class APIGateway,HealthRouter,PredictRouter,PatientRouter,CORS,ErrorHandler,RateLimit,Validator,PredictionSvc,CacheSvc,DBSvc,AuditSvc apiStyle
     class SafetyGuard,PromptEnhance,CAGStore,QdrantEmbed,QdrantSearch,NCBIApi,ScholarAPI,RAGAggregator,LLMEngine,CitationBuilder aiStyle
@@ -221,5 +240,3 @@ graph TB
     class Encryption,HIPAA,GDPR securityStyle
     class Docker,GHActions,TestRunner,Linting,SecurityScan devopsStyle
     class NCBI,ScholarExt,QdrantCloud,Supabase externalStyle
-
-    classDef externalStyle fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000

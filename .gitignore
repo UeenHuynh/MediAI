@@ -87,6 +87,9 @@ temp/
 *.tmp
 *.bak
 
+# Git internal
+.git-rewrite/
+
 # Reports
 bandit-report.json
 pylint-report.txt
@@ -98,3 +101,6 @@ pylint-report.txt
 *_rsa.pub
 credentials.json
 secrets.json
+
+# Debug files
+debug_openapi.json

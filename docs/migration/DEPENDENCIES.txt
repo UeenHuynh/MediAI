@@ -1,0 +1,50 @@
+absl-py==2.3.1
+aiodns==3.5.0
+aiohappyeyeballs==2.6.1
+aiohttp==3.12.14
+aiosignal==1.4.0
+alabaster==1.0.0
+altair==4.2.2
+anaconda-anon-usage @ file:///croot/anaconda-anon-usage_1710965072196/work
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anyio==4.10.0
+archspec @ file:///croot/archspec_1709217642129/work
+argon2-cffi==25.1.0
+argon2-cffi-bindings==25.1.0
+arrow==1.3.0
+astroid==4.0.2
+asttokens==3.0.0
+astunparse==1.6.3
+async-lru==2.0.5
+attrs==25.3.0
+Authlib==1.6.5
+babel==2.17.0
+bandit==1.9.2
+bcrypt==5.0.0
+beautifulsoup4==4.13.4
+bibtexparser==1.4.3
+biopython==1.86
+black==24.1.1
+bleach==6.2.0
+blinker==1.9.0
+boltons @ file:///work/perseverance-python-buildout/croot/boltons_1698851177130/work
+Bottleneck @ file:///croot/bottleneck_1731058641041/work
+Brotli @ file:///croot/brotli-split_1714483155106/work
+cachetools==5.5.2
+ccxt==4.4.96
+certifi==2025.11.12
+cffi==2.0.0
+charset-normalizer @ file:///croot/charset-normalizer_1721748349566/work
+claude-code==0.0.1
+click==8.1.7
+cloudpickle @ file:///home/conda/feedstock_root/build_artifacts/cloudpickle_1736947526808/work
+colorama==0.4.6
+colorlog==6.8.0
+comm==0.2.3
+conda @ file:///croot/conda_1736277811838/work
+conda-content-trust @ file:///croot/conda-content-trust_1714483159009/work
+conda-libmamba-solver @ file:///croot/conda-libmamba-solver_1727775630457/work/src
+conda-package-handling @ file:///croot/conda-package-handling_1718138267740/work
+conda_package_streaming @ file:///croot/conda-package-streaming_1718136078615/work
+contourpy @ file:///croot/contourpy_1732540045555/work
