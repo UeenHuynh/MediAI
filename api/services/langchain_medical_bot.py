@@ -17,9 +17,10 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from langchain.chains import LLMChain
-from langchain.memory import ConversationSummaryMemory
-from langchain.prompts import ChatPromptTemplate
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_aws import ChatBedrock
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
@@ -174,13 +175,9 @@ class ProductionMedicalChatbot:
                 logger.warning(f"PII redaction initialization failed: {e}")
                 self.enable_pii_redaction = False
 
-        # Initialize conversation memory with summarization
-        self.memory = ConversationSummaryMemory(
-            llm=self.llm,
-            memory_key="chat_history",
-            return_messages=True,
-            max_token_limit=memory_max_tokens,
-        )
+        # Initialize conversation memory (simple message history for now)
+        self.memory_max_tokens = memory_max_tokens
+        self.message_history = ChatMessageHistory()
 
         # Create structured prompt template
         self.prompt = ChatPromptTemplate.from_messages([
@@ -188,14 +185,15 @@ class ProductionMedicalChatbot:
             ("human", self._get_user_template()),
         ])
 
-        # Create LLM chain with callbacks
+        # Create LCEL chain with callbacks
         callbacks = [self.callback_handler] if self.callback_handler else []
-        self.chain = LLMChain(
-            llm=self.llm,
-            prompt=self.prompt,
-            memory=self.memory,
-            verbose=False,
-            callbacks=callbacks,
+        output_parser = StrOutputParser()
+
+        # Modern LangChain 1.x LCEL chain
+        self.chain = (
+            self.prompt
+            | self.llm.with_config({"callbacks": callbacks})
+            | output_parser
         )
 
         logger.info("ProductionMedicalChatbot initialized successfully")
@@ -339,9 +337,6 @@ class ProductionMedicalChatbot:
         return """Retrieved Context:
 {context}
 
-Conversation Summary:
-{chat_history}
-
 User Question: {question}
 
 Provide a structured response following the system guidelines with proper citations."""
@@ -436,10 +431,11 @@ Provide a structured response following the system guidelines with proper citati
         Raises:
             Exception: If all retries fail
         """
-        return self.chain.predict(
-            question=question,
-            context=context,
-        )
+        # Modern LangChain 1.x API using invoke()
+        return self.chain.invoke({
+            "question": question,
+            "context": context,
+        })
 
     def query(
         self,
@@ -522,7 +518,7 @@ Provide a structured response following the system guidelines with proper citati
 
     def clear_memory(self) -> None:
         """Clear conversation memory."""
-        self.memory.clear()
+        self.message_history.clear()
         logger.info("Conversation memory cleared")
 
     def get_memory_summary(self) -> str:
@@ -533,7 +529,8 @@ Provide a structured response following the system guidelines with proper citati
             Memory summary string
         """
         try:
-            return self.memory.buffer
+            messages = self.message_history.messages
+            return "\n".join([f"{m.type}: {m.content}" for m in messages])
         except AttributeError:
             return ""
 
