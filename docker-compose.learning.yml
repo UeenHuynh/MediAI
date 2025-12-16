@@ -1,0 +1,122 @@
+# Learning Features - Optional Components
+# Run with: docker-compose -f docker-compose.yml -f docker-compose.learning.yml up
+
+version: '3.8'
+
+services:
+  # Kafka - Minimal single broker for learning
+  kafka:
+    image: apache/kafka:3.6.1
+    container_name: mediai_kafka_learning
+    environment:
+      # KRaft mode (no Zookeeper needed)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Memory limits for learning environment
+      KAFKA_HEAP_OPTS: "-Xmx256M -Xms128M"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - mediai_network
+    profiles: ["learning", "streaming"]
+
+  # Kafka UI - For visualization and debugging
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: mediai_kafka_ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8080:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - mediai_network
+    profiles: ["learning", "streaming"]
+
+  # Simple Stream Processor - Learning example
+  stream-processor:
+    build:
+      context: ./streaming
+      dockerfile: Dockerfile.processor
+    container_name: mediai_stream_processor
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - POSTGRES_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/mimic_iv
+      - FEATURE_FLAG_STREAMING=true
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - mediai_network
+    profiles: ["learning", "streaming"]
+    restart: unless-stopped
+
+  # TimescaleDB - PostgreSQL with time-series extension
+  # Note: This extends the existing postgres service
+  postgres-timescale:
+    image: timescale/timescaledb:latest-pg16
+    container_name: mediai_postgres_timescale
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_DB: mimic_iv_timeseries
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_timescale_data:/var/lib/postgresql/data
+      - ./database/timescale_init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mediai_network
+    profiles: ["learning", "timeseries"]
+
+  # DuckDB - For local analytics learning
+  # Note: DuckDB is typically embedded, but we can run Jupyter for learning
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    container_name: mediai_jupyter_learning
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/data:ro
+    networks:
+      - mediai_network
+    profiles: ["learning", "analytics"]
+
+volumes:
+  kafka_data:
+    driver: local
+  postgres_timescale_data:
+    driver: local
+
+networks:
+  mediai_network:
+    external: true

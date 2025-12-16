@@ -1,0 +1,613 @@
+%% ============================================================================
+%% MediAI Architecture V3 - ACTIVE VERSION
+%% ============================================================================
+%% This is the CURRENT architecture being used for the MediAI project.
+%% All development should follow this specification.
+%%
+%% Key Features:
+%% - 100% Local/Self-hosted ($0/month)
+%% - Docker Compose based deployment
+%% - Medallion Architecture (Bronze/Silver/Gold)
+%% - React/Next.js Frontend (Vercel Free Tier)
+%% - FastAPI Backend
+%% - LangChain RAG Chatbot with Groq LLM
+%%
+%% Last Updated: December 2024
+%% Status: Production Ready
+%% ============================================================================
+
+graph TB
+    subgraph ExternalSources[EXTERNAL DATA SOURCES]
+        MIMICRaw[(MIMIC-IV Raw Data<br/>30GB Random Sample<br/>One-time download)]
+        NCBIExt[NCBI PubMed API<br/>Free 10 req/sec<br/>With API key]
+        ScholarExt[Semantic Scholar API<br/>Free tier<br/>Rate limited]
+    end
+    
+    subgraph BronzeLayer[BRONZE LAYER - Raw Data Storage]
+        PostgresLocal[(PostgreSQL 16 Local<br/>Docker Container<br/>MIMIC-IV Schema<br/>30GB Sample Data<br/>Free Self-hosted<br/>4GB RAM allocated)]
+        
+        LocalBackup[(Local Backup<br/>Parquet Files<br/>Compressed Snappy<br/>30-day rotation)]
+    end
+    
+    subgraph StreamingInfra[STREAMING INFRASTRUCTURE - Local Only]
+        DataReplayer[Data Replayer Service<br/>Python FastAPI<br/>Local Docker Container<br/>512MB RAM<br/>Simulate real-time from PostgreSQL]
+        
+        subgraph LocalKafka[Apache Kafka - FREE]
+            KafkaLocal[Apache Kafka 3.6<br/>Docker Container<br/>KRaft mode no Zookeeper<br/>1GB RAM<br/>7-day retention]
+            
+            KafkaVitals[Topic: icu-vitals<br/>Partition: 3<br/>Replication: 1]
+            
+            KafkaLabs[Topic: icu-labs<br/>Partition: 2<br/>Replication: 1]
+            
+            KafkaAlerts[Topic: icu-alerts<br/>Critical events<br/>Partition: 1]
+        end
+    end
+    
+    subgraph StreamProcessing[STREAM PROCESSING - Local Docker]
+        LocalStreamProcessor[Python Stream Processor<br/>Docker Container<br/>asyncio + aiokafka<br/>Kafka Consumer<br/>1GB RAM<br/>Real-time features<br/>Anomaly detection]
+        
+        VitalsProcessor[Vitals Processor<br/>Python Service<br/>256MB RAM<br/>Real-time validation<br/>Unit conversion F to C]
+        
+        LabsProcessor[Labs Processor<br/>Python Service<br/>256MB RAM<br/>Result enrichment<br/>Critical value flagging]
+        
+        AlertEngine[Alert Engine<br/>Python Service<br/>512MB RAM<br/>Rule-based logic<br/>Priority P0-P3<br/>Deduplication]
+    end
+    
+    subgraph SilverLayer[SILVER LAYER - Processed Data]
+        subgraph DataQuality[Data Quality - Local Services]
+            DataCleaner[Data Cleaner<br/>Local Docker<br/>Null removal<br/>Outlier detection Z-score<br/>Range validation]
+            
+            UnitConverter[Unit Converter<br/>Local Python Service<br/>Temperature F to C<br/>Weight lbs to kg<br/>Pressure mmHg<br/>Lookup table based]
+            
+            DataValidator[Data Validator<br/>Local Pydantic<br/>Schema conformance<br/>Business rules<br/>Cross-field validation]
+        end
+        
+        subgraph FeatureEngineering[Feature Engineering - Local]
+            TimeSeriesFeatures[Time-series Engine<br/>Local Python Service<br/>Pandas 2.1 + NumPy 1.26<br/>Rolling windows 1h/6h/12h<br/>Lag features<br/>Trend computation]
+            
+            ClinicalFeatures[Clinical Features<br/>Local Service<br/>SOFA score calculator<br/>Shock index<br/>GCS scoring<br/>Derived indicators]
+            
+            RealtimeFeatureEngine[Real-time Feature Engine<br/>Local Service<br/>On-demand computation<br/>Redis cache 1h TTL<br/>Lactate trends<br/>HR variability]
+        end
+        
+        subgraph SilverStorage[Silver Storage - Local]
+            PostgresSilver[(PostgreSQL Silver<br/>Local Docker<br/>TimescaleDB extension<br/>Time-series optimized<br/>Continuous aggregates<br/>Hypertables)]
+            
+            ParquetSilver[(Local Parquet Files<br/>Partitioned year/month/day<br/>Snappy compression<br/>DuckDB queryable)]
+            
+            SQLiteMeta[(SQLite Metadata<br/>Data lineage<br/>Quality metrics<br/>Lightweight free)]
+        end
+    end
+    
+    subgraph GoldLayer[GOLD LAYER - Analytics and ML]
+        subgraph FeatureStore[Feature Store - Local]
+            RedisOnline[(Redis 7.2 Local<br/>Docker Container<br/>256MB LRU cache<br/>Online features<br/>1h TTL<br/>Free self-hosted)]
+            
+            DuckDBOffline[(DuckDB Offline<br/>Local embedded DB<br/>Historical features<br/>ML training data<br/>Parquet native<br/>Zero config free)]
+            
+            FeatureRegistry[Feature Registry<br/>SQLite<br/>Feature definitions<br/>Version tracking<br/>Schema evolution]
+        end
+        
+        subgraph MLModels[ML Models - Local Hosting]
+            LocalMLServer[Local ML Server<br/>FastAPI + Uvicorn<br/>Docker Container<br/>2GB RAM<br/>Model loading<br/>Inference engine<br/>SHAP computation]
+            
+            SepsisModel[Sepsis Model<br/>LightGBM 4.2<br/>sepsis_v1.pkl<br/>42 features<br/>AUROC: 0.87+<br/>Pickle serialized]
+            
+            MortalityModel[Mortality Model<br/>LightGBM 4.2<br/>mortality_v1.pkl<br/>13 features<br/>AUROC: 0.88+<br/>Pickle serialized]
+            
+            SHAPExplainers[SHAP 0.44<br/>TreeExplainer<br/>Precomputed base values<br/>Feature importance<br/>Cached in Redis]
+            
+            ModelMetrics[Model Metrics<br/>Local SQLite DB<br/>Prediction logs<br/>Performance tracking<br/>Calibration curves]
+        end
+        
+        subgraph AggregatedViews[Aggregated Views]
+            LocalAggregates[(PostgreSQL Views<br/>Materialized views<br/>Patient summaries<br/>Cohort statistics<br/>Daily refresh)]
+        end
+    end
+    
+    subgraph ApplicationLayer[APPLICATION LAYER - Local Docker]
+        subgraph APIGateway[FastAPI Backend - Local]
+            LocalAPI[Local API Server<br/>Docker Container<br/>FastAPI 0.109+<br/>Uvicorn ASGI<br/>Port 8000<br/>2GB RAM<br/>No cloud dependency]
+            
+            subgraph APIRouters[API Routers]
+                AuthAPI[Auth API<br/>/api/auth/login<br/>/api/auth/refresh<br/>OAuth2 Password Flow<br/>JWT PyJWT 2.8<br/>bcrypt 4.1 hashing<br/>15-min access token]
+                
+                HealthCheck[Health Check<br/>/health liveness<br/>/ready readiness<br/>/metrics Prometheus]
+                
+                PredictionAPI[Prediction API<br/>/api/predict/sepsis<br/>/api/predict/mortality<br/>Pydantic 2.5 validation<br/>SHAP explanations]
+                
+                PatientAPI[Patient API<br/>/api/patients<br/>SQLAlchemy 2.0<br/>Async queries]
+                
+                StreamingAPI[Streaming API<br/>/api/stream/start<br/>/api/stream/status<br/>Control replay]
+                
+                ChatbotAPI[Chatbot API<br/>/api/chat/message<br/>RAG pipeline<br/>Citation builder]
+                
+                DoctorAPI[Doctor API<br/>/api/doctors<br/>Profile CRUD]
+                
+                FeatureAPI[Feature API<br/>/api/features/compute<br/>Real-time serving]
+            end
+            
+            subgraph Middleware[Middleware Stack]
+                CORS[CORS Middleware<br/>fastapi.middleware.cors<br/>Localhost allowed]
+                
+                RateLimiter[Rate Limiter<br/>slowapi 0.1.9<br/>Redis-backed<br/>100 req/min per user]
+                
+                ErrorHandler[Error Handler<br/>Custom exceptions<br/>HTTP 4xx/5xx<br/>JSON structured logs]
+                
+                Validator[Pydantic Validator<br/>Request/Response<br/>Type checking]
+                
+                CircuitBreaker[Circuit Breaker<br/>pybreaker 1.0<br/>Failure threshold: 5<br/>Fallback responses]
+                
+                AuthMiddleware[Auth Middleware<br/>JWT verification<br/>Token extraction]
+                
+                RBACMiddleware[RBAC Middleware<br/>Permission matrix<br/>Role checking]
+            end
+            
+            subgraph Services[Business Services]
+                PredictionSvc[Prediction Service<br/>Model inference<br/>Feature fetching<br/>Redis caching<br/>SHAP computation]
+                
+                UserMgmtSvc[User Management<br/>10 pre-created users<br/>SQLAlchemy ORM<br/>bcrypt hashing]
+                
+                DoctorSvc[Doctor Service<br/>Profile CRUD<br/>Local photo storage]
+                
+                StreamSvc[Stream Service<br/>Kafka producer<br/>Message serialization<br/>Replay control]
+                
+                AuditSvc[Audit Service<br/>Local file logging<br/>JSON structured<br/>7-year retention]
+                
+                FeatureSvc[Feature Service<br/>Real-time compute<br/>Version management<br/>Cache coordination]
+                
+                AuthSvc[Auth Service<br/>JWT generation<br/>Token validation<br/>Refresh logic]
+            end
+        end
+    end
+    
+    subgraph MedicalChatbot[MEDICAL AI CHATBOT - LangChain RAG v2]
+        subgraph ChatbotFlow[Chatbot Pipeline]
+            UserQuery([User Query])
+            SafetyCheck{Safety Check}
+            EmergencyResp[🚨 Emergency Response<br/>Call 911 + Guidelines]
+            BlockResp[🚫 Blocked Response<br/>Safety Message]
+            AutoEnhance{Auto-Enhance<br/>Enabled?}
+            PatternMatch[Pattern Matching<br/>15+ Medical Patterns<br/>sepsis, shock, labs...]
+            OriginalQuery[Use Original Query]
+            EnhancedPrompt[Enhanced Prompt<br/>Structured Context]
+            SearchQuery[Original Query<br/>For Search APIs]
+        end
+        
+        subgraph LangChainComponents[LangChain Components]
+            LCMemory[ConversationSummaryMemory<br/>Windowed last 5 turns<br/>+ PII Redaction]
+            LCPrompt[PromptTemplate<br/>Medical Q&A Format<br/>Context-aware]
+            LCChain[LLMChain<br/>Vendor-agnostic<br/>Groq/OpenAI/Bedrock]
+            LCOutput[OutputParser<br/>Extract citations]
+        end
+        
+        subgraph RAGPipeline[4-Tier Hybrid Retrieval]
+            Tier1CAG[Tier 1: CAG Cache<br/>Local JSON files<br/>Static knowledge<br/>Guidelines<br/>Priority: 4<br/>Latency: 5ms]
+            
+            Tier2Vector[Tier 2: Vector Search<br/>Qdrant Local Docker<br/>OR Qdrant Cloud 1GB free<br/>BioBERT embeddings<br/>768-dim vectors<br/>Priority: 3<br/>Latency: 50ms]
+            
+            Tier3PubMed[Tier 3: PubMed<br/>NCBI E-utilities<br/>Biopython 1.86<br/>Free 10 req/sec<br/>Priority: 2<br/>Latency: 300ms]
+            
+            Tier4Scholar[Tier 4: Academic<br/>Semantic Scholar API<br/>Free tier<br/>Priority: 1<br/>Latency: 800ms]
+        end
+        
+        subgraph RAGAggregation[Context Aggregation]
+            Results1[CAG Results]
+            Results2[Qdrant Results]
+            Results3[PubMed Results]
+            Results4[Scholar Results]
+            Aggregate[Aggregate & Rank<br/>Deduplication<br/>Tier-based Scoring]
+            TopK[Select Top-3<br/>Max 1000 chars each]
+            TokenCheck{Token Budget<br/>Check}
+            ReduceK[Reduce to Top-2]
+            BuildContext[Build Context Prompt]
+        end
+        
+        subgraph LLMGeneration[LLM Response]
+            LLMEngine[Groq API<br/>llama-3.3-70b-versatile<br/>Free: 30 req/min<br/>Temp: 0.3<br/>Streaming support]
+            GenerateAnswer[Generate Answer]
+            ExtractCitations[Extract Citations<br/>PMID + URLs]
+            AddDisclaimer[Privacy Notice<br/>+ Medical Disclaimer]
+            PostSafety{Post Safety<br/>Check}
+            FixResponse[Add Missing Disclaimer]
+            DisplayResponse[Display Response<br/>+ Sources Expander<br/>+ Chat History]
+        end
+    end
+    
+    subgraph PresentationLayer[PRESENTATION LAYER - Vercel Free]
+        subgraph VercelDeployment[Vercel Hosting - FREE]
+            VercelApp[Next.js 14 App Router<br/>Vercel Free Tier<br/>Bandwidth: Unlimited<br/>Builds: 6000 min/month<br/>Functions: 100GB-hours<br/>Edge: 500K requests/month<br/>Deployments: Unlimited]
+            
+            subgraph ReactPages[React Pages - Glassmorphism]
+                LoginPage[Login Page<br/>React 18.2<br/>Tailwind CSS 3.4<br/>Framer Motion 11<br/>10 pre-created users<br/>JWT auth<br/>React Hook Form 7.49<br/>Zod validation]
+                
+                MainDashboard[Dashboard<br/>Real-time metrics<br/>Chart.js 4.4 / D3.js 7<br/>Recharts 2.10<br/>Glass cards<br/>Grid layout<br/>Responsive design]
+                
+                SepsisUI[Sepsis Form<br/>42 inputs<br/>Multi-step wizard<br/>Real-time validation<br/>Unit hints<br/>SHAP viz<br/>Risk gauge]
+                
+                MortalityUI[Mortality Form<br/>13 inputs<br/>Risk calculation<br/>Probability gauge<br/>Feature importance<br/>Recommendations]
+                
+                StreamingDashboard[Streaming Dashboard<br/>Live charts D3.js<br/>WebSocket connection<br/>Real-time updates<br/>Patient grid<br/>Alert panel<br/>Replay controls]
+                
+                ChatbotUI[AI Assistant<br/>Chat interface<br/>Markdown rendering<br/>Code syntax highlight<br/>Citation display<br/>Context aware<br/>History panel]
+                
+                DoctorProfilePage[Doctor Profile<br/>Photo display<br/>Qualifications<br/>Specializations<br/>Contact info<br/>Biography<br/>Edit: dev-only]
+                
+                DoctorListPage[Doctor Directory<br/>Grid/List toggle<br/>Search filter<br/>Sort by specialty<br/>Click to profile<br/>Status indicators]
+                
+                AdminPanel[Admin Panel<br/>Dev role only<br/>User table<br/>Create/Edit users<br/>Role management<br/>Permissions<br/>Audit viewer]
+                
+                SettingsPage[Settings<br/>Preferences<br/>Theme dark/light<br/>Notifications<br/>Privacy controls<br/>GDPR export<br/>Account deletion]
+                
+                FeatureExplorer[Feature Explorer<br/>Registry browser<br/>Version timeline<br/>Dependency graph<br/>Usage stats<br/>Performance metrics]
+            end
+            
+            subgraph UIComponents[Reusable Components]
+                GlassCard[Glass Card<br/>Backdrop blur<br/>Gradient borders<br/>Hover animations<br/>tailwindcss-glassmorphism]
+                
+                RiskGauge[Risk Gauge<br/>Chart.js Doughnut<br/>OR react-gauge-chart<br/>Animated transitions<br/>Color zones<br/>Real-time]
+                
+                DataTable[Data Table<br/>TanStack Table v8<br/>@tanstack/react-table<br/>Sorting pagination<br/>Filtering<br/>Row selection]
+                
+                FormInputs[Form Inputs<br/>React Hook Form<br/>Zod schemas<br/>Custom styles<br/>Error messages<br/>Autocomplete]
+            end
+        end
+        
+        VercelEdge[Vercel Edge Functions<br/>Geo-routing<br/>Auth middleware<br/>Cache headers<br/>Rate limiting<br/>100 req/sec]
+        
+        VercelAnalytics[Vercel Analytics<br/>Free tier<br/>Page views<br/>Web Vitals<br/>Audience insights]
+    end
+    
+    subgraph MonitoringObservability[MONITORING - Local Only FREE]
+        PrometheusLocal[Prometheus<br/>Docker Container<br/>Metrics scraping<br/>15-day retention<br/>512MB RAM]
+        
+        GrafanaLocal[Grafana<br/>Docker Container<br/>Dashboards<br/>Visualizations<br/>Alerts<br/>256MB RAM]
+        
+        LocalLogs[Local Logging<br/>Python logging module<br/>JSON formatter<br/>File rotation<br/>30-day retention]
+        
+        EmailAlerts[Email Alerts<br/>Gmail SMTP free<br/>Python smtplib<br/>Alert templates]
+        
+        DiscordAlerts[Discord Webhook<br/>Free notifications<br/>JSON payloads]
+    end
+    
+    subgraph SecurityCompliance[SECURITY AND COMPLIANCE - Local]
+        subgraph Authentication[Authentication]
+            JWTAuth[JWT Authentication<br/>PyJWT 2.8<br/>HS256 algorithm<br/>Access: 15min<br/>Refresh: 7days]
+            
+            OAuth2Flow[OAuth2 Password Flow<br/>fastapi.security<br/>Token endpoint]
+            
+            PasswordSecurity[Password Security<br/>bcrypt 4.1<br/>Cost factor: 12<br/>Salt rounds]
+        end
+        
+        subgraph Authorization[Authorization - RBAC]
+            RBACEngine[RBAC Engine<br/>4 roles: admin, doctor, nurse, guest<br/>Permission matrix<br/>Resource-level ACL]
+            
+            PermissionStore[Permissions Store<br/>Local PostgreSQL<br/>User-Role mapping]
+        end
+        
+        subgraph Encryption[Data Encryption]
+            LocalEncryption[AES-256-GCM<br/>cryptography 42.0<br/>Fernet symmetric<br/>PBKDF2 KDF<br/>Local key storage<br/>Environment vars]
+        end
+        
+        subgraph Compliance[Compliance Controls]
+            HIPAAControls[HIPAA Controls<br/>Audit logs 7-year<br/>PHI encryption<br/>Access controls<br/>Local storage]
+            
+            GDPRControls[GDPR Controls<br/>Consent management<br/>Right to erasure<br/>Data portability]
+            
+            AuditTrail[Audit Trail<br/>Local files<br/>Who What When Where<br/>Tamper-evident hashing]
+        end
+    end
+    
+    subgraph DevOpsCI[DEVOPS AND CI/CD - Free Tools Only]
+        subgraph VersionControl[Version Control]
+            GitHubRepo[GitHub Free<br/>Unlimited repos<br/>GitHub Actions<br/>2000 min/month<br/>Branch protection]
+        end
+        
+        subgraph CI[Continuous Integration]
+            GitHubActions[GitHub Actions<br/>Free: 2000 min/month<br/>Linux runners<br/>Matrix builds]
+            
+            subgraph CIPipeline[CI Pipeline]
+                UnitTests[Unit Tests<br/>pytest 7.4<br/>pytest-cov<br/>Coverage 80% target]
+                
+                IntegrationTests[Integration Tests<br/>API testing<br/>httpx async client<br/>Mock external APIs]
+                
+                SecurityScan[Security Scanning<br/>bandit SAST<br/>safety dependencies<br/>detect-secrets<br/>Trivy containers]
+                
+                LintFormat[Lint and Format<br/>black formatter<br/>flake8 PEP8<br/>isort imports<br/>mypy type check]
+                
+                SonarQube[SonarQube Scan<br/>Community Edition FREE<br/>Code quality gates<br/>Technical debt]
+            end
+        end
+        
+        subgraph CD[Continuous Deployment]
+            VercelDeploy[Vercel Deploy<br/>Git push auto-deploy<br/>Preview per PR<br/>Production main<br/>Instant rollback<br/>Env variables<br/>Free unlimited]
+            
+            DockerBuild[Docker Build<br/>GitHub Actions<br/>Multi-stage builds<br/>Layer caching]
+            
+            DockerHub[Docker Hub<br/>Free tier<br/>1 private repo<br/>Unlimited public]
+            
+            LocalDeploy[Local Deployment<br/>Docker Compose<br/>Single command up<br/>Volume mounts]
+        end
+        
+        DockerCompose[Docker Compose 2.23<br/>postgres:16-alpine<br/>redis:7.2-alpine<br/>Python 3.11-slim<br/>kafka:3.6<br/>qdrant/qdrant<br/>prometheus + grafana<br/>All FREE self-hosted]
+    end
+    
+    subgraph UserManagement[USER MANAGEMENT - Local]
+        subgraph PreCreatedUsers[10 Pre-created Users]
+            DevUser[dev@mediai.com<br/>Role: admin<br/>Full access]
+            
+            Doctors[doctor1-5@mediai.com<br/>Role: doctor<br/>Predict + View]
+            
+            Nurses[nurse1-3@mediai.com<br/>Role: nurse<br/>Monitor + Alert]
+            
+            Guest[guest@mediai.com<br/>Role: guest<br/>Dashboard only]
+        end
+        
+        UserDB[(User Database<br/>PostgreSQL local<br/>users table<br/>bcrypt passwords)]
+        
+        DoctorDB[(Doctor Profiles<br/>PostgreSQL local<br/>10 doctor records)]
+        
+        PhotoStorage[(Photo Storage<br/>Local filesystem<br/>Max 2MB per photo)]
+    end
+    
+    subgraph CostSummary[COST SUMMARY - $0/month]
+        FreeTier[Monthly Cost: $0<br/>━━━━━━━━━━━━━━━━━━━━<br/>Self-hosted Backend FREE:<br/>PostgreSQL: Docker FREE<br/>Redis: Docker FREE<br/>Kafka: Docker FREE<br/>Qdrant: Docker FREE<br/>Prometheus: Docker FREE<br/>Grafana: Docker FREE<br/>FastAPI: Docker FREE<br/>━━━━━━━━━━━━━━━━━━━━<br/>Frontend FREE:<br/>Vercel: Free tier unlimited<br/>Next.js: Open source<br/>━━━━━━━━━━━━━━━━━━━━<br/>External APIs FREE tiers:<br/>Groq: 30 req/min FREE<br/>NCBI PubMed: FREE with key<br/>Semantic Scholar: FREE<br/>GitHub Actions: 2000 min FREE<br/>Docker Hub: FREE tier<br/>━━━━━━━━━━━━━━━━━━━━<br/>Hardware Requirements:<br/>RAM: 8-16GB recommended<br/>Storage: 50GB SSD<br/>CPU: 4+ cores]
+    end
+    
+    %% Data Flow Connections
+    MIMICRaw --> PostgresLocal
+    PostgresLocal --> LocalBackup
+    
+    PostgresLocal --> DataReplayer
+    DataReplayer --> KafkaLocal
+    KafkaLocal --> KafkaVitals
+    KafkaLocal --> KafkaLabs
+    KafkaLocal --> KafkaAlerts
+    
+    KafkaVitals --> VitalsProcessor
+    KafkaLabs --> LabsProcessor
+    KafkaLocal --> LocalStreamProcessor
+    
+    VitalsProcessor --> AlertEngine
+    LocalStreamProcessor --> AlertEngine
+    AlertEngine --> KafkaAlerts
+    
+    VitalsProcessor --> DataCleaner
+    LabsProcessor --> DataCleaner
+    LocalStreamProcessor --> DataCleaner
+    
+    DataCleaner --> UnitConverter
+    UnitConverter --> DataValidator
+    DataValidator --> TimeSeriesFeatures
+    DataValidator --> ClinicalFeatures
+    DataValidator --> RealtimeFeatureEngine
+    
+    TimeSeriesFeatures --> PostgresSilver
+    TimeSeriesFeatures --> ParquetSilver
+    ClinicalFeatures --> PostgresSilver
+    
+    PostgresSilver --> SQLiteMeta
+    ParquetSilver --> SQLiteMeta
+    
+    PostgresSilver --> RedisOnline
+    PostgresSilver --> DuckDBOffline
+    ParquetSilver --> DuckDBOffline
+    
+    DuckDBOffline --> FeatureRegistry
+    RedisOnline --> FeatureRegistry
+    
+    FeatureRegistry --> LocalMLServer
+    LocalMLServer --> SepsisModel
+    LocalMLServer --> MortalityModel
+    SepsisModel --> SHAPExplainers
+    MortalityModel --> SHAPExplainers
+    LocalMLServer --> ModelMetrics
+    
+    PostgresSilver --> LocalAggregates
+    
+    RealtimeFeatureEngine --> FeatureRegistry
+    RealtimeFeatureEngine --> RedisOnline
+    
+    %% Frontend to Backend
+    LoginPage --> LocalAPI
+    MainDashboard --> LocalAPI
+    SepsisUI --> LocalAPI
+    MortalityUI --> LocalAPI
+    StreamingDashboard --> LocalAPI
+    ChatbotUI --> LocalAPI
+    DoctorProfilePage --> LocalAPI
+    DoctorListPage --> LocalAPI
+    AdminPanel --> LocalAPI
+    FeatureExplorer --> LocalAPI
+    
+    VercelApp --> VercelEdge
+    VercelApp --> VercelAnalytics
+    VercelEdge --> LocalAPI
+    
+    LocalAPI --> CORS
+    CORS --> AuthMiddleware
+    AuthMiddleware --> RateLimiter
+    RateLimiter --> ErrorHandler
+    ErrorHandler --> Validator
+    Validator --> RBACMiddleware
+    RBACMiddleware --> CircuitBreaker
+    
+    CircuitBreaker --> HealthCheck
+    CircuitBreaker --> AuthAPI
+    CircuitBreaker --> PredictionAPI
+    CircuitBreaker --> PatientAPI
+    CircuitBreaker --> StreamingAPI
+    CircuitBreaker --> ChatbotAPI
+    CircuitBreaker --> DoctorAPI
+    CircuitBreaker --> FeatureAPI
+    
+    AuthAPI --> AuthSvc
+    AuthSvc --> JWTAuth
+    AuthSvc --> OAuth2Flow
+    AuthSvc --> PasswordSecurity
+    AuthSvc --> UserDB
+    
+    PredictionAPI --> PredictionSvc
+    PredictionSvc --> FeatureSvc
+    FeatureSvc --> RealtimeFeatureEngine
+    FeatureSvc --> RedisOnline
+    FeatureSvc --> FeatureRegistry
+    PredictionSvc --> LocalMLServer
+    
+    DoctorAPI --> DoctorSvc
+    DoctorSvc --> DoctorDB
+    DoctorSvc --> PhotoStorage
+    
+    StreamingAPI --> StreamSvc
+    StreamSvc --> DataReplayer
+    
+    PatientAPI --> PostgresSilver
+    PatientAPI --> PostgresLocal
+    
+    FeatureAPI --> FeatureSvc
+    
+    RBACMiddleware --> RBACEngine
+    RBACEngine --> PermissionStore
+    PermissionStore --> PostgresLocal
+    
+    AuditSvc --> LocalLogs
+    AuditSvc --> AuditTrail
+    AuditTrail --> HIPAAControls
+    AuditTrail --> GDPRControls
+    
+    %% Chatbot Flow
+    UserQuery --> SafetyCheck
+    SafetyCheck -->|Emergency| EmergencyResp
+    SafetyCheck -->|Unsafe| BlockResp
+    SafetyCheck -->|Safe| AutoEnhance
+    
+    AutoEnhance -->|Yes| PatternMatch
+    AutoEnhance -->|No| OriginalQuery
+    
+    PatternMatch --> EnhancedPrompt
+    PatternMatch --> SearchQuery
+    OriginalQuery --> SearchQuery
+    
+    SearchQuery --> Tier1CAG
+    SearchQuery --> Tier2Vector
+    SearchQuery --> Tier3PubMed
+    SearchQuery --> Tier4Scholar
+    
+    Tier3PubMed --> NCBIExt
+    Tier4Scholar --> ScholarExt
+    
+    Tier1CAG --> Results1
+    Tier2Vector --> Results2
+    Tier3PubMed --> Results3
+    Tier4Scholar --> Results4
+    
+    Results1 --> Aggregate
+    Results2 --> Aggregate
+    Results3 --> Aggregate
+    Results4 --> Aggregate
+    
+    Aggregate --> TopK
+    TopK --> TokenCheck
+    TokenCheck -->|Exceeds| ReduceK
+    TokenCheck -->|Within| BuildContext
+    ReduceK --> BuildContext
+    
+    EnhancedPrompt --> LCMemory
+    BuildContext --> LCMemory
+    LCMemory --> LCPrompt
+    LCPrompt --> LCChain
+    LCChain --> LLMEngine
+    
+    LLMEngine --> LCOutput
+    LCOutput --> GenerateAnswer
+    GenerateAnswer --> ExtractCitations
+    ExtractCitations --> AddDisclaimer
+    AddDisclaimer --> PostSafety
+    PostSafety -->|Issues| FixResponse
+    PostSafety -->|Pass| DisplayResponse
+    FixResponse --> DisplayResponse
+    
+    EmergencyResp --> DisplayResponse
+    BlockResp --> DisplayResponse
+    
+    DisplayResponse --> ChatbotUI
+    
+    ChatbotAPI --> UserQuery
+    
+    %% Monitoring
+    LocalAPI -.-> PrometheusLocal
+    LocalMLServer -.-> PrometheusLocal
+    LocalStreamProcessor -.-> PrometheusLocal
+    PrometheusLocal --> GrafanaLocal
+    
+    LocalAPI -.-> LocalLogs
+    LocalMLServer -.-> LocalLogs
+    
+    GrafanaLocal --> EmailAlerts
+    GrafanaLocal --> DiscordAlerts
+    
+    %% Security
+    AuthSvc --> LocalEncryption
+    DoctorSvc --> LocalEncryption
+    HIPAAControls --> LocalEncryption
+    
+    %% DevOps
+    GitHubRepo --> GitHubActions
+    GitHubActions --> UnitTests
+    GitHubActions --> IntegrationTests
+    GitHubActions --> SecurityScan
+    GitHubActions --> LintFormat
+    GitHubActions --> SonarQube
+    
+    GitHubActions --> DockerBuild
+    GitHubActions --> VercelDeploy
+    VercelDeploy --> VercelApp
+    DockerBuild --> DockerHub
+    DockerBuild --> DockerCompose
+    
+    DockerCompose --> PostgresLocal
+    DockerCompose --> RedisOnline
+    DockerCompose --> KafkaLocal
+    DockerCompose --> LocalAPI
+    DockerCompose --> LocalMLServer
+    DockerCompose --> PrometheusLocal
+    DockerCompose --> GrafanaLocal
+    DockerCompose --> Tier2Vector
+    
+    %% Styling
+    classDef bronzeStyle fill:#8d6e63,stroke:#5d4037,stroke-width:3px,color:#fff
+    classDef streamStyle fill:#26a69a,stroke:#00695c,stroke-width:3px,color:#fff
+    classDef silverStyle fill:#42a5f5,stroke:#1565c0,stroke-width:3px,color:#fff
+    classDef goldStyle fill:#ffa726,stroke:#e65100,stroke-width:3px,color:#fff
+    classDef apiStyle fill:#ab47bc,stroke:#6a1b9a,stroke-width:3px,color:#fff
+    classDef uiStyle fill:#ec407a,stroke:#ad1457,stroke-width:3px,color:#fff
+    classDef aiStyle fill:#66bb6a,stroke:#2e7d32,stroke-width:3px,color:#fff
+    classDef monitorStyle fill:#ff9800,stroke:#e65100,stroke-width:3px,color:#fff
+    classDef securityStyle fill:#ef5350,stroke:#c62828,stroke-width:3px,color:#fff
+    classDef devopsStyle fill:#5c6bc0,stroke:#283593,stroke-width:3px,color:#fff
+    classDef userStyle fill:#9c27b0,stroke:#6a1b9a,stroke-width:3px,color:#fff
+    classDef freeStyle fill:#00e676,stroke:#00c853,stroke-width:4px,color:#000
+    classDef localStyle fill:#4fc3f7,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef chatbotStyle fill:#81c784,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef langchainStyle fill:#d1c4e9,stroke:#512da8,stroke-width:3px,color:#000
+    classDef decisionStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef emergencyStyle fill:#ffebee,stroke:#d32f2f,stroke-width:3px,color:#000
+    
+    class PostgresLocal,LocalBackup,MIMICRaw bronzeStyle
+    class DataReplayer,KafkaLocal,KafkaVitals,KafkaLabs,KafkaAlerts streamStyle
+    class VitalsProcessor,LabsProcessor,AlertEngine,LocalStreamProcessor streamStyle
+    class DataCleaner,UnitConverter,DataValidator,TimeSeriesFeatures,ClinicalFeatures,RealtimeFeatureEngine,PostgresSilver,ParquetSilver,SQLiteMeta silverStyle
+    class RedisOnline,DuckDBOffline,FeatureRegistry,LocalMLServer,SepsisModel,MortalityModel,SHAPExplainers,ModelMetrics,LocalAggregates goldStyle
+    class LocalAPI,AuthAPI,HealthCheck,PredictionAPI,PatientAPI,StreamingAPI,ChatbotAPI,DoctorAPI,FeatureAPI,CORS,RateLimiter,ErrorHandler,Validator,CircuitBreaker,AuthMiddleware,RBACMiddleware,PredictionSvc,UserMgmtSvc,DoctorSvc,StreamSvc,AuditSvc,FeatureSvc,AuthSvc apiStyle
+    class VercelApp,VercelEdge,VercelAnalytics,LoginPage,MainDashboard,SepsisUI,MortalityUI,StreamingDashboard,ChatbotUI,DoctorProfilePage,DoctorListPage,AdminPanel,SettingsPage,FeatureExplorer,GlassCard,RiskGauge,DataTable,FormInputs uiStyle
+    class Tier1CAG,Tier2Vector,Tier3PubMed,Tier4Scholar,Results1,Results2,Results3,Results4,Aggregate,TopK,BuildContext,LLMEngine,GenerateAnswer,ExtractCitations,AddDisclaimer,DisplayResponse,FixResponse,ReduceK aiStyle
+    class LCMemory,LCPrompt,LCChain,LCOutput langchainStyle
+    class UserQuery,EnhancedPrompt,SearchQuery,PatternMatch,OriginalQuery chatbotStyle
+    class SafetyCheck,AutoEnhance,TokenCheck,PostSafety decisionStyle
+    class EmergencyResp,BlockResp emergencyStyle
+    class PrometheusLocal,GrafanaLocal,LocalLogs,EmailAlerts,DiscordAlerts monitorStyle
+    class JWTAuth,OAuth2Flow,PasswordSecurity,RBACEngine,PermissionStore,LocalEncryption,HIPAAControls,GDPRControls,AuditTrail securityStyle
+    class GitHubRepo,GitHubActions,UnitTests,IntegrationTests,SecurityScan,LintFormat,SonarQube,VercelDeploy,DockerBuild,DockerHub,LocalDeploy,DockerCompose devopsStyle
+    class DevUser,Doctors,Nurses,Guest,UserDB,DoctorDB,PhotoStorage userStyle
+    class FreeTier freeStyle
+    class NCBIExt,ScholarExt localStyle

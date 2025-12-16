@@ -1,0 +1,114 @@
+# Monitoring Stack - Prometheus + Grafana + SonarQube
+# Run with: docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml up
+# With profiles: --profile monitoring (Prometheus + Grafana) or --profile quality (SonarQube)
+
+version: '3.8'
+
+services:
+  # SonarQube - Code Quality Analysis
+  sonarqube:
+    image: sonarqube:community
+    container_name: mediai_sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - mediai_network
+    profiles: ["quality"]
+    restart: unless-stopped
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mediai_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - mediai_network
+    profiles: ["monitoring"]
+    restart: unless-stopped
+
+  # Grafana - Visualization Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mediai_grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - mediai_network
+    profiles: ["monitoring"]
+    restart: unless-stopped
+
+  # Node Exporter - System Metrics (Optional)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: mediai_node_exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - mediai_network
+    profiles: ["monitoring"]
+    restart: unless-stopped
+
+volumes:
+  sonarqube_data:
+    driver: local
+  sonarqube_extensions:
+    driver: local
+  sonarqube_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  mediai_network:
+    external: true
+
+# Usage Examples:
+#
+# 1. Run with monitoring only (Prometheus + Grafana):
+#    docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile monitoring up -d
+#
+# 2. Run with code quality only (SonarQube):
+#    docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile quality up -d
+#
+# 3. Run all monitoring tools:
+#    docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile monitoring --profile quality up -d
+#
+# Access URLs:
+#   - Prometheus: http://localhost:9090
+#   - Grafana: http://localhost:3001 (admin/admin)
+#   - SonarQube: http://localhost:9000 (admin/admin)
+#   - Node Exporter: http://localhost:9100/metrics
