@@ -1,0 +1,106 @@
+# ⚠️ DEPRECATED - DO NOT USE
+# This file has conflicts with docker-compose.yml (duplicate postgres/redis)
+# Use docker-compose.monitoring.yml instead for monitoring services
+#
+# version: '3.8'
+#
+# services:
+#   # PostgreSQL - Main Database
+#   postgres:
+#     image: postgres:16-alpine
+#     container_name: mediai_dev_postgres
+#     environment:
+#       POSTGRES_USER: mediai
+#       POSTGRES_PASSWORD: dev123
+#       POSTGRES_DB: mediai_dev
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - postgres_dev_data:/var/lib/postgresql/data
+#     healthcheck:
+#       test: [ "CMD-SHELL", "pg_isready -U mediai" ]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - mediai_dev_network
+#
+#   # Redis - Caching
+#   redis:
+#     image: redis:7.2-alpine
+#     container_name: mediai_dev_redis
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - redis_dev_data:/data
+#     command: redis-server --appendonly yes
+#     healthcheck:
+#       test: [ "CMD", "redis-cli", "ping" ]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - mediai_dev_network
+
+#   # SonarQube - Code Quality
+#   sonarqube:
+#     image: sonarqube:community
+#     container_name: mediai_sonarqube
+#     ports:
+#       - "9000:9000"
+#     environment:
+#       SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+#     volumes:
+#       - sonarqube_data:/opt/sonarqube/data
+#       - sonarqube_extensions:/opt/sonarqube/extensions
+#       - sonarqube_logs:/opt/sonarqube/logs
+#     networks:
+#       - mediai_dev_network
+#     profiles: [ "quality" ]
+#
+#   # Prometheus - Metrics (Optional)
+#   prometheus:
+#     image: prom/prometheus:latest
+#     container_name: mediai_prometheus
+#     ports:
+#       - "9090:9090"
+#     volumes:
+#       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#       - prometheus_data:/prometheus
+#     networks:
+#       - mediai_dev_network
+#     profiles: [ "monitoring" ]
+#
+#   # Grafana - Dashboards (Optional)
+#   grafana:
+#     image: grafana/grafana:latest
+#     container_name: mediai_grafana
+#     ports:
+#       - "3001:3000"
+#     environment:
+#       GF_SECURITY_ADMIN_PASSWORD: admin
+#     volumes:
+#       - grafana_data:/var/lib/grafana
+#     depends_on:
+#       - prometheus
+#     networks:
+#       - mediai_dev_network
+#     profiles: [ "monitoring" ]
+#
+# volumes:
+#   postgres_dev_data:
+#   redis_dev_data:
+#   sonarqube_data:
+#   sonarqube_extensions:
+#   sonarqube_logs:
+#   prometheus_data:
+#   grafana_data:
+#
+#
+# networks:
+#   mediai_dev_network:
+#     driver: bridge
+
+# ✅ MIGRATED TO: docker-compose.monitoring.yml
+# Run monitoring stack with:
+#   docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile monitoring up

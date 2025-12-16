@@ -1,0 +1,415 @@
+openapi: 3.1.0
+info:
+  title: MediAI API
+  version: 2.0.0
+  description: |
+    ICU Patient Risk Prediction System API.
+    Provides endpoints for authentication, patient data management,
+    and ML-based predictions for sepsis and mortality risk.
+  contact:
+    name: MediAI Team
+    email: dev@mediai.com
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development
+  - url: https://api.mediai.app/api/v1
+    description: Production
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Predictions
+    description: ML predictions for patient risk
+  - name: Patients
+    description: Patient data management
+  - name: Doctors
+    description: Doctor profile management
+  - name: Health
+    description: API health checks
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: demo
+                password:
+                  type: string
+                  format: password
+                  example: demo123
+              required: [username, password]
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Refresh token
+              required: [token]
+      responses:
+        '200':
+          description: New tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid or expired refresh token
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user info
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /predict/sepsis:
+    post:
+      tags: [Predictions]
+      summary: Predict sepsis risk
+      operationId: predictSepsis
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SepsisInput'
+      responses:
+        '200':
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionResult'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+
+  /predict/mortality:
+    post:
+      tags: [Predictions]
+      summary: Predict mortality risk
+      operationId: predictMortality
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MortalityInput'
+      responses:
+        '200':
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionResult'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+
+  /doctors:
+    get:
+      tags: [Doctors]
+      summary: List all doctors
+      operationId: listDoctors
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of doctors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Doctor'
+
+  /doctors/{id}:
+    get:
+      tags: [Doctors]
+      summary: Get doctor by ID
+      operationId: getDoctor
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Doctor details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Doctor'
+        '404':
+          description: Doctor not found
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token (15min expiry)
+        refresh_token:
+          type: string
+          description: Refresh token (7 days expiry)
+        token_type:
+          type: string
+          enum: [bearer]
+      required: [access_token, token_type]
+
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        disabled:
+          type: boolean
+
+    SepsisInput:
+      type: object
+      properties:
+        patient_id:
+          type: string
+        age:
+          type: integer
+          minimum: 0
+          maximum: 120
+        gender:
+          type: string
+          enum: [M, F]
+        heart_rate:
+          type: number
+          minimum: 0
+          maximum: 300
+        temperature:
+          type: number
+          minimum: 30
+          maximum: 45
+        respiratory_rate:
+          type: number
+          minimum: 0
+          maximum: 60
+        systolic_bp:
+          type: number
+          minimum: 0
+          maximum: 300
+        diastolic_bp:
+          type: number
+          minimum: 0
+          maximum: 200
+        spo2:
+          type: number
+          minimum: 0
+          maximum: 100
+        wbc:
+          type: number
+        lactate:
+          type: number
+        creatinine:
+          type: number
+      required: [age, heart_rate, temperature]
+
+    MortalityInput:
+      type: object
+      properties:
+        patient_id:
+          type: string
+        age:
+          type: integer
+        gender:
+          type: string
+          enum: [M, F]
+        admission_type:
+          type: string
+        los_hours:
+          type: number
+          description: Length of stay in hours
+        sofa_score:
+          type: integer
+          minimum: 0
+          maximum: 24
+        charlson_index:
+          type: integer
+        mechanical_ventilation:
+          type: boolean
+        vasopressor_use:
+          type: boolean
+      required: [age, sofa_score]
+
+    PredictionResult:
+      type: object
+      properties:
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of adverse outcome
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        feature_importance:
+          type: array
+          items:
+            type: object
+            properties:
+              feature:
+                type: string
+              value:
+                type: number
+              impact:
+                type: number
+        recommendations:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    Doctor:
+      type: object
+      properties:
+        id:
+          type: integer
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        specialty:
+          type: string
+        department:
+          type: string
+        phone:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        components:
+          type: object
+          properties:
+            database:
+              type: string
+            redis:
+              type: string
+            api:
+              type: string
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+        code:
+          type: string
