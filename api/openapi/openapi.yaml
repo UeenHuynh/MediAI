@@ -27,6 +27,8 @@ tags:
     description: Patient data management
   - name: Doctors
     description: Doctor profile management
+  - name: Chat
+    description: Medical AI assistant with RAG
   - name: Health
     description: API health checks
 
@@ -208,6 +210,54 @@ paths:
                 $ref: '#/components/schemas/Doctor'
         '404':
           description: Doctor not found
+
+  /chat:
+    post:
+      tags: [Chat]
+      summary: Send message to medical AI assistant
+      operationId: sendChatMessage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: AI response with citations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+
+  /chat/history/{session_id}:
+    get:
+      tags: [Chat]
+      summary: Get conversation history
+      operationId: getChatHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversation history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationHistory'
+        '404':
+          description: Session not found
 
   /health:
     get:
@@ -405,6 +455,94 @@ components:
               type: string
             api:
               type: string
+
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: User's medical question
+        session_id:
+          type: string
+          description: Session ID for conversation continuity
+        include_sources:
+          type: boolean
+          default: true
+          description: Whether to include source citations
+      required: [message]
+
+    ChatResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+          description: AI-generated response
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        disclaimer:
+          type: string
+          description: Medical disclaimer
+        session_id:
+          type: string
+        redacted_query:
+          type: string
+          description: Query with PII redacted (if applicable)
+        processing_time_ms:
+          type: integer
+          description: Response time in milliseconds
+
+    Citation:
+      type: object
+      properties:
+        number:
+          type: integer
+          description: Citation number
+        source:
+          type: string
+          description: Source title or name
+        url:
+          type: string
+          format: uri
+          description: Source URL (if available)
+        pmid:
+          type: string
+          description: PubMed ID (if applicable)
+
+    ConversationHistory:
+      type: object
+      properties:
+        session_id:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        created_at:
+          type: string
+          format: date-time
+        last_updated:
+          type: string
+          format: date-time
+
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
 
     Error:
       type: object

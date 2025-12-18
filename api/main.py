@@ -12,7 +12,7 @@ from core.database import init_db
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from routers import auth, health, predictions
+from routers import auth, health, predictions, doctors, chat
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -43,7 +43,7 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="MediAI - ICU Risk Prediction API",
     description="REST API for sepsis and mortality risk prediction in ICU patients",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -58,8 +58,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],  # Only allow necessary methods
-    allow_headers=["Content-Type", "Authorization"],  # Only allow necessary headers
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -87,6 +87,8 @@ async def global_exception_handler(_request: Request, exc: Exception):
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(health.router, tags=["Health"])
 app.include_router(predictions.router, prefix="/api/v1", tags=["Predictions"])
+app.include_router(doctors.router, prefix="/api/v1", tags=["Doctors"])
+app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
 
 
 @app.get("/")
