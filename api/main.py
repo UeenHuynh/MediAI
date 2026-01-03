@@ -29,8 +29,14 @@ async def lifespan(_app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("Starting MediAI API...")
-    init_db()
-    logger.info("Database initialized")
+
+    # Only initialize database if enabled
+    if settings.ENABLE_DATABASE:
+        init_db()
+        logger.info("Database initialized")
+    else:
+        logger.info("Database disabled - using CSV data source")
+
     yield
     # Shutdown
     logger.info("Shutting down MediAI API...")
