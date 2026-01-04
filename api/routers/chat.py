@@ -5,6 +5,7 @@ Provides endpoints for medical Q&A using LangChain RAG pipeline.
 """
 
 import logging
+import os
 from typing import List, Optional
 from datetime import datetime
 
@@ -12,10 +13,40 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from core.rbac import require_authenticated, UserWithRole, require_permission
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+# Initialize chatbot if enabled
+_chatbot_instance = None
+
+def get_chatbot():
+    """Get or create chatbot instance"""
+    global _chatbot_instance
+
+    if not settings.ENABLE_CHATBOT:
+        return None
+
+    if _chatbot_instance is None:
+        try:
+            from services.langchain_medical_bot import ProductionMedicalChatbot
+
+            # Get LLM provider from env (default: groq)
+            provider = os.getenv("LLM_PROVIDER", "groq").lower()
+
+            _chatbot_instance = ProductionMedicalChatbot(
+                provider=provider,
+                enable_pii_redaction=True,
+                enable_callbacks=True,
+            )
+            logger.info(f"✅ ProductionMedicalChatbot initialized with provider={provider}")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize chatbot: {e}")
+            _chatbot_instance = None
+
+    return _chatbot_instance
 
 
 # --- Pydantic Models ---
@@ -160,27 +191,61 @@ async def send_message(
     ))
     
     try:
-        # Get response (mock for now, replace with ProductionMedicalChatbot)
-        answer, citations = get_mock_response(request.message)
-        
+        # Get chatbot instance
+        chatbot = get_chatbot()
+
+        if chatbot is not None:
+            # Use real ProductionMedicalChatbot
+            try:
+                result = chatbot.query(
+                    question=request.message,
+                    retrieved_context="",  # No RAG context for now
+                    conversation_history=[(msg.role, msg.content) for msg in session.messages[-5:]],  # Last 5 messages
+                )
+
+                answer = result.get("answer", "I apologize, but I'm unable to generate a response at this time.")
+
+                # Convert citations format
+                citations = []
+                for i, citation in enumerate(result.get("citations", []), 1):
+                    citations.append(Citation(
+                        number=i,
+                        source=citation.get("source", "Unknown"),
+                        url=citation.get("url"),
+                        pmid=citation.get("pmid"),
+                    ))
+
+                redacted_query = result.get("redacted_query")
+
+            except Exception as e:
+                logger.error(f"Chatbot error: {e}, falling back to mock")
+                # Fallback to mock if chatbot fails
+                answer, citations = get_mock_response(request.message)
+                redacted_query = None
+        else:
+            # Use mock response if chatbot not enabled
+            answer, citations = get_mock_response(request.message)
+            redacted_query = None
+
         # Add assistant message
         session.messages.append(ChatMessage(
             role="assistant",
             content=answer,
             citations=citations,
         ))
-        
+
         session.last_updated = datetime.utcnow()
-        
+
         processing_time = int((time.time() - start_time) * 1000)
-        
+
         return ChatResponse(
             answer=answer,
             citations=citations if request.include_sources else [],
             session_id=session_id,
+            redacted_query=redacted_query,
             processing_time_ms=processing_time,
         )
-        
+
     except Exception as e:
         logger.error(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate response")
