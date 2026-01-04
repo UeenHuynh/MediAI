@@ -63,15 +63,20 @@ export default function ChatbotPage() {
         setIsLoading(true);
 
         try {
-            const response = await apiClient.post("/chat/message", {
+            const response = await apiClient.post("/chat", {
                 message: userMessage.content,
+                include_sources: true,
             });
 
             const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: response.data.response || response.data.answer,
-                sources: response.data.sources,
+                content: response.data.answer,
+                sources: response.data.citations?.map((c: any) => ({
+                    title: c.source,
+                    url: c.url || "",
+                    pmid: c.pmid,
+                })),
                 timestamp: new Date(),
             };
 
