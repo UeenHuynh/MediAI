@@ -48,28 +48,38 @@ class PredictionService:
             self.redis_client = None
 
     def _load_models(self):
-        """Load ML models from disk"""
+        """Load ML models v2 from disk"""
         model_path = settings.MODEL_PATH
+        self.feature_names = {}
 
-        # Load sepsis model
-        # nosec B301 - ML models are generated internally, not user-uploaded
-        sepsis_model_file = os.path.join(model_path, "sepsis_model_v1.pkl")
+        # Load sepsis model v2
+        sepsis_model_file = os.path.join(model_path, "sepsis_lightgbm_v2.pkl")
+        sepsis_features_file = os.path.join(model_path, "sepsis_feature_names_v2.pkl")
+        
         if os.path.exists(sepsis_model_file):
             with open(sepsis_model_file, "rb") as f:
                 self.models["sepsis"] = pickle.load(f)  # nosec B301
-            logger.info("Sepsis model loaded")
+            if os.path.exists(sepsis_features_file):
+                with open(sepsis_features_file, "rb") as f:
+                    self.feature_names["sepsis"] = pickle.load(f)  # nosec B301
+            logger.info("Sepsis model v2 loaded (42 features)")
         else:
-            logger.warning("Sepsis model not found at %s", sepsis_model_file)
+            logger.warning("Sepsis model v2 not found at %s", sepsis_model_file)
 
-        # Load mortality model
-        # nosec B301 - ML models are generated internally, not user-uploaded
-        mortality_model_file = os.path.join(model_path, "mortality_model_v1.pkl")
+        # Load mortality model v2
+        mortality_model_file = os.path.join(model_path, "mortality_lightgbm_v2.pkl")
+        mortality_features_file = os.path.join(model_path, "mortality_feature_names_v2.pkl")
+        
         if os.path.exists(mortality_model_file):
             with open(mortality_model_file, "rb") as f:
                 self.models["mortality"] = pickle.load(f)  # nosec B301
-            logger.info("Mortality model loaded")
+            if os.path.exists(mortality_features_file):
+                with open(mortality_features_file, "rb") as f:
+                    self.feature_names["mortality"] = pickle.load(f)  # nosec B301
+            logger.info("Mortality model v2 loaded (61 features)")
         else:
-            logger.warning("Mortality model not found at %s", mortality_model_file)
+            logger.warning("Mortality model v2 not found at %s", mortality_model_file)
+
 
     def _get_cache_key(self, patient_id: str, features: Dict) -> str:
         """Generate cache key from patient_id and features"""
@@ -168,7 +178,7 @@ class PredictionService:
 
         # Make prediction
         model = self.models["sepsis"]
-        probability = model.predict_proba(features_df)[0][1]
+        probability = model.predict(features_df)[0]  # LightGBM returns probability directly
 
         # Calculate feature importance (simplified - would use SHAP in production)
         top_features = self._get_top_features(features_df, model, "sepsis")
@@ -218,7 +228,7 @@ class PredictionService:
         # Make prediction (similar to sepsis)
         features_df = pd.DataFrame([features_dict])
         model = self.models["mortality"]
-        probability = model.predict_proba(features_df)[0][1]
+        probability = model.predict(features_df)[0]  # LightGBM returns probability directly
 
         top_features = self._get_top_features(features_df, model, "mortality")
         risk_level = self._categorize_risk(probability)

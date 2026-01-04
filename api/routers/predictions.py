@@ -29,8 +29,8 @@ prediction_service = PredictionService()
 @router.post("/predict/sepsis", response_model=SepsisPredictionResponse)
 @limiter.limit("100/minute")
 async def predict_sepsis(
-    request_obj: Request,
-    request: SepsisPredictionRequest,
+    request: Request,
+    sepsis_request: SepsisPredictionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -44,10 +44,10 @@ async def predict_sepsis(
         - recommendation: Clinical recommendation based on risk level
     """
     try:
-        logger.info("Sepsis prediction request for patient: %s", request.patient_id)
+        logger.info("Sepsis prediction request for patient: %s", sepsis_request.patient_id)
 
         # Get prediction
-        result = await prediction_service.predict_sepsis(request, db)
+        result = await prediction_service.predict_sepsis(sepsis_request, db)
 
         logger.info("Sepsis prediction completed: %s", result.prediction.risk_level)
         return result
@@ -63,8 +63,8 @@ async def predict_sepsis(
 @router.post("/predict/mortality", response_model=MortalityPredictionResponse)
 @limiter.limit("100/minute")
 async def predict_mortality(
-    request_obj: Request,
-    request: MortalityPredictionRequest,
+    request: Request,
+    mortality_request: MortalityPredictionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -78,10 +78,10 @@ async def predict_mortality(
         - recommendation: Clinical recommendation based on risk level
     """
     try:
-        logger.info("Mortality prediction request for patient: %s", request.patient_id)
+        logger.info("Mortality prediction request for patient: %s", mortality_request.patient_id)
 
         # Get prediction
-        result = await prediction_service.predict_mortality(request, db)
+        result = await prediction_service.predict_mortality(mortality_request, db)
 
         logger.info("Mortality prediction completed: %s", result.prediction.risk_level)
         return result
@@ -96,18 +96,30 @@ async def predict_mortality(
 
 @router.get("/models/info")
 async def get_models_info():
-    """Get information about loaded models"""
+    """Get information about loaded models (v2)"""
     return {
         "sepsis_model": {
-            "version": "v1",
+            "version": "v2.0",
             "features": 42,
             "algorithm": "LightGBM",
             "target": "sepsis_onset_within_6h",
+            "source": "features_sepsis_6h.csv",
+            "metrics": {
+                "auc_roc": 0.847,
+                "accuracy": 0.83,
+                "recall": 0.53,
+            },
         },
         "mortality_model": {
-            "version": "v1",
-            "features": 65,
+            "version": "v2.0",
+            "features": 61,
             "algorithm": "LightGBM",
             "target": "hospital_mortality",
+            "source": "features_mortality_24h.csv",
+            "metrics": {
+                "auc_roc": 0.963,
+                "accuracy": 0.94,
+                "recall": 0.64,
+            },
         },
     }
