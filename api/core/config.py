@@ -21,6 +21,18 @@ class Settings(BaseSettings):
     # Database Configuration
     DATABASE_URL: str = "postgresql://postgres:postgres123@localhost:5434/mimic_iv"
 
+    # Data Source Configuration
+    DATA_SOURCE: str = "csv"  # Options: "csv", "database"
+    CSV_DATA_PATH: str = "./data/sample_kaggle"
+
+    # Feature Flags
+    ENABLE_DATABASE: bool = False
+    ENABLE_PREDICTIONS: bool = True
+    ENABLE_CHATBOT: bool = False
+
+    # Security
+    SECRET_KEY: str = "your-secret-key-change-in-production"
+
     # Redis Configuration
     REDIS_URL: str = "redis://localhost:6379/0"
     CACHE_TTL_SECONDS: int = 3600
@@ -33,8 +45,12 @@ class Settings(BaseSettings):
 
     # Model Configuration
     MODEL_PATH: str = "./models"
-    SEPSIS_MODEL_VERSION: str = "v1"
-    MORTALITY_MODEL_VERSION: str = "v1"
+    SEPSIS_MODEL_VERSION: str = "v2"
+    MORTALITY_MODEL_VERSION: str = "v2"
+    SEPSIS_MODEL_FILE: str = "sepsis_lightgbm_v2.pkl"
+    SEPSIS_FEATURES_FILE: str = "sepsis_feature_names_v2.pkl"
+    MORTALITY_MODEL_FILE: str = "mortality_lightgbm_v2.pkl"
+    MORTALITY_FEATURES_FILE: str = "mortality_feature_names_v2.pkl"
 
     # CORS
     CORS_ORIGINS: Union[str, List[str]] = [
@@ -55,7 +71,7 @@ class Settings(BaseSettings):
 
     # Feature Engineering
     SEPSIS_FEATURES_COUNT: int = 42
-    MORTALITY_FEATURES_COUNT: int = 65
+    MORTALITY_FEATURES_COUNT: int = 61
 
     class Config:
         env_file = ".env"
