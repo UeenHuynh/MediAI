@@ -71,8 +71,62 @@ export default function SepsisPredictionPage() {
         setError(null);
 
         try {
-            const response = await apiClient.post("/predict/sepsis", data);
-            setResult(response.data);
+            // Map frontend fields to backend API format
+            const payload = {
+                patient_id: `WEB_${Date.now()}`,
+                features: {
+                    age: data.age,
+                    gender: 1, // Default male
+                    bmi: 25.0, // Default BMI
+                    heart_rate: data.heart_rate,
+                    sbp: data.systolic_bp,
+                    dbp: data.diastolic_bp,
+                    temperature: data.temperature,
+                    respiratory_rate: data.respiratory_rate,
+                    wbc: data.wbc || 7.5,
+                    lactate: data.lactate || 1.5,
+                    creatinine: data.creatinine || 1.0,
+                    platelets: 200.0,
+                    bilirubin: 1.0,
+                    sodium: 140.0,
+                    potassium: 4.0,
+                    glucose: 100.0,
+                    hemoglobin: 12.0,
+                    bicarbonate: 24.0,
+                    pao2: 90.0,
+                    paco2: 40.0,
+                    ph: 7.4,
+                    anion_gap: 12.0,
+                    albumin: 3.5,
+                    troponin: 0.01,
+                    bnp: 100.0,
+                    inr: 1.0,
+                    ast: 30.0,
+                    alt: 30.0,
+                    respiratory_sofa: 0,
+                    cardiovascular_sofa: 0,
+                    hepatic_sofa: 0,
+                    coagulation_sofa: 0,
+                    renal_sofa: 0,
+                    neurological_sofa: 0,
+                    lactate_trend_12h: 0.0,
+                    hr_trend_6h: 0.0,
+                    wbc_trend_12h: 0.0,
+                    sbp_trend_6h: 0.0,
+                    temperature_trend_6h: 0.0,
+                    rr_trend_6h: 0.0,
+                    hour_of_admission: new Date().getHours(),
+                    icu_los_so_far: 0.0,
+                },
+            };
+
+            const response = await apiClient.post("/predict/sepsis", payload);
+            setResult({
+                risk_score: response.data.prediction.risk_score,
+                risk_level: response.data.prediction.risk_level,
+                confidence: response.data.prediction.risk_score,
+                recommendations: [response.data.prediction.recommendation],
+            });
         } catch (err: any) {
             setError(err.response?.data?.detail || "Prediction failed. Please try again.");
         } finally {

@@ -69,8 +69,55 @@ export default function MortalityPredictionPage() {
         setError(null);
 
         try {
-            const response = await apiClient.post("/predict/mortality", data);
-            setResult(response.data);
+            const agePoints = data.age < 45 ? 0 : data.age < 55 ? 2 : data.age < 65 ? 3 : data.age < 75 ? 5 : 6;
+
+            const payload = {
+                patient_id: `WEB_${Date.now()}`,
+                features: {
+                    // SOFA Scores
+                    respiratory_sofa: Math.floor(data.sofa_score / 6),
+                    cardiovascular_sofa: Math.floor(data.sofa_score / 6),
+                    hepatic_sofa: 0,
+                    coagulation_sofa: 0,
+                    renal_sofa: 0,
+                    neurological_sofa: 0,
+                    // APACHE-II
+                    age_points: agePoints,
+                    gcs_score: 15,
+                    // Worst values in 24h
+                    worst_hr_24h: 100, worst_sbp_24h: 120, worst_temp_24h: 37.0, worst_rr_24h: 18,
+                    worst_pao2_24h: 90, worst_ph_24h: 7.4, worst_sodium_24h: 140, worst_potassium_24h: 4.0,
+                    worst_creatinine_24h: 1.0, worst_hematocrit_24h: 40, worst_wbc_24h: 7.5, worst_lactate_24h: 1.5,
+                    worst_platelets_24h: 200, worst_bilirubin_24h: 1.0, worst_glucose_24h: 100, worst_hemoglobin_24h: 12,
+                    worst_bicarbonate_24h: 24, worst_albumin_24h: 3.5, worst_ast_24h: 30, worst_alt_24h: 30,
+                    // Additional worst labs
+                    worst_bun_24h: 20, worst_chloride_24h: 100, worst_inr_24h: 1.0, worst_ptt_24h: 30,
+                    worst_troponin_24h: 0.01, worst_bnp_24h: 100, worst_anion_gap_24h: 12, worst_paco2_24h: 40,
+                    worst_map_24h: 90, worst_spo2_24h: 96,
+                    // Min/Max Vitals
+                    min_hr_24h: 60, max_hr_24h: 100, min_sbp_24h: 100, max_sbp_24h: 140,
+                    min_temp_24h: 36.5, max_temp_24h: 37.5, min_rr_24h: 12, max_rr_24h: 20,
+                    // Additional
+                    worst_fio2_24h: 21,
+                    // ICU Details
+                    icu_type: data.admission_type === "Emergency" ? 1 : 0,
+                    ventilation_flag: data.mechanical_ventilation ? 1 : 0,
+                    vasopressor_flag: data.vasopressor_use ? 1 : 0,
+                    dialysis_flag: 0,
+                    age: data.age,
+                    gender: data.gender === "M" ? 1 : 0,
+                    los_icu_hours: data.los_hours,
+                    charlson_comorbidity_index: data.charlson_index || 0,
+                },
+            };
+
+            const response = await apiClient.post("/predict/mortality", payload);
+            setResult({
+                risk_score: response.data.prediction.risk_score,
+                risk_level: response.data.prediction.risk_level,
+                confidence: response.data.prediction.risk_score,
+                recommendations: [response.data.prediction.recommendation],
+            });
         } catch (err: any) {
             setError(err.response?.data?.detail || "Prediction failed. Please try again.");
         } finally {
