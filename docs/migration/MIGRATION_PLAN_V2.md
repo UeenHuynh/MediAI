@@ -1,8 +1,11 @@
 # MediAI Migration Plan V2 - Enhanced UI-First Strategy
 **V1 (Streamlit) → V2 (React/Next.js) with Production-Grade Standards**
 
-**Last Updated:** January 3, 2026
+**Last Updated:** January 5, 2026
 **Current Status:** Phase 0-4 Complete (93%), Phase 5-9 In Progress
+**🚀 Deployment:** 
+- Frontend: https://mediai-frontend-five.vercel.app
+- Backend: https://mediai-7owz.onrender.com
 **Models:** V2 Deployed (Sepsis AUC 0.98, Mortality AUC 0.99)
 **E2E Tests:** 11/11 Passing (100%)
 
@@ -320,10 +323,14 @@ See full document for rollback scripts and risk matrix.
 | Phase 9: Testing | 🔄 Ongoing | 60% | E2E excellent, coverage needs work |
 
 **Overall Completion:** ~55% (Phases 0-4 done, 5-9 in progress)
+**✅ Deployment Status:** Frontend + Backend LIVE and connected!
 
 ---
 
-**Document Version**: 3.0.0
-**Last Updated**: January 3, 2026
-**Status**: Phase 0-4 Complete, Phase 5+ In Progress
-**Next Milestone**: User Acceptance Testing + Phase 5 Database Migration
+**Document Version**: 3.1.0
+**Last Updated**: January 5, 2026
+**Status**: Phase 0-4 Complete, **DEPLOYED TO PRODUCTION**
+**Live URLs**: 
+- Frontend: https://mediai-frontend-five.vercel.app
+- Backend: https://mediai-7owz.onrender.com
+**Next Milestone**: Phase 5 Database Migration + UAT

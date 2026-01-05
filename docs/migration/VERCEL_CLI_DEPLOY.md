@@ -1,6 +1,15 @@
-# Vercel Deployment - Fix "No Production Deployment"
+# Vercel Deployment - ✅ DEPLOYED SUCCESSFULLY
 
-## Issue
+## 🚀 Live URLs (January 5, 2026)
+
+| Component | URL | Status |
+|-----------|-----|--------|
+| **Frontend** | https://mediai-frontend-five.vercel.app | ✅ LIVE |
+| **Backend** | https://mediai-7owz.onrender.com | ✅ LIVE |
+
+---
+
+## Issue (RESOLVED)
 Build local thành công, nhưng Vercel Dashboard không deploy được.
 
 ## Solution: Deploy bằng Vercel CLI
