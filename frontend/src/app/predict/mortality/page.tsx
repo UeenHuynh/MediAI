@@ -106,8 +106,17 @@ export default function MortalityPredictionPage() {
                     dialysis_flag: 0,
                     age: data.age,
                     gender: data.gender === "M" ? 1 : 0,
-                    los_icu_hours: data.los_hours,
-                    charlson_comorbidity_index: data.charlson_index || 0,
+                    // Patient info
+                    bmi: 25.0,
+                    admission_source: data.admission_type === "Emergency" ? 1 : 0,
+                    comorbidity_count: data.charlson_index || 0,
+                    // Time
+                    icu_los_24h: Math.min(data.los_hours, 24),
+                    // Flags
+                    sepsis_flag: 0,
+                    shock_flag: 0,
+                    cardiac_arrest_flag: 0,
+                    trauma_flag: 0,
                 },
             };
 
