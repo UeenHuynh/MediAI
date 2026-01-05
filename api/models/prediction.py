@@ -20,7 +20,7 @@ class Prediction(Base):
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="SET NULL"), nullable=True, index=True)
+    patient_id = Column(Integer, ForeignKey("public.patients.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Prediction metadata
     prediction_type = Column(String(20), nullable=False, index=True)  # 'sepsis' or 'mortality'
@@ -43,7 +43,7 @@ class Prediction(Base):
     top_features = Column(JSON, nullable=True)  # Top 5-10 contributing features
 
     # User and timing
-    predicted_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    predicted_by = Column(Integer, ForeignKey("public.users.id"), nullable=True)
     predicted_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
     # Outcome tracking (for model evaluation)

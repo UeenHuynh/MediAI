@@ -47,7 +47,7 @@ class Patient(Base):
     discharge_date = Column(DateTime, nullable=True)
 
     # Metadata
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("public.users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

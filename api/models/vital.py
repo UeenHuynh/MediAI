@@ -20,7 +20,7 @@ class Vital(Base):
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    patient_id = Column(Integer, ForeignKey("public.patients.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Timestamp
     recorded_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -47,7 +47,7 @@ class Vital(Base):
 
     # Clinical notes
     notes = Column(Text, nullable=True)
-    recorded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    recorded_by = Column(Integer, ForeignKey("public.users.id"), nullable=True)
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)

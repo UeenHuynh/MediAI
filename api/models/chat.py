@@ -23,7 +23,7 @@ class ChatSession(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("public.users.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Session metadata
     title = Column(String(200), nullable=True)  # Auto-generated from first message
@@ -51,7 +51,7 @@ class ChatMessage(Base):
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("chat_sessions.session_id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("public.chat_sessions.session_id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Message content
     role = Column(String(20), nullable=False)  # 'user' or 'assistant'
