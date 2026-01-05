@@ -13,7 +13,7 @@
 **🔑 Demo Credentials:** `demo` / `demo123`
 
 <!-- PROJECT BANNER -->
-![MediAI Platform Banner](docs/images/Sélection_858.png)
+![MediAI Platform Banner](docs/screenshots/Sélection_858.png)
 
 ---
 
