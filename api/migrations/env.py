@@ -20,6 +20,10 @@ from core.database import Base
 
 # Import all models here so Alembic can detect them
 from models.user import User  # noqa: F401
+from models.patient import Patient  # noqa: F401
+from models.vital import Vital  # noqa: F401
+from models.prediction import Prediction  # noqa: F401
+from models.chat import ChatSession, ChatMessage  # noqa: F401
 
 # Alembic Config object
 config = context.config
