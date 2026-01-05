@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy processor code
+COPY processors/ ./processors/
+COPY kafka_producer.py .
+
+# Run consumer
+CMD ["python", "-u", "processors/simple_consumer.py"]

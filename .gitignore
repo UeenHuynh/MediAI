@@ -105,3 +105,4 @@ secrets.json
 
 # Debug files
 debug_openapi.json
+.vercel

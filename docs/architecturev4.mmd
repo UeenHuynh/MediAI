@@ -1,0 +1,251 @@
+%% ============================================================================
+%% MediAI Architecture V4 - Production Ready with Models V2
+%% ============================================================================
+%% STATUS: Phase 0-4 Complete (93%), Phase 5 Pending
+%% CURRENT DATA SOURCE: Direct CSV read (data/sample_kaggle/, 500 samples)
+%% FUTURE (Phase 5): PostgreSQL Bronze/Silver/Gold layers
+%% MODELS: V2 Deployed (Sepsis AUC 0.98, Mortality AUC 0.99)
+%% RAG: LangChain + Qdrant + Presidio fully integrated
+%% LEGEND: Solid lines = Current (Phase 0-4), Dashed lines = Future (Phase 5+)
+%% Last Updated: January 3, 2026
+%% ============================================================================
+
+graph TB
+    %% ==========================================================================
+    %% EXTERNAL DATA SOURCES - CHANGED
+    %% ==========================================================================
+    subgraph ExternalSources[EXTERNAL DATA SOURCES]
+        KaggleCSV[(Kaggle CSV Files<br/>features_sepsis_6h.csv 2.5MB<br/>features_mortality_24h.csv 4.2MB<br/>patients_lookup.csv 45KB<br/>Pre-extracted features)]
+        NCBIExt[NCBI PubMed API<br/>Free 10 req/sec<br/>With API key]
+        ScholarExt[Semantic Scholar API<br/>Free tier<br/>Rate limited]
+    end
+    
+    %% ==========================================================================
+    %% BRONZE LAYER - CURRENT STATE
+    %% ==========================================================================
+    subgraph BronzeLayer[BRONZE LAYER - Raw Data Storage]
+        PostgresBronze[(PostgreSQL 16 Local<br/>Docker Container<br/>Schema: bronze<br/>CSV-based currently<br/>Phase 5: Full migration<br/>Free Self-hosted<br/>512MB RAM)]
+
+        LocalBackup[(Local Backup<br/>Original CSV Files<br/>data/sample_kaggle/<br/>500 samples<br/>Git tracked)]
+    end
+    
+    %% ==========================================================================
+    %% STREAMING INFRASTRUCTURE - ADJUSTED
+    %% ==========================================================================
+    subgraph StreamingInfra[STREAMING INFRASTRUCTURE - Local Only]
+        DataReplayer[Data Replayer Service<br/>Python FastAPI<br/>Docker Container<br/>512MB RAM<br/>Replay from bronze.features_sepsis<br/>Simulate patient admissions]
+        
+        subgraph LocalKafka[Apache Kafka - FREE]
+            KafkaLocal[Apache Kafka 3.6<br/>Docker Container<br/>KRaft mode no Zookeeper<br/>1GB RAM<br/>7-day retention]
+            
+            KafkaVitals[Topic: patient-vitals<br/>Partition: 3<br/>Simulated vital signs]
+            
+            KafkaLabs[Topic: patient-labs<br/>Partition: 2<br/>Simulated lab results]
+            
+            KafkaAlerts[Topic: clinical-alerts<br/>Critical events<br/>Partition: 1]
+        end
+    end
+    
+    %% ==========================================================================
+    %% STREAM PROCESSING - KEPT
+    %% ==========================================================================
+    subgraph StreamProcessing[STREAM PROCESSING - Local Docker]
+        LocalStreamProcessor[Python Stream Processor<br/>Docker Container<br/>asyncio + aiokafka<br/>Kafka Consumer<br/>1GB RAM]
+        
+        VitalsProcessor[Vitals Processor<br/>Python Service<br/>256MB RAM<br/>Real-time validation]
+        
+        LabsProcessor[Labs Processor<br/>Python Service<br/>256MB RAM<br/>Critical value flagging]
+        
+        AlertEngine[Alert Engine<br/>Python Service<br/>512MB RAM<br/>Rule-based alerts<br/>Priority P0-P3]
+    end
+    
+    %% ==========================================================================
+    %% SILVER LAYER - SIMPLIFIED (Features pre-extracted)
+    %% ==========================================================================
+    subgraph SilverLayer[SILVER LAYER - Validated Data]
+        subgraph DataQuality[Data Quality - Local Services]
+            DataValidator[Data Validator<br/>Local Pydantic<br/>Schema conformance<br/>Range validation<br/>42/61 feature check]
+            
+            DataCleaner[Data Cleaner<br/>Local Python<br/>Null handling<br/>Outlier detection Z-score<br/>Type normalization]
+        end
+        
+        subgraph SilverStorage[Silver Storage - Local]
+            PostgresSilver[(PostgreSQL Silver<br/>Local Docker<br/>Schema: silver<br/>Validated features<br/>Indexed columns)]
+            
+            ParquetSilver[(Local Parquet Files<br/>Partitioned by date<br/>Snappy compression<br/>DuckDB queryable)]
+        end
+    end
+    
+    %% ==========================================================================
+    %% GOLD LAYER - KEPT
+    %% ==========================================================================
+    subgraph GoldLayer[GOLD LAYER - Analytics and ML]
+        subgraph FeatureStore[Feature Store - Local]
+            RedisOnline[(Redis 7.2 Local<br/>Docker Container<br/>256MB LRU cache<br/>Online features<br/>1h TTL)]
+            
+            DuckDBOffline[(DuckDB Offline<br/>Local embedded DB<br/>Historical queries<br/>Parquet native)]
+            
+            FeatureRegistry[Feature Registry<br/>SQLite<br/>42 sepsis features<br/>61 mortality features<br/>Version tracking]
+        end
+        
+        subgraph MLModels[ML Models V2 - Production Ready]
+            LocalMLServer[Local ML Server<br/>FastAPI + Uvicorn<br/>Docker Container<br/>2GB RAM<br/>Model inference<br/>Response time: ~50ms]
+
+            SepsisModel[Sepsis Model V2<br/>LightGBM 4.2<br/>sepsis_lightgbm_v2.pkl<br/>42 features 100% match<br/>AUROC: 0.9796<br/>Accuracy: 96.6%]
+
+            MortalityModel[Mortality Model V2<br/>LightGBM 4.2<br/>mortality_lightgbm_v2.pkl<br/>61 features 100% match<br/>AUROC: 0.9949<br/>Accuracy: 98.8%]
+
+            SHAPExplainers[SHAP 0.44<br/>TreeExplainer<br/>Feature importance<br/>Explainability ready]
+        end
+        
+        subgraph AggregatedViews[Aggregated Views]
+            PostgresGold[(PostgreSQL Gold<br/>Schema: gold<br/>Materialized views<br/>Patient summaries<br/>Prediction history)]
+        end
+    end
+    
+    %% ==========================================================================
+    %% APPLICATION LAYER - KEPT
+    %% ==========================================================================
+    subgraph ApplicationLayer[APPLICATION LAYER - Local Docker]
+        subgraph APIGateway[FastAPI Backend - Local]
+            LocalAPI[Local API Server<br/>FastAPI 0.109+<br/>Port 8000<br/>2GB RAM]
+            
+            subgraph APIRouters[API Routers]
+                AuthAPI[Auth API<br/>/api/auth/*<br/>JWT + OAuth2]
+                
+                PredictionAPI[Prediction API<br/>/api/predict/sepsis<br/>/api/predict/mortality]
+                
+                PatientAPI[Patient API<br/>/api/patients<br/>CRUD operations]
+                
+                StreamingAPI[Streaming API<br/>/api/stream/*<br/>Control replay]
+                
+                ChatbotAPI[Chatbot API<br/>/api/chat<br/>RAG pipeline<br/>LangChain LCEL<br/>Qdrant vector store<br/>Presidio PII masking<br/>PubMed integration]
+            end
+        end
+    end
+    
+    %% ==========================================================================
+    %% FRONTEND - KEPT
+    %% ==========================================================================
+    subgraph Frontend[FRONTEND - Vercel Free Tier]
+        VercelApp[Next.js App<br/>Vercel Edge<br/>Free Tier]
+        
+        MainDashboard[Main Dashboard<br/>Patient Overview]
+        
+        PredictionUI[Prediction UI<br/>Sepsis + Mortality<br/>Risk Gauges]
+        
+        StreamingDashboard[Streaming Dashboard<br/>Real-time vitals]
+        
+        ChatbotUI[Medical Chatbot<br/>RAG Interface]
+    end
+    
+    %% ==========================================================================
+    %% MONITORING - KEPT
+    %% ==========================================================================
+    subgraph Monitoring[MONITORING - Local]
+        PrometheusLocal[Prometheus<br/>Metrics collection]
+        GrafanaLocal[Grafana<br/>Dashboards]
+        LocalLogs[Local Logs<br/>JSON structured]
+    end
+    
+    %% ==========================================================================
+    %% DATA FLOW CONNECTIONS
+    %% ==========================================================================
+    
+    %% Initial Data Load
+    KaggleCSV -->|One-time download| LocalBackup
+    LocalBackup -.->|Phase 5: load_csv.py| PostgresBronze
+
+    %% Current: Direct CSV read (Phase 0-4)
+    LocalBackup -->|API reads directly| LocalMLServer
+
+    %% Bronze to Silver (Phase 5+)
+    PostgresBronze -.-> DataValidator
+    DataValidator --> DataCleaner
+    DataCleaner --> PostgresSilver
+    DataCleaner -.-> ParquetSilver
+    
+    %% Streaming Flow (Phase 6 - Optional)
+    PostgresBronze -.-> DataReplayer
+    DataReplayer -.-> KafkaLocal
+    KafkaLocal --> KafkaVitals
+    KafkaLocal --> KafkaLabs
+    KafkaLocal --> KafkaAlerts
+    
+    KafkaVitals --> LocalStreamProcessor
+    KafkaLabs --> LocalStreamProcessor
+    LocalStreamProcessor --> VitalsProcessor
+    LocalStreamProcessor --> LabsProcessor
+    VitalsProcessor --> AlertEngine
+    LabsProcessor --> AlertEngine
+    AlertEngine --> KafkaAlerts
+    
+    %% Silver to Gold (Phase 5+)
+    PostgresSilver -.-> RedisOnline
+    PostgresSilver -.-> DuckDBOffline
+    PostgresSilver -.-> FeatureRegistry
+    PostgresSilver -.-> PostgresGold
+
+    %% ML Flow (Current: Direct CSV, Future: Redis cache)
+    RedisOnline -.-> LocalMLServer
+    FeatureRegistry -.-> LocalMLServer
+    LocalMLServer --> SepsisModel
+    LocalMLServer --> MortalityModel
+    SepsisModel --> SHAPExplainers
+    MortalityModel --> SHAPExplainers
+    
+    %% API Flow
+    LocalAPI --> AuthAPI
+    LocalAPI --> PredictionAPI
+    LocalAPI --> PatientAPI
+    LocalAPI --> StreamingAPI
+    LocalAPI --> ChatbotAPI
+    
+    PredictionAPI --> LocalMLServer
+    PatientAPI --> PostgresSilver
+    PatientAPI --> PostgresGold
+    StreamingAPI --> DataReplayer
+    
+    %% Frontend Flow
+    VercelApp --> MainDashboard
+    VercelApp --> PredictionUI
+    VercelApp --> StreamingDashboard
+    VercelApp --> ChatbotUI
+    
+    MainDashboard --> LocalAPI
+    PredictionUI --> PredictionAPI
+    StreamingDashboard --> StreamingAPI
+    ChatbotUI --> ChatbotAPI
+    
+    %% Monitoring
+    LocalAPI -.-> PrometheusLocal
+    LocalMLServer -.-> PrometheusLocal
+    PrometheusLocal --> GrafanaLocal
+    LocalAPI -.-> LocalLogs
+    
+    %% External APIs for Chatbot
+    ChatbotAPI --> NCBIExt
+    ChatbotAPI --> ScholarExt
+
+    %% ==========================================================================
+    %% STYLING
+    %% ==========================================================================
+    classDef sourceStyle fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    classDef bronzeStyle fill:#8d6e63,stroke:#5d4037,stroke-width:2px,color:#fff
+    classDef streamStyle fill:#26a69a,stroke:#00695c,stroke-width:2px,color:#fff
+    classDef silverStyle fill:#42a5f5,stroke:#1565c0,stroke-width:2px,color:#fff
+    classDef goldStyle fill:#ffa726,stroke:#e65100,stroke-width:2px,color:#fff
+    classDef mlStyle fill:#66bb6a,stroke:#2e7d32,stroke-width:2px,color:#fff
+    classDef apiStyle fill:#ab47bc,stroke:#6a1b9a,stroke-width:2px,color:#fff
+    classDef uiStyle fill:#ec407a,stroke:#ad1457,stroke-width:2px,color:#fff
+    classDef monitorStyle fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+
+    class KaggleCSV,NCBIExt,ScholarExt sourceStyle
+    class PostgresBronze,LocalBackup bronzeStyle
+    class DataReplayer,KafkaLocal,KafkaVitals,KafkaLabs,KafkaAlerts,LocalStreamProcessor,VitalsProcessor,LabsProcessor,AlertEngine streamStyle
+    class DataValidator,DataCleaner,PostgresSilver,ParquetSilver silverStyle
+    class RedisOnline,DuckDBOffline,FeatureRegistry,PostgresGold goldStyle
+    class LocalMLServer,SepsisModel,MortalityModel,SHAPExplainers mlStyle
+    class LocalAPI,AuthAPI,PredictionAPI,PatientAPI,StreamingAPI,ChatbotAPI apiStyle
+    class VercelApp,MainDashboard,PredictionUI,StreamingDashboard,ChatbotUI uiStyle
+    class PrometheusLocal,GrafanaLocal,LocalLogs monitorStyle
