@@ -120,7 +120,18 @@ export default function MortalityPredictionPage() {
                 },
             };
 
-            const response = await apiClient.post("/predict/mortality", payload);
+            // Use simplified endpoint
+            const simplifiedPayload = {
+                age: data.age,
+                gender: data.gender,
+                sofa_score: data.sofa_score,
+                los_hours: data.los_hours,
+                mechanical_ventilation: data.mechanical_ventilation,
+                vasopressor_use: data.vasopressor_use,
+                charlson_index: data.charlson_index || 0,
+            };
+
+            const response = await apiClient.post("/predict/simple/mortality", simplifiedPayload);
             setResult({
                 risk_score: response.data.prediction.risk_score,
                 risk_level: response.data.prediction.risk_level,

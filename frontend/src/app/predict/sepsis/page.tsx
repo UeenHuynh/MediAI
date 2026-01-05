@@ -71,62 +71,21 @@ export default function SepsisPredictionPage() {
         setError(null);
 
         try {
-            // Map frontend fields to backend API format
-            // Calculate risk indicators from vitals
-            const isHighRisk = data.temperature > 38 || data.heart_rate > 100 || data.systolic_bp < 90;
-            const isCritical = (data.lactate || 0) > 3 || data.respiratory_rate > 25 || data.systolic_bp < 80;
-
+            // Use simplified endpoint - backend will handle feature imputation
             const payload = {
-                patient_id: `WEB_${Date.now()}`,
-                features: {
-                    age: data.age,
-                    gender: 1,
-                    bmi: 25.0,
-                    heart_rate: data.heart_rate,
-                    sbp: data.systolic_bp,
-                    dbp: data.diastolic_bp,
-                    temperature: data.temperature,
-                    respiratory_rate: data.respiratory_rate,
-                    wbc: data.wbc || (isHighRisk ? 15.0 : 7.5),
-                    lactate: data.lactate || (isCritical ? 3.5 : 1.5),
-                    creatinine: data.creatinine || (isHighRisk ? 1.8 : 1.0),
-                    platelets: isHighRisk ? 120.0 : 200.0,
-                    bilirubin: isHighRisk ? 2.0 : 1.0,
-                    sodium: data.systolic_bp < 90 ? 135.0 : 140.0,
-                    potassium: isHighRisk ? 4.8 : 4.0,
-                    glucose: isHighRisk ? 160.0 : 100.0,
-                    hemoglobin: isHighRisk ? 10.0 : 12.0,
-                    bicarbonate: data.respiratory_rate > 25 ? 20.0 : 24.0,
-                    pao2: data.respiratory_rate > 25 ? 75.0 : 90.0,
-                    paco2: data.respiratory_rate > 25 ? 48.0 : 40.0,
-                    ph: data.respiratory_rate > 25 ? 7.32 : 7.4,
-                    anion_gap: isCritical ? 16.0 : 12.0,
-                    albumin: isHighRisk ? 2.8 : 3.5,
-                    troponin: data.heart_rate > 110 ? 0.3 : 0.01,
-                    bnp: data.heart_rate > 110 ? 450.0 : 100.0,
-                    inr: isHighRisk ? 1.5 : 1.0,
-                    ast: isHighRisk ? 120.0 : 30.0,
-                    alt: isHighRisk ? 85.0 : 30.0,
-                    // SOFA scores based on vitals
-                    respiratory_sofa: data.respiratory_rate > 25 ? 2 : 0,
-                    cardiovascular_sofa: data.systolic_bp < 90 ? 2 : 0,
-                    hepatic_sofa: 0,
-                    coagulation_sofa: 0,
-                    renal_sofa: (data.creatinine || 0) > 2 ? 1 : 0,
-                    neurological_sofa: 0,
-                    // Trends
-                    lactate_trend_12h: isCritical ? 1.5 : 0.0,
-                    hr_trend_6h: data.heart_rate > 100 ? 15.0 : 0.0,
-                    wbc_trend_12h: isHighRisk ? 5.0 : 0.0,
-                    sbp_trend_6h: data.systolic_bp < 90 ? -20.0 : 0.0,
-                    temperature_trend_6h: data.temperature > 38 ? 1.0 : 0.0,
-                    rr_trend_6h: data.respiratory_rate > 25 ? 8.0 : 0.0,
-                    hour_of_admission: new Date().getHours(),
-                    icu_los_so_far: 2.0,
-                },
+                age: data.age,
+                heart_rate: data.heart_rate,
+                temperature: data.temperature,
+                respiratory_rate: data.respiratory_rate,
+                systolic_bp: data.systolic_bp,
+                diastolic_bp: data.diastolic_bp,
+                spo2: data.spo2,
+                wbc: data.wbc || null,
+                lactate: data.lactate || null,
+                creatinine: data.creatinine || null,
             };
 
-            const response = await apiClient.post("/predict/sepsis", payload);
+            const response = await apiClient.post("/predict/simple/sepsis", payload);
             setResult({
                 risk_score: response.data.prediction.risk_score,
                 risk_level: response.data.prediction.risk_level,
