@@ -13,7 +13,7 @@
 **🔑 Demo Credentials:** `demo` / `demo123`
 
 <!-- PROJECT BANNER -->
-![MediAI Platform Banner](docs/images/banner.jpeg)
+![MediAI Platform Banner](docs/images/Sélection_858.png)
 
 ---
 
@@ -38,27 +38,27 @@ MediAI V4 is a production-deployed healthcare ML platform for ICU clinical decis
 
 ### Login Page
 <!-- TODO: Replace with actual screenshot -->
-![Login](docs/screenshots/login.png)
+![Login](docs/screenshots/Sélection_864.png)
 *JWT authentication with role-based access control*
 
 ### Dashboard Overview
 <!-- TODO: Replace with actual screenshot -->
-![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](docs/screenshots/Sélection_859.png)
 *Real-time patient monitoring and risk assessment*
 
 ### Sepsis Prediction
 <!-- TODO: Replace with actual screenshot -->
-![Sepsis Prediction](docs/screenshots/sepsis.png)
+![Sepsis Prediction](docs/screenshots/Sélection_860.png)
 *Interactive form with gradual risk progression (0.9% → 30-70% → 92%)*
 
 ### Mortality Prediction
 <!-- TODO: Replace with actual screenshot -->
-![Mortality Prediction](docs/screenshots/mortality.png)
+![Mortality Prediction](docs/screenshots/Sélection_861.png)
 *ICU mortality risk with vent/vaso intervention effects (+8-9%)*
 
 ### Medical Chatbot
 <!-- TODO: Replace with actual screenshot -->
-![Chatbot](docs/screenshots/chatbot.png)
+![Chatbot](docs/screenshots/Sélection_862.png)
 *RAG-powered medical assistant with PubMed citations*
 
 ---
