@@ -10,7 +10,7 @@ from sqlalchemy import func
 
 from models.patient import Patient
 from schemas.patient import PatientCreate, PatientUpdate
-from apps.utils.encryption import encrypt_field, decrypt_field
+from core.encryption import encrypt_field, decrypt_field
 
 
 class PatientService:
