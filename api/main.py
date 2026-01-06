@@ -69,6 +69,10 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Metrics middleware - automatic request tracking
+from core.metrics import MetricsMiddleware
+app.add_middleware(MetricsMiddleware)
+
 
 # Request timing middleware
 @app.middleware("http")

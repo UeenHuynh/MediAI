@@ -1,14 +1,16 @@
 """
-Health check endpoints
+Health check and metrics endpoints
 """
 
 from datetime import datetime
 
 import redis
-from core.config import settings
-from core.database import get_db, test_connection
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+
+from core.config import settings
+from core.database import get_db, test_connection
+from core.metrics import get_metrics
 
 router = APIRouter()
 
@@ -54,3 +56,19 @@ async def readiness_check():
 async def liveness_check():
     """Kubernetes liveness probe"""
     return {"alive": True}
+
+
+@router.get("/metrics/json")
+async def json_metrics():
+    """
+    JSON metrics endpoint for dashboards.
+    
+    Returns all metrics in structured JSON format:
+    - Latency: API response times (p50, p95, p99)
+    - Throughput: Requests per minute
+    - Cache: Hit/miss rates
+    - Predictions: Count by type and risk category
+    - Resources: Memory and CPU usage
+    """
+    return get_metrics()
+
