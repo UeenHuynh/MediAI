@@ -95,10 +95,10 @@ graph LR
 | **Backend API** | FastAPI + Render.com | REST API, ML inference | ✅ Live |
 | **ML Models** | LightGBM V2 | Sepsis/Mortality prediction | ✅ Optimized |
 | **Chatbot** | LangChain + Groq | RAG pipeline, PII redaction | ✅ Live |
-| **Database** | PostgreSQL (Render) | Patient data (Phase 5) | ⏳ Pending |
-| **Cache** | Redis (Render) | Response caching (Phase 5) | ⏳ Pending |
+| **Database** | PostgreSQL (Neon) | Patient data, predictions | ✅ Live |
+| **Cache** | Redis (Upstash-ready) | Response caching | ✅ Ready |
 | **Auth** | JWT + Zustand | Stateless authentication | ✅ Live |
-| **Monitoring** | Render Metrics | Basic observability | ✅ Active |
+| **Monitoring** | `/metrics/json` | Latency, throughput, cache | ✅ Active |
 
 ---
 

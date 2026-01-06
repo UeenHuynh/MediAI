@@ -24,10 +24,19 @@ async def health_check(_db: Session = Depends(get_db)):
     # Check database
     db_status = "healthy" if test_connection() else "unhealthy"
 
-    # Check Redis
+    # Check Redis (try Upstash first, then fallback)
     redis_status = "healthy"
     try:
-        r = redis.from_url(settings.REDIS_URL)
+        import os
+        # Try Upstash first (production)
+        upstash_url = os.getenv("UPSTASH_REDIS_URL")
+        redis_url = upstash_url or settings.REDIS_URL
+
+        r = redis.from_url(
+            redis_url,
+            socket_timeout=3,
+            socket_connect_timeout=3
+        )
         r.ping()
     except Exception:
         redis_status = "unhealthy"
