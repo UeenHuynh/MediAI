@@ -1,0 +1,30 @@
+services:
+  # Backend API Service
+  - type: web
+    name: mediai-api
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: cd api && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        sync: false
+      - key: ENABLE_DATABASE
+        value: true
+      - key: ENABLE_PREDICTIONS
+        value: true
+      - key: ENABLE_CHATBOT
+        value: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+    healthCheckPath: /health

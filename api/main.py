@@ -59,13 +59,14 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS middleware - restricted permissions for security
+# CORS middleware - allow Vercel and Render deployments
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https://.*\.(vercel\.app|onrender\.com)|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 

@@ -54,8 +54,10 @@ class Settings(BaseSettings):
 
     # CORS
     CORS_ORIGINS: Union[str, List[str]] = [
-        "http://localhost:8501",  # Streamlit
-        "http://localhost:3000",  # React (if used)
+        "http://localhost:8501",  # Streamlit local
+        "http://localhost:3000",  # React local
+        "https://*.vercel.app",   # Vercel deployments
+        "https://*.onrender.com", # Render deployments
     ]
 
     @field_validator("CORS_ORIGINS", mode="before")
