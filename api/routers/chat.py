@@ -2,18 +2,24 @@
 Chat/RAG API router for MediAI.
 
 Provides endpoints for medical Q&A using LangChain RAG pipeline.
+Chat sessions and messages are persisted to database.
 """
 
 import logging
 import os
 from typing import List, Optional
 from datetime import datetime
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 from core.rbac import require_authenticated, UserWithRole, require_permission
 from core.config import settings
+from core.database import get_db
+from services.chat_service import ChatService
+from schemas.chat import ChatSessionResponse, ChatMessageResponse
 
 logger = logging.getLogger(__name__)
 
@@ -92,11 +98,7 @@ class ConversationHistory(BaseModel):
     last_updated: datetime
 
 
-# --- Mock implementation (replace with actual LangChain service) ---
-
-# In-memory session storage (use Redis in production)
-CHAT_SESSIONS: dict = {}
-
+# --- Mock implementation (fallback when chatbot is disabled) ---
 
 def get_mock_response(question: str) -> tuple[str, List[Citation]]:
     """
@@ -159,38 +161,42 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
 async def send_message(
     request: ChatRequest,
     user: UserWithRole = Depends(require_permission("chat:write")),
+    db: Session = Depends(get_db),
 ):
     """
     Send a message to the medical AI assistant.
     
     The assistant uses RAG (Retrieval-Augmented Generation) to provide
     evidence-based responses with source citations.
+    
+    Messages are persisted to the database for conversation history.
     """
     import time
-    import uuid
-    
+
     start_time = time.time()
-    
+
     # Get or create session
-    session_id = request.session_id or str(uuid.uuid4())
-    
-    if session_id not in CHAT_SESSIONS:
-        CHAT_SESSIONS[session_id] = ConversationHistory(
-            session_id=session_id,
-            messages=[],
-            created_at=datetime.utcnow(),
-            last_updated=datetime.utcnow(),
-        )
-    
-    session = CHAT_SESSIONS[session_id]
-    
-    # Add user message
-    session.messages.append(ChatMessage(
+    session, is_new = ChatService.get_or_create_session(
+        db=db,
+        session_id_str=request.session_id,
+        user_id=user.id
+    )
+
+    session_id_str = str(session.session_id)
+
+    # Save user message to database
+    ChatService.add_message(
+        db=db,
+        session_id=session.session_id,
         role="user",
         content=request.message,
-    ))
-    
+    )
+
     try:
+        # Get recent messages for context
+        recent_messages = ChatService.get_recent_messages(db, session.session_id, count=5)
+        conversation_history = [(msg.role, msg.content) for msg in recent_messages]
+
         # Get chatbot instance
         chatbot = get_chatbot()
 
@@ -200,7 +206,7 @@ async def send_message(
                 result = chatbot.query(
                     question=request.message,
                     retrieved_context="",  # No RAG context for now
-                    conversation_history=[(msg.role, msg.content) for msg in session.messages[-5:]],  # Last 5 messages
+                    conversation_history=conversation_history,
                 )
 
                 answer = result.get("answer", "I apologize, but I'm unable to generate a response at this time.")
@@ -216,32 +222,44 @@ async def send_message(
                     ))
 
                 redacted_query = result.get("redacted_query")
+                model_name = result.get("model_name", "unknown")
+                tokens_used = result.get("tokens_used")
 
             except Exception as e:
                 logger.error(f"Chatbot error: {e}, falling back to mock")
                 # Fallback to mock if chatbot fails
                 answer, citations = get_mock_response(request.message)
                 redacted_query = None
+                model_name = "mock"
+                tokens_used = None
         else:
             # Use mock response if chatbot not enabled
             answer, citations = get_mock_response(request.message)
             redacted_query = None
-
-        # Add assistant message
-        session.messages.append(ChatMessage(
-            role="assistant",
-            content=answer,
-            citations=citations,
-        ))
-
-        session.last_updated = datetime.utcnow()
+            model_name = "mock"
+            tokens_used = None
 
         processing_time = int((time.time() - start_time) * 1000)
+
+        # Save assistant message to database
+        sources_dict = {"citations": [c.model_dump() for c in citations]} if citations else None
+
+        ChatService.add_message(
+            db=db,
+            session_id=session.session_id,
+            role="assistant",
+            content=answer,
+            sources=sources_dict,
+            pii_redacted=redacted_query is not None,
+            model_name=model_name,
+            tokens_used=tokens_used,
+            processing_time_ms=processing_time,
+        )
 
         return ChatResponse(
             answer=answer,
             citations=citations if request.include_sources else [],
-            session_id=session_id,
+            session_id=session_id_str,
             redacted_query=redacted_query,
             processing_time_ms=processing_time,
         )
@@ -255,47 +273,87 @@ async def send_message(
 async def get_conversation_history(
     session_id: str,
     user: UserWithRole = Depends(require_permission("chat:read")),
+    db: Session = Depends(get_db),
 ):
     """
     Get conversation history for a session.
     """
-    if session_id not in CHAT_SESSIONS:
+    try:
+        session_uuid = UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid session ID format")
+
+    session = ChatService.get_session(db, session_uuid)
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
-    return CHAT_SESSIONS[session_id]
+
+    # Get messages from database
+    db_messages = ChatService.get_session_messages(db, session_uuid)
+
+    messages = []
+    for msg in db_messages:
+        citations = []
+        if msg.sources and "citations" in msg.sources:
+            for c in msg.sources["citations"]:
+                citations.append(Citation(**c))
+
+        messages.append(ChatMessage(
+            role=msg.role,
+            content=msg.content,
+            timestamp=msg.created_at,
+            citations=citations,
+        ))
+
+    return ConversationHistory(
+        session_id=session_id,
+        messages=messages,
+        created_at=session.started_at,
+        last_updated=session.last_activity_at,
+    )
 
 
 @router.delete("/history/{session_id}")
 async def clear_conversation(
     session_id: str,
     user: UserWithRole = Depends(require_permission("chat:write")),
+    db: Session = Depends(get_db),
 ):
     """
-    Clear conversation history for a session.
+    Clear conversation history for a session (soft delete).
     """
-    if session_id in CHAT_SESSIONS:
-        del CHAT_SESSIONS[session_id]
-    
+    try:
+        session_uuid = UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid session ID format")
+
+    success = ChatService.delete_session(db, session_uuid)
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Session not found")
+
     return {"message": "Conversation cleared", "session_id": session_id}
 
 
 @router.get("/sessions")
 async def list_sessions(
     user: UserWithRole = Depends(require_permission("chat:read")),
+    db: Session = Depends(get_db),
 ):
     """
-    List all active chat sessions.
-    Admin/Doctor only endpoint.
+    List all active chat sessions for the current user.
     """
+    sessions, total = ChatService.list_user_sessions(db, user.id)
+
     return {
         "sessions": [
             {
-                "session_id": sid,
-                "message_count": len(session.messages),
-                "created_at": session.created_at,
-                "last_updated": session.last_updated,
+                "session_id": str(session.session_id),
+                "title": session.title,
+                "message_count": session.message_count,
+                "created_at": session.started_at,
+                "last_updated": session.last_activity_at,
             }
-            for sid, session in CHAT_SESSIONS.items()
+            for session in sessions
         ],
-        "total": len(CHAT_SESSIONS),
+        "total": total,
     }
