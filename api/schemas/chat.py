@@ -54,7 +54,10 @@ class ChatMessageResponse(BaseModel):
     processing_time_ms: Optional[int] = None
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True,
+        "protected_namespaces": ()
+    }
 
 
 class ChatHistoryResponse(BaseModel):

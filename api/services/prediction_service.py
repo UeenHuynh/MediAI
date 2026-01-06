@@ -13,6 +13,7 @@ from typing import Any, Dict
 import pandas as pd
 import redis
 from core.config import settings
+from services.prediction_history_service import PredictionHistoryService
 from models.schemas import (
     FeatureContribution,
     MortalityPredictionRequest,
@@ -195,11 +196,32 @@ class PredictionService:
             },
             "top_features": top_features,
             "metadata": {
-                "model_version": "v1",
+                "model_version": "v2",
                 "timestamp": datetime.utcnow().isoformat(),
                 "cached": False,
             },
         }
+
+        # Save to database if enabled
+        if settings.ENABLE_DATABASE and db:
+            try:
+                PredictionHistoryService.save_prediction(
+                    db=db,
+                    prediction_type="sepsis",
+                    input_features=features_dict,
+                    risk_score=float(probability),
+                    risk_percentage=float(probability * 100),
+                    model_version="v2",
+                    model_file="sepsis_lightgbm_v2.pkl",
+                    shap_values=None,  # TODO: Add SHAP values
+                    top_features={ft["feature"]: ft["importance"] for ft in top_features},
+                    patient_id=None,  # TODO: Extract from request if available
+                    predicted_by=None  # TODO: Get from auth
+                )
+                logger.info(f"Saved sepsis prediction to database for patient {request.patient_id}")
+            except Exception as e:
+                logger.error(f"Failed to save prediction to database: {str(e)}")
+                # Don't fail the request if DB save fails
 
         # Cache result
         self._save_to_cache(cache_key, result)
@@ -242,11 +264,32 @@ class PredictionService:
             },
             "top_features": top_features,
             "metadata": {
-                "model_version": "v1",
+                "model_version": "v2",
                 "timestamp": datetime.utcnow().isoformat(),
                 "cached": False,
             },
         }
+
+        # Save to database if enabled
+        if settings.ENABLE_DATABASE and db:
+            try:
+                PredictionHistoryService.save_prediction(
+                    db=db,
+                    prediction_type="mortality",
+                    input_features=features_dict,
+                    risk_score=float(probability),
+                    risk_percentage=float(probability * 100),
+                    model_version="v2",
+                    model_file="mortality_lightgbm_v2.pkl",
+                    shap_values=None,  # TODO: Add SHAP values
+                    top_features={ft["feature"]: ft["importance"] for ft in top_features},
+                    patient_id=None,  # TODO: Extract from request if available
+                    predicted_by=None  # TODO: Get from auth
+                )
+                logger.info(f"Saved mortality prediction to database for patient {request.patient_id}")
+            except Exception as e:
+                logger.error(f"Failed to save prediction to database: {str(e)}")
+                # Don't fail the request if DB save fails
 
         self._save_to_cache(cache_key, result)
         return MortalityPredictionResponse(**result)

@@ -12,7 +12,7 @@ from core.database import init_db
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from routers import auth, health, predictions, doctors, chat, patients, vitals
+from routers import auth, health, predictions, doctors, chat, patients, vitals, prediction_history
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -99,6 +99,7 @@ app.include_router(doctors.router, prefix="/api/v1", tags=["Doctors"])
 app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
 app.include_router(patients.router, prefix="/api/v1", tags=["Patients"])
 app.include_router(vitals.router, prefix="/api/v1", tags=["Vitals"])
+app.include_router(prediction_history.router, prefix="/api/v1", tags=["Prediction History"])
 
 
 @app.get("/")
