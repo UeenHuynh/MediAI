@@ -215,6 +215,36 @@ npm run dev
 └─────────────────────────────────────────────────────────┘
 ```
 
+### 📊 API Performance Metrics (Live)
+
+Real-time metrics from production API `/metrics` endpoint:
+
+| Metric | Value |
+|--------|-------|
+| **Uptime** | 57.47 seconds |
+| **API Latency (avg)** | 0.51 ms |
+| **API Latency (p95)** | 0.55 ms |
+| **Throughput** | 2.09 req/min |
+| **Memory Usage** | 213.7 MB (0.68%) |
+| **Threads** | 23 |
+
+**Latency Breakdown:**
+
+| Endpoint | Avg (ms) | P50 (ms) | P95 (ms) | Min (ms) | Max (ms) |
+|----------|----------|----------|----------|----------|----------|
+| API Health | 0.51 | 0.55 | 0.55 | 0.47 | 0.55 |
+| Sepsis Prediction | - | - | - | - | - |
+| Mortality Prediction | - | - | - | - | - |
+| Chat | - | - | - | - | - |
+
+**Cache Performance:**
+- Hit Rate: 0% (cache warming)
+- Hits: 0 | Misses: 0
+
+**Predictions Summary:**
+- Sepsis: 0 total (Low: 0, Medium: 0, High: 0, Critical: 0)
+- Mortality: 0 total (Low: 0, Medium: 0, High: 0, Critical: 0)
+
 ---
 
 ## 📁 Project Structure
