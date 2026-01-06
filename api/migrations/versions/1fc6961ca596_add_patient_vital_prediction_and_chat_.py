@@ -1,8 +1,8 @@
-"""Initial schema - patient, vital, prediction, chat models
+"""Add patient, vital, prediction, and chat models
 
-Revision ID: 4c958aa7580f
+Revision ID: 1fc6961ca596
 Revises: 
-Create Date: 2026-01-06 02:56:41.514409
+Create Date: 2026-01-06 12:12:15.060334
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4c958aa7580f'
+revision: str = '1fc6961ca596'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
