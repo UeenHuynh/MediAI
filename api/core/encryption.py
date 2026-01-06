@@ -276,6 +276,56 @@ class DataEncryption:
         return "*" * (len(value) - visible_chars) + value[-visible_chars:]
 
 
+# Global encryptor instance for convenience functions
+_default_encryptor = None
+
+
+def _get_encryptor() -> DataEncryption:
+    """Get or create default encryptor instance"""
+    global _default_encryptor
+    if _default_encryptor is None:
+        _default_encryptor = DataEncryption()
+    return _default_encryptor
+
+
+def encrypt_field(value: str) -> Optional[str]:
+    """
+    Encrypt a single field value.
+    
+    Args:
+        value: Plain text value to encrypt
+        
+    Returns:
+        Encrypted string or None if value is None/empty
+    """
+    if not value:
+        return None
+    try:
+        return _get_encryptor().encrypt_string(str(value))
+    except Exception as e:
+        logger.error(f"Failed to encrypt field: {e}")
+        return None
+
+
+def decrypt_field(encrypted_value: str) -> Optional[str]:
+    """
+    Decrypt a single field value.
+    
+    Args:
+        encrypted_value: Encrypted string to decrypt
+        
+    Returns:
+        Decrypted string or None if decryption fails
+    """
+    if not encrypted_value:
+        return None
+    try:
+        return _get_encryptor().decrypt_string(encrypted_value)
+    except Exception as e:
+        logger.error(f"Failed to decrypt field: {e}")
+        return None
+
+
 # Example usage for compliance
 PHI_FIELDS = [
     "patient_id",
