@@ -74,7 +74,9 @@ class Settings(BaseSettings):
     MORTALITY_FEATURES_COUNT: int = 61
 
     class Config:
-        env_file = ".env"
+        # Look for .env in parent directory (project root)
+        from pathlib import Path
+        env_file = str(Path(__file__).parent.parent.parent / '.env')
         case_sensitive = True
         extra = "ignore"  # Ignore extra fields from .env
 
