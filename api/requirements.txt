@@ -28,3 +28,4 @@ python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 slowapi==0.1.9
 python-multipart
+psutil==5.9.8
