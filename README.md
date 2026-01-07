@@ -726,7 +726,7 @@ detect-secrets scan --all-files
 
 ## 🚧 Development Roadmap
 
-### Current Status (Phase 4: 98% Complete)
+### Current Status (Phase 5: 100% Complete)
 
 | Component | Status | Progress |
 |-----------|--------|----------|
@@ -736,15 +736,11 @@ detect-secrets scan --all-files
 | Chatbot RAG | ✅ Live | 100% |
 | Production Deployment | ✅ Live | 100% |
 | Auth & Security | ✅ Complete | 100% |
+| Data Engineering | ✅ Complete | 100% |
 
-### Next Phase (Phase 5: Data Engineering)
+> 📋 **Chi tiết tiến độ Phase 5:** Xem [docs/migration/PROJECT_PROGRESS_OVERVIEW.md](docs/migration/PROJECT_PROGRESS_OVERVIEW.md)
 
-**Planned for Week 6:**
-- ⏳ PostgreSQL database migration
-- ⏳ Doctor CRUD with persistent storage
-- ⏳ Patient CRUD operations
-- ⏳ Prediction history storage
-- ⏳ Chat session persistence (Redis)
+### Next Phase (Phase 6: Streaming - Optional)
 
 ### Future Enhancements
 

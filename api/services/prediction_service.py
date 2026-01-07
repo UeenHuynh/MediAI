@@ -39,11 +39,18 @@ class PredictionService:
     def _init_redis(self):
         """Initialize Redis connection for caching"""
         try:
+            # Try Upstash first (production), then fallback to REDIS_URL
+            upstash_url = os.getenv("UPSTASH_REDIS_URL")
+            redis_url = upstash_url or settings.REDIS_URL
+
             self.redis_client = redis.from_url(
-                settings.REDIS_URL, decode_responses=True
+                redis_url,
+                decode_responses=True,
+                socket_timeout=5,
+                socket_connect_timeout=5
             )
             self.redis_client.ping()
-            logger.info("Redis connection established")
+            logger.info("✅ Redis connected for caching (TTL: %ss)", settings.CACHE_TTL_SECONDS)
         except Exception as e:
             logger.warning("Redis connection failed: %s. Caching disabled.", str(e))
             self.redis_client = None
