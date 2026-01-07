@@ -24,19 +24,31 @@ from jose import JWTError, jwt
 router = APIRouter()
 
 # Demo users database (in production, use real database)
+# Passwords should be set via environment variables
+import os
+
+_DEMO_PASSWORD_HASH = os.getenv(
+    "DEMO_USER_PASSWORD_HASH",
+    "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.OPVcKH1Y1kMfFS",  # Default: changeme
+)
+_ADMIN_PASSWORD_HASH = os.getenv(
+    "ADMIN_USER_PASSWORD_HASH",
+    "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.OPVcKH1Y1kMfFS",  # Default: changeme
+)
+
 DEMO_USERS = {
     "demo": {
         "username": "demo",
         "full_name": "Demo User",
         "email": "demo@mediai.com",
-        "hashed_password": "$2b$12$5UzdnZkrsAfid.BCSJpk8uBdtRbz2UWChXMQPLgH1aTR9RloOp1Ci",  # demo123
+        "hashed_password": _DEMO_PASSWORD_HASH,
         "disabled": False,
     },
     "admin": {
         "username": "admin",
         "full_name": "Admin User",
         "email": "admin@mediai.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",  # admin123
+        "hashed_password": _ADMIN_PASSWORD_HASH,
         "disabled": False,
     },
 }

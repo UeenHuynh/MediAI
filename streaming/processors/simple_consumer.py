@@ -45,7 +45,7 @@ class PredictionEventConsumer:
     def __init__(
         self,
         bootstrap_servers: str = "localhost:9092",
-        postgres_url: str = "postgresql://postgres:postgres123@localhost:5434/mimic_iv",
+        postgres_url: str = "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@localhost:5434/mimic_iv",
         group_id: str = "prediction-processor",
     ):
         self.running = False
@@ -208,7 +208,7 @@ if __name__ == "__main__":
 
     consumer = PredictionEventConsumer(
         bootstrap_servers="localhost:9092",
-        postgres_url="postgresql://postgres:postgres123@localhost:5434/mimic_iv",
+        postgres_url="postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@localhost:5434/mimic_iv",
         group_id="prediction-processor-learning",
     )
 

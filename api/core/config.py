@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
 
-    # Database Configuration
-    DATABASE_URL: str = "postgresql://postgres:postgres123@localhost:5434/mimic_iv"
+    # Database Configuration - password should be set via POSTGRES_PASSWORD env var
+    DATABASE_URL: str = "postgresql://postgres@localhost:5434/mimic_iv"
 
     # Data Source Configuration
     DATA_SOURCE: str = "csv"  # Options: "csv", "database"

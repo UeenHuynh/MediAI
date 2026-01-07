@@ -61,7 +61,8 @@ async def health_check():
     # Check PostgreSQL
     try:
         DATABASE_URL = os.getenv(
-            "DATABASE_URL", "postgresql://postgres:postgres123@postgres:5432/mimic_iv"
+            "DATABASE_URL",
+            "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/mimic_iv",
         )
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor()
@@ -93,7 +94,8 @@ async def get_data_stats():
     """Get database statistics"""
     try:
         DATABASE_URL = os.getenv(
-            "DATABASE_URL", "postgresql://postgres:postgres123@postgres:5432/mimic_iv"
+            "DATABASE_URL",
+            "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/mimic_iv",
         )
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor()

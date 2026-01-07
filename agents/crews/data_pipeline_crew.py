@@ -31,7 +31,7 @@ class DataPipelineCrew:
     def __init__(self):
         """Initialize data pipeline crew."""
         self.db_connection = os.getenv(
-            "DATABASE_URL", "postgresql://postgres:postgres123@localhost:5432/mimic_iv"
+            "DATABASE_URL", "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@localhost:5432/mimic_iv"
         )
         self.dbt_project_dir = os.getenv("DBT_PROJECT_DIR", "./dbt_project")
 

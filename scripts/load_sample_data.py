@@ -15,7 +15,7 @@ load_dotenv()
 
 # Configuration
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://postgres:postgres123@localhost:5432/mimic_iv"
+    "DATABASE_URL", "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@localhost:5432/mimic_iv"
 )
 DATA_DIR = Path(__file__).parent.parent / "data" / "sample"
 
