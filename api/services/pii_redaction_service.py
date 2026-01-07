@@ -106,21 +106,37 @@ class PIIRedactionService:
         PIIEntityType.MEDICAL_LICENSE,
         PIIEntityType.LOCATION,
         PIIEntityType.DATE_TIME,
+        PIIEntityType.PATIENT_ID,
+        PIIEntityType.MRN,
     ]
 
     # Medical-specific patterns
     MEDICAL_PATTERNS = {
         "PATIENT_ID": Pattern(
             name="patient_id_pattern",
-            regex=r"\b(PATIENT|PT|PAT)[-_]?[0-9]{6,10}\b",
-            score=0.7,
+            regex=r"(?i)\b(PATIENT|PT|PAT)[-_][0-9]{5,10}\b",
+            score=0.85,
         ),
         "MRN": Pattern(
             name="mrn_pattern",
-            regex=r"\b(MRN|MR)[-:]?\s*[0-9]{6,12}\b",
-            score=0.8,
+            regex=r"(?i)\b(?:MRN|MR)[-:][0-9]{6,12}\b",
+            score=0.9,
         ),
     }
+
+    # SSN explicit pattern (Presidio's built-in is too strict)
+    SSN_PATTERN = Pattern(
+        name="ssn_explicit_pattern",
+        regex=r"\b[0-9]{3}-[0-9]{2}-[0-9]{4}\b",
+        score=0.85,
+    )
+
+    # Short phone pattern (Presidio needs 10+ digits by default)
+    SHORT_PHONE_PATTERN = Pattern(
+        name="short_phone_pattern",
+        regex=r"\b[0-9]{3}-[0-9]{4}\b",
+        score=0.7,
+    )
 
     def __init__(
         self,
@@ -168,6 +184,7 @@ class PIIRedactionService:
 
     def _add_medical_recognizers(self) -> None:
         """Add custom medical entity recognizers."""
+        # Add medical patterns
         for entity_type, pattern in self.MEDICAL_PATTERNS.items():
             recognizer = PatternRecognizer(
                 supported_entity=entity_type,
@@ -175,8 +192,27 @@ class PIIRedactionService:
                 context=[],
             )
             self.analyzer.registry.add_recognizer(recognizer)
+            # Ensure entity is in detection list
+            if entity_type not in self.entities:
+                self.entities.append(entity_type)
 
-        logger.info(f"Added {len(self.MEDICAL_PATTERNS)} medical recognizers")
+        # Add explicit SSN pattern recognizer
+        ssn_recognizer = PatternRecognizer(
+            supported_entity="US_SSN",
+            patterns=[self.SSN_PATTERN],
+            context=["ssn", "social", "security"],
+        )
+        self.analyzer.registry.add_recognizer(ssn_recognizer)
+
+        # Add short phone pattern recognizer (7-digit format like 555-1234)
+        phone_recognizer = PatternRecognizer(
+            supported_entity="PHONE_NUMBER",
+            patterns=[self.SHORT_PHONE_PATTERN],
+            context=["phone", "call", "tel"],
+        )
+        self.analyzer.registry.add_recognizer(phone_recognizer)
+
+        logger.info(f"Added {len(self.MEDICAL_PATTERNS)} medical recognizers + SSN/phone patterns")
 
     def _build_operators_config(
         self,
