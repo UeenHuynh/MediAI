@@ -22,14 +22,12 @@ class TestPrivacyCompliance:
 
     @pytest.fixture
     @patch('api.services.langchain_medical_bot.ChatGroq')
-    @patch('api.services.langchain_medical_bot.AnalyzerEngine')
-    @patch('api.services.langchain_medical_bot.AnonymizerEngine')
-    def chatbot(self, mock_anon, mock_analyzer, mock_groq, monkeypatch):
+    def chatbot(self, mock_groq, monkeypatch):
         """Create chatbot with PII protection enabled."""
         monkeypatch.setenv("GROQ_API_KEY", "test_key")
         mock_groq.return_value = MagicMock()
 
-        # Create real analyzer/anonymizer for integration test
+        # Don't mock AnalyzerEngine/AnonymizerEngine - use real for integration test
         bot = ProductionMedicalChatbot(
             provider="groq",
             enable_pii_redaction=True
