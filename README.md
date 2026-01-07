@@ -96,7 +96,7 @@ graph LR
 | **ML Models** | LightGBM V2 | Sepsis/Mortality prediction | ✅ Optimized |
 | **Chatbot** | LangChain + Groq | RAG pipeline, PII redaction | ✅ Live |
 | **Database** | PostgreSQL (Neon) | Patient data, predictions | ✅ Live |
-| **Cache** | Redis (Upstash-ready) | Response caching | ✅ Ready |
+| **Cache** | Redis (Upstash) | Response caching (10x faster) | ✅ Live |
 | **Auth** | JWT + Zustand | Stateless authentication | ✅ Live |
 | **Monitoring** | `/metrics/json` | Latency, throughput, cache | ✅ Active |
 
@@ -203,15 +203,27 @@ npm run dev
 │  - ML Models V2 (LightGBM)                              │
 │  - Auto-SSL (HTTPS)                                     │
 │  - Backend: mediai-7owz.onrender.com                    │
-└─────────────┬───────────────────────────────────────────┘
-              │ Model Inference
-              ▼
+└─────┬───────┬───────────────────────────────────────────┘
+      │       │
+      │       └──────────────┐
+      │ Model Inference      │ Data Persistence
+      ▼                      ▼
+┌────────────────────┐  ┌──────────────────────┐
+│ Prediction Engine  │  │ Neon PostgreSQL      │
+│ - Sepsis V2        │  │ - Patient records    │
+│ - Mortality V2     │  │ - Vital signs        │
+│ - SHAP Explain     │  │ - Predictions        │
+└────────────────────┘  │ - AES-256 encryption │
+                        │ (0.5 GB free tier)   │
+                        └──────────────────────┘
+      │
+      │ Cache Layer (10x faster)
+      ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Prediction Engine                                      │
-│  - Sepsis Model V2 (AUROC 0.9796)                       │
-│  - Mortality Model V2 (AUROC 0.9949)                    │
-│  - Smart Feature Imputation                             │
-│  - SHAP Explainability                                  │
+│  Upstash Redis (Cloud)                                  │
+│  - Prediction caching (1 hour TTL)                      │
+│  - ~50ms response time (vs 500ms cold)                  │
+│  - 10,000 commands/day (free tier)                      │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -281,24 +293,44 @@ MediAI/
 │   ├── routers/
 │   │   ├── auth.py               # JWT authentication
 │   │   ├── predictions.py        # ML prediction endpoints
-│   │   ├── simplified_predictions.py  # Simplified endpoints (NEW)
+│   │   ├── simplified_predictions.py  # Simplified endpoints
+│   │   ├── patients.py           # Patient CRUD (Phase 5 - NEW)
+│   │   ├── vitals.py             # Vital signs (Phase 5 - NEW)
+│   │   ├── prediction_history.py # Prediction tracking (Phase 5 - NEW)
 │   │   ├── doctors.py            # Doctor CRUD
-│   │   └── chat.py               # Chatbot RAG pipeline
+│   │   ├── chat.py               # Chatbot RAG pipeline
+│   │   └── health.py             # Health & metrics
 │   ├── services/
-│   │   ├── prediction_service.py # Prediction logic
-│   │   ├── feature_imputation.py # Smart feature imputation (NEW)
+│   │   ├── prediction_service.py # Prediction logic + Redis cache
+│   │   ├── patient_service.py    # Patient CRUD (Phase 5 - NEW)
+│   │   ├── vital_service.py      # Vital signs (Phase 5 - NEW)
+│   │   ├── prediction_history_service.py  # History (Phase 5 - NEW)
+│   │   ├── feature_imputation.py # Smart feature imputation
 │   │   ├── langchain_medical_bot.py  # LangChain RAG
 │   │   └── pii_redaction_service.py  # PII redaction
-│   ├── models/
-│   │   ├── schemas.py            # Pydantic models
-│   │   ├── sepsis_lightgbm_v2.pkl      # Sepsis model V2
-│   │   ├── mortality_lightgbm_v2.pkl   # Mortality model V2
-│   │   ├── sepsis_feature_names_v2.pkl
-│   │   └── mortality_feature_names_v2.pkl
+│   ├── models/                   # SQLAlchemy ORM models (Phase 5)
+│   │   ├── user.py               # User model
+│   │   ├── patient.py            # Patient model (Phase 5 - NEW)
+│   │   ├── vital.py              # Vital signs (Phase 5 - NEW)
+│   │   ├── prediction.py         # Prediction history (Phase 5 - NEW)
+│   │   ├── chat.py               # Chat sessions (Phase 5 - NEW)
+│   │   └── schemas.py            # Pydantic request/response models
+│   ├── schemas/                  # Pydantic schemas (Phase 5 - NEW)
+│   │   ├── patient.py
+│   │   ├── vital.py
+│   │   ├── prediction.py
+│   │   └── chat.py
 │   ├── core/
 │   │   ├── config.py             # Settings management
+│   │   ├── database.py           # SQLAlchemy setup (Phase 5 - NEW)
+│   │   ├── encryption.py         # PII encryption (Phase 5 - NEW)
+│   │   ├── redis_cache.py        # Redis caching utilities
 │   │   ├── security.py           # JWT, encryption
 │   │   └── rbac.py               # Role-based access
+│   ├── alembic/                  # Database migrations (Phase 5 - NEW)
+│   │   ├── versions/
+│   │   │   └── 1fc6961ca596_initial_schema.py
+│   │   └── env.py
 │   └── requirements.txt
 │
 ├── docs/                          # Documentation
@@ -670,6 +702,89 @@ POST /chat
 }
 ```
 
+#### Phase 5: Data Engineering API (NEW - Jan 2026)
+
+**Patient Management (6 endpoints):**
+```bash
+# Create patient
+POST /api/v1/patients/
+{
+  "patient_code": "P001",
+  "full_name": "John Doe",
+  "date_of_birth": "1980-01-15",
+  "gender": "M",
+  "department": "ICU",
+  "chief_complaint": "Respiratory distress"
+}
+
+# List patients (with pagination & search)
+GET /api/v1/patients/?page=1&page_size=50&search=john
+
+# Get patient by ID
+GET /api/v1/patients/{patient_id}
+
+# Update patient
+PUT /api/v1/patients/{patient_id}
+
+# Soft delete patient
+DELETE /api/v1/patients/{patient_id}
+
+# Get patient by code
+GET /api/v1/patients/code/{patient_code}
+```
+
+**Vital Signs (5 endpoints):**
+```bash
+# Record vital signs
+POST /api/v1/vitals/
+{
+  "patient_id": 1,
+  "heart_rate": 85,
+  "systolic_bp": 120,
+  "diastolic_bp": 80,
+  "temperature": 37.2,
+  "respiratory_rate": 16,
+  "spo2": 98
+}
+
+# Get patient's vitals
+GET /api/v1/vitals/patient/{patient_id}
+
+# Get latest vitals
+GET /api/v1/vitals/patient/{patient_id}/latest
+```
+
+**Prediction History (6 endpoints):**
+```bash
+# List all predictions
+GET /api/v1/predictions/?page=1&page_size=50
+
+# Get prediction by ID
+GET /api/v1/predictions/{prediction_id}
+
+# Get patient's prediction history
+GET /api/v1/predictions/patient/{patient_id}/history
+
+# Get latest prediction by type
+GET /api/v1/predictions/patient/{patient_id}/latest/sepsis
+
+# Update prediction outcome
+POST /api/v1/predictions/{prediction_id}/outcome
+{
+  "actual_outcome": "positive",
+  "outcome_notes": "Patient developed sepsis"
+}
+
+# Get prediction statistics
+GET /api/v1/predictions/statistics
+```
+
+**Security Features:**
+- ✅ **PII Encryption**: AES-256 for SSN, address, phone
+- ✅ **JWT Authentication**: All endpoints require valid token
+- ✅ **Soft Deletes**: Patient records not permanently deleted
+- ✅ **Audit Trail**: All operations logged with timestamps
+
 ---
 
 ## 🧪 Testing & Quality
@@ -763,7 +878,13 @@ detect-secrets scan --all-files
 |----------|-------------|
 | [README.md](README.md) | Main documentation (this file) |
 | [docs/architecturev4.mmd](docs/architecturev4.mmd) | Architecture V4 diagram (Mermaid) |
-| [docs/migration/PROJECT_PROGRESS_OVERVIEW.md](docs/migration/PROJECT_PROGRESS_OVERVIEW.md) | Project progress (62% complete) |
+| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Production deployment steps |
+| **Phase 5 Documentation** | |
+| [docs/migration/PHASE5_STATUS.md](docs/migration/PHASE5_STATUS.md) | Phase 5 completion report (95% ✅) |
+| [docs/REDIS_SETUP_COMPLETE.md](docs/REDIS_SETUP_COMPLETE.md) | Redis/Upstash caching guide |
+| [docs/migration/UPSTASH_REDIS_SETUP.md](docs/migration/UPSTASH_REDIS_SETUP.md) | Upstash setup instructions |
+| **Project Progress** | |
+| [docs/migration/PROJECT_PROGRESS_OVERVIEW.md](docs/migration/PROJECT_PROGRESS_OVERVIEW.md) | Complete project progress |
 | [models/KAGGLE_TRAINING_INSTRUCTIONS.md](models/KAGGLE_TRAINING_INSTRUCTIONS.md) | Model training guide |
 | [api/README.md](api/README.md) | Backend API documentation |
 | [frontend/README.md](frontend/README.md) | Frontend setup guide |
@@ -886,8 +1007,8 @@ If this project helps you learn MLOps or healthcare ML, please give it a ⭐!
 
 **Built with ❤️ for healthcare ML and modern MLOps**
 
-**Version:** 4.0.0 (Production)
-**Last Updated:** January 5, 2026
+**Version:** 4.1.0 (Production - Phase 5 Complete)
+**Last Updated:** January 7, 2026
 **Status:** ✅ Deployed & Live
 
 [⬆ Back to Top](#mediai---icu-risk-prediction-platform-v4)
