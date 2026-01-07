@@ -119,7 +119,7 @@ class QdrantVectorStore:
             total_added = 0
 
             for i in range(0, len(documents), batch_size):
-                batch = documents[i : i + batch_size]
+                batch = documents[i: i + batch_size]
 
                 points = [
                     PointStruct(

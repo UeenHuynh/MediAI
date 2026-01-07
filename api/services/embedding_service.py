@@ -160,7 +160,7 @@ class EmbeddingService:
             try:
                 # OpenAI has a limit on batch size, process in chunks
                 for i in range(0, len(valid_texts), batch_size):
-                    batch = valid_texts[i : i + batch_size]
+                    batch = valid_texts[i: i + batch_size]
                     response = openai.embeddings.create(
                         input=batch, model=self.model_name
                     )

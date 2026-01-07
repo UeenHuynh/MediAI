@@ -112,7 +112,7 @@ class PIIMasker:
         masked_text = text
         for match in matches:
             masked_text = (
-                masked_text[: match.start] + match.token + masked_text[match.end :]
+                masked_text[: match.start] + match.token + masked_text[match.end:]
             )
 
             # Store mapping

@@ -394,7 +394,7 @@ class HuggingFaceLLM:
             # Extract generated text (remove prompt)
             generated = result[0]["generated_text"]
             if generated.startswith(prompt):
-                generated = generated[len(prompt) :].strip()
+                generated = generated[len(prompt):].strip()
 
             return {
                 "content": generated,
