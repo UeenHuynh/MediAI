@@ -12,13 +12,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core.config import settings
 from core.database import Base
 
-from models.chat import ChatMessage, ChatSession
-from models.patient import Patient
-from models.prediction import Prediction
+from models.chat import ChatMessage, ChatSession  # noqa: F401
+from models.patient import Patient  # noqa: F401
+from models.prediction import Prediction  # noqa: F401
 
 # Import all models to register them with Base.metadata
-from models.user import User
-from models.vital import Vital
+from models.user import User  # noqa: F401
+from models.vital import Vital  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

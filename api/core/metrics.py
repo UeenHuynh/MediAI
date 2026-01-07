@@ -8,10 +8,10 @@ Tracks latency, throughput, cache efficiency, and resource usage.
 import logging
 import time
 from functools import wraps
-from typing import Optional
+from typing import Optional  # noqa: F401
 
 import psutil
-from fastapi import Request, Response
+from fastapi import Request, Response  # noqa: F401
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
@@ -248,18 +248,18 @@ class MetricsCollector:
         metrics = self.get_all_metrics()
 
         # Uptime
-        lines.append(f"# HELP mediai_uptime_seconds API uptime in seconds")
-        lines.append(f"# TYPE mediai_uptime_seconds gauge")
+        lines.append("# HELP mediai_uptime_seconds API uptime in seconds")
+        lines.append("# TYPE mediai_uptime_seconds gauge")
         lines.append(f"mediai_uptime_seconds {metrics['uptime_seconds']}")
 
         # Request count
-        lines.append(f"# HELP mediai_requests_total Total HTTP requests")
-        lines.append(f"# TYPE mediai_requests_total counter")
+        lines.append("# HELP mediai_requests_total Total HTTP requests")
+        lines.append("# TYPE mediai_requests_total counter")
         lines.append(f"mediai_requests_total {metrics['throughput']['total_requests']}")
 
         # Requests per minute
-        lines.append(f"# HELP mediai_requests_per_minute Current request rate")
-        lines.append(f"# TYPE mediai_requests_per_minute gauge")
+        lines.append("# HELP mediai_requests_per_minute Current request rate")
+        lines.append("# TYPE mediai_requests_per_minute gauge")
         lines.append(
             f"mediai_requests_per_minute {metrics['throughput']['requests_per_minute']}"
         )
@@ -267,16 +267,16 @@ class MetricsCollector:
         # Request latency
         api_lat = metrics["latency"]["api"]
         lines.append(
-            f"# HELP mediai_request_latency_ms Request latency in milliseconds"
+            "# HELP mediai_request_latency_ms Request latency in milliseconds"
         )
-        lines.append(f"# TYPE mediai_request_latency_ms gauge")
+        lines.append("# TYPE mediai_request_latency_ms gauge")
         lines.append(f'mediai_request_latency_ms{{quantile="0.5"}} {api_lat["p50"]}')
         lines.append(f'mediai_request_latency_ms{{quantile="0.95"}} {api_lat["p95"]}')
         lines.append(f'mediai_request_latency_ms{{quantile="0.99"}} {api_lat["p99"]}')
 
         # Prediction counts
-        lines.append(f"# HELP mediai_predictions_total Total predictions by type")
-        lines.append(f"# TYPE mediai_predictions_total counter")
+        lines.append("# HELP mediai_predictions_total Total predictions by type")
+        lines.append("# TYPE mediai_predictions_total counter")
         for pred_type, count in metrics["predictions"]["total"].items():
             lines.append(f'mediai_predictions_total{{type="{pred_type}"}} {count}')
 
@@ -291,20 +291,20 @@ class MetricsCollector:
             )
 
         # Cache metrics
-        lines.append(f"# HELP mediai_cache_hits_total Cache hit count")
-        lines.append(f"# TYPE mediai_cache_hits_total counter")
+        lines.append("# HELP mediai_cache_hits_total Cache hit count")
+        lines.append("# TYPE mediai_cache_hits_total counter")
         lines.append(f"mediai_cache_hits_total {metrics['cache']['hits']}")
-        lines.append(f"# HELP mediai_cache_hit_rate Cache hit rate percentage")
-        lines.append(f"# TYPE mediai_cache_hit_rate gauge")
+        lines.append("# HELP mediai_cache_hit_rate Cache hit rate percentage")
+        lines.append("# TYPE mediai_cache_hit_rate gauge")
         lines.append(f"mediai_cache_hit_rate {metrics['cache']['hit_rate_percent']}")
 
         # Resource metrics
         res = metrics["resources"]
-        lines.append(f"# HELP mediai_memory_mb Memory usage in MB")
-        lines.append(f"# TYPE mediai_memory_mb gauge")
+        lines.append("# HELP mediai_memory_mb Memory usage in MB")
+        lines.append("# TYPE mediai_memory_mb gauge")
         lines.append(f"mediai_memory_mb {res['memory_mb']:.2f}")
-        lines.append(f"# HELP mediai_cpu_percent CPU usage percentage")
-        lines.append(f"# TYPE mediai_cpu_percent gauge")
+        lines.append("# HELP mediai_cpu_percent CPU usage percentage")
+        lines.append("# TYPE mediai_cpu_percent gauge")
         lines.append(f"mediai_cpu_percent {res['cpu_percent']:.2f}")
 
         return "\n".join(lines)

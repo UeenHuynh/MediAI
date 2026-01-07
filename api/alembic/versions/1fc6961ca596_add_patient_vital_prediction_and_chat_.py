@@ -1,7 +1,7 @@
 """Add patient, vital, prediction, and chat models
 
 Revision ID: 1fc6961ca596
-Revises: 
+Revises:
 Create Date: 2026-01-06 12:12:15.060334
 
 """
