@@ -5,17 +5,14 @@ Stores vital signs, lab results, and clinical measurements.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from core.database import Base
 from sqlalchemy import (
-    Boolean,
     Column,
     DateTime,
     ForeignKey,
     Integer,
     Numeric,
-    String,
     Text,
 )
 from sqlalchemy.orm import relationship

@@ -4,7 +4,7 @@ Automatically enhances short medical queries into detailed, structured prompts
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 
 
 class PromptEnhancer:

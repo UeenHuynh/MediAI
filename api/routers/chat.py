@@ -13,10 +13,9 @@ from uuid import UUID
 
 from core.config import settings
 from core.database import get_db
-from core.rbac import UserWithRole, require_authenticated, require_permission
+from core.rbac import UserWithRole, require_permission
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from schemas.chat import ChatMessageResponse, ChatSessionResponse
 from services.chat_service import ChatService
 from sqlalchemy.orm import Session
 

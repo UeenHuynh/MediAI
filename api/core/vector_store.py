@@ -8,7 +8,6 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import Session
 
 from .config import settings
 

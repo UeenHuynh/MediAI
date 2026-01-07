@@ -5,14 +5,14 @@ Interactive UI for selecting and customizing medical prompt templates
 
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import streamlit as st
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.prompt_templates import MagicPromptTemplates
+from utils.prompt_templates import MagicPromptTemplates  # noqa: E402
 
 
 def show_magic_prompt_generator() -> Optional[str]:

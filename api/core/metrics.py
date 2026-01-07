@@ -266,9 +266,7 @@ class MetricsCollector:
 
         # Request latency
         api_lat = metrics["latency"]["api"]
-        lines.append(
-            "# HELP mediai_request_latency_ms Request latency in milliseconds"
-        )
+        lines.append("# HELP mediai_request_latency_ms Request latency in milliseconds")
         lines.append("# TYPE mediai_request_latency_ms gauge")
         lines.append(f'mediai_request_latency_ms{{quantile="0.5"}} {api_lat["p50"]}')
         lines.append(f'mediai_request_latency_ms{{quantile="0.95"}} {api_lat["p95"]}')

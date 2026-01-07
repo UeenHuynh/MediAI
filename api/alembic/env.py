@@ -1,24 +1,24 @@
 import sys
-from logging.config import fileConfig
-from pathlib import Path
+from logging.config import fileConfig  # noqa: E402
+from pathlib import Path  # noqa: E402
 
-from alembic import context
-from sqlalchemy import engine_from_config, pool
+from alembic import context  # noqa: E402
+from sqlalchemy import engine_from_config, pool  # noqa: E402
 
 # Add parent directory to path to import our modules
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Import settings and Base
-from core.config import settings
-from core.database import Base
+from core.config import settings  # noqa: E402
+from core.database import Base  # noqa: E402
 
-from models.chat import ChatMessage, ChatSession  # noqa: F401
-from models.patient import Patient  # noqa: F401
-from models.prediction import Prediction  # noqa: F401
+from models.chat import ChatMessage, ChatSession  # noqa: F401, E402
+from models.patient import Patient  # noqa: F401, E402
+from models.prediction import Prediction  # noqa: F401, E402
 
 # Import all models to register them with Base.metadata
-from models.user import User  # noqa: F401
-from models.vital import Vital  # noqa: F401
+from models.user import User  # noqa: F401, E402
+from models.vital import Vital  # noqa: F401, E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

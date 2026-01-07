@@ -5,12 +5,10 @@ Stores user credentials, profile information, and role assignments.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from core.database import Base
 from core.rbac import Role
 from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String
-from sqlalchemy.orm import relationship
 
 
 class User(Base):

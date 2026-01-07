@@ -67,7 +67,6 @@ async def predict_sepsis_simplified(
     Requires only basic vitals - backend will impute missing features
     """
     import time
-    from datetime import datetime
 
     patient_id = request.patient_id or f"WEB_{int(time.time())}"
 

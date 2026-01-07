@@ -14,22 +14,22 @@ import streamlit as st
 # Add parent directories to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from api.core.vector_store import VectorStore
-from api.services.document_processor import MedicalDocumentProcessor
-from api.services.embedding_service import MedicalEmbeddingService
-from api.services.hybrid_rag import HybridRAGPipeline
+from api.core.vector_store import VectorStore  # noqa: E402
+from api.services.document_processor import MedicalDocumentProcessor  # noqa: E402
+from api.services.embedding_service import MedicalEmbeddingService  # noqa: E402
+from api.services.hybrid_rag import HybridRAGPipeline  # noqa: E402
 
 # Import LangChain integration
-from api.services.langchain_medical_bot import (
+from api.services.langchain_medical_bot import (  # noqa: E402
     ProductionMedicalChatbot,
     create_medical_chatbot,
 )
-from api.services.rag_pipeline import RAGPipeline
-from api.services.safety_guardrails import SafetyGuardrails
+from api.services.rag_pipeline import RAGPipeline  # noqa: E402
+from api.services.safety_guardrails import SafetyGuardrails  # noqa: E402
 
 # Import prompt enhancer
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.prompt_enhancer import PromptEnhancer
+from utils.prompt_enhancer import PromptEnhancer  # noqa: E402
 
 
 @st.cache_resource

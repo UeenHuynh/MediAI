@@ -5,7 +5,6 @@ Stores all sepsis and mortality predictions with input features and SHAP explana
 """
 
 from datetime import datetime
-from typing import Optional
 
 from core.database import Base
 from sqlalchemy import (

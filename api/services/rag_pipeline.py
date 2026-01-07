@@ -5,9 +5,7 @@ Combines document retrieval with LLM generation
 
 import logging
 import os
-from typing import Dict, List, Optional, Tuple
-
-import numpy as np
+from typing import Dict, List, Optional
 
 from ..core.vector_store import VectorStore
 from .document_processor import MedicalDocumentProcessor

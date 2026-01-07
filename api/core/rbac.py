@@ -5,11 +5,9 @@ Provides role management and permission checking for protected endpoints.
 """
 
 from enum import Enum
-from functools import wraps
-from typing import Callable, List, Optional
+from typing import List
 
 from fastapi import Depends, HTTPException, status
-from pydantic import BaseModel
 
 from .security import User, get_current_user
 

@@ -64,7 +64,7 @@ class ChatService:
         """
         return (
             db.query(ChatSession)
-            .filter(ChatSession.session_id == session_id, ChatSession.is_active == True)
+            .filter(ChatSession.session_id == session_id, ChatSession.is_active is True)
             .first()
         )
 
@@ -82,7 +82,7 @@ class ChatService:
         """
         return (
             db.query(ChatSession)
-            .filter(ChatSession.id == id, ChatSession.is_active == True)
+            .filter(ChatSession.id == id, ChatSession.is_active is True)
             .first()
         )
 
@@ -103,7 +103,7 @@ class ChatService:
             Tuple of (list of sessions, total count)
         """
         query = db.query(ChatSession).filter(
-            ChatSession.user_id == user_id, ChatSession.is_active == True
+            ChatSession.user_id == user_id, ChatSession.is_active is True
         )
 
         total = query.count()

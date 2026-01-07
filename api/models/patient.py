@@ -4,8 +4,7 @@ Patient model for MediAI patient management.
 Stores patient demographics, admission data, and medical history.
 """
 
-from datetime import date, datetime
-from typing import Optional
+from datetime import datetime
 
 from core.database import Base
 from sqlalchemy import (

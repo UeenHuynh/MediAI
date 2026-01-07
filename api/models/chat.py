@@ -6,7 +6,6 @@ Stores chat sessions and messages for conversation persistence.
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from core.database import Base
 from sqlalchemy import (

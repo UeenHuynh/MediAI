@@ -6,7 +6,7 @@ Handles all database operations for patient management.
 
 from typing import List, Optional, Tuple
 
-from core.encryption import decrypt_field, encrypt_field
+from core.encryption import encrypt_field
 from schemas.patient import PatientCreate, PatientUpdate
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -81,7 +81,7 @@ class PatientService:
         """
         return (
             db.query(Patient)
-            .filter(Patient.id == patient_id, Patient.is_active == True)
+            .filter(Patient.id == patient_id, Patient.is_active is True)
             .first()
         )
 
@@ -99,7 +99,7 @@ class PatientService:
         """
         return (
             db.query(Patient)
-            .filter(Patient.patient_code == patient_code, Patient.is_active == True)
+            .filter(Patient.patient_code == patient_code, Patient.is_active is True)
             .first()
         )
 
@@ -124,7 +124,7 @@ class PatientService:
         Returns:
             Tuple of (list of patients, total count)
         """
-        query = db.query(Patient).filter(Patient.is_active == True)
+        query = db.query(Patient).filter(Patient.is_active is True)
 
         # Apply filters
         if department:
@@ -211,5 +211,5 @@ class PatientService:
             Count of active patients
         """
         return (
-            db.query(func.count(Patient.id)).filter(Patient.is_active == True).scalar()
+            db.query(func.count(Patient.id)).filter(Patient.is_active is True).scalar()
         )

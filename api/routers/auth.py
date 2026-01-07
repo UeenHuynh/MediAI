@@ -15,7 +15,6 @@ from core.security import (
     create_access_token,
     create_refresh_token,
     get_current_active_user,
-    oauth2_scheme,
     verify_password,
 )
 from fastapi import APIRouter, Body, Depends, HTTPException, status

@@ -21,12 +21,11 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 from presidio_analyzer import AnalyzerEngine
 from presidio_anonymizer import AnonymizerEngine
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -36,8 +35,6 @@ from tenacity import (
 
 # Import callbacks
 from api.services.langchain_callbacks import (
-    MedicalChatbotCallbackHandler,
-    PIIDetectionCallbackHandler,
     get_callback_handler,
     get_pii_callback,
 )

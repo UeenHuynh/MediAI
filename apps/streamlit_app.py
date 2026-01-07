@@ -15,10 +15,10 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
-import streamlit as st
+import streamlit as st  # noqa: E402
 
 # Import page modules
-from pages import (
+from pages import (  # noqa: E402
     auth,
     dashboard,
     legal,
@@ -33,10 +33,10 @@ try:
     from pages import chatbot_rag as chatbot
 except ImportError:
     from pages import chatbot
-from utils.audit_logger import AuditEventType, AuditLogger
+from utils.audit_logger import AuditEventType, AuditLogger  # noqa: E402
 
 # Import compliance utilities
-from utils.encryption import DataEncryption
+from utils.encryption import DataEncryption  # noqa: E402
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")

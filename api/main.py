@@ -79,7 +79,7 @@ app.add_middleware(
 )
 
 # Metrics middleware - automatic request tracking
-from core.metrics import MetricsMiddleware
+from core.metrics import MetricsMiddleware  # noqa: E402
 
 app.add_middleware(MetricsMiddleware)
 
@@ -108,7 +108,7 @@ async def global_exception_handler(_request: Request, exc: Exception):
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(health.router, tags=["Health"])
 app.include_router(predictions.router, prefix="/api/v1", tags=["Predictions"])
-from routers import simplified_predictions
+from routers import simplified_predictions  # noqa: E402
 
 app.include_router(
     simplified_predictions.router, prefix="/api/v1", tags=["Simplified Predictions"]

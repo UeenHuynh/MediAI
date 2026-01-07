@@ -5,7 +5,7 @@ Updated: December 2024 - Aligned with data/sample_kaggle/ CSV files
 """
 
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel, Field
 
