@@ -10,25 +10,33 @@ KAGGLE SETUP:
 4. Download: sepsis_lightgbm_v2.pkl, sepsis_feature_names_v2.pkl
 """
 
-import pandas as pd
-import numpy as np
-import lightgbm as lgb
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.metrics import (
-    roc_auc_score, accuracy_score, precision_score, recall_score,
-    f1_score, confusion_matrix, classification_report, roc_curve
-)
-from imblearn.over_sampling import SMOTE
-import matplotlib.pyplot as plt
-import seaborn as sns
-import joblib
 import json
 import warnings
-warnings.filterwarnings('ignore')
 
-print("="*80)
+import joblib
+import lightgbm as lgb
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+    roc_curve,
+)
+from sklearn.model_selection import StratifiedKFold, train_test_split
+
+warnings.filterwarnings("ignore")
+
+print("=" * 80)
 print("🏥 MediAI - Sepsis Prediction Model Training V2")
-print("="*80)
+print("=" * 80)
 
 # ============================================================================
 # 1. LOAD DATA
@@ -37,7 +45,7 @@ print("="*80)
 print("\n📊 Loading data...")
 
 # Kaggle path (change này nếu run local)
-CSV_PATH = '/kaggle/input/mediai-sepsis/features_sepsis_6h.csv'
+CSV_PATH = "/kaggle/input/mediai-sepsis/features_sepsis_6h.csv"
 # Local path: CSV_PATH = 'data/sample_kaggle/features_sepsis_6h.csv'
 
 try:
@@ -45,7 +53,7 @@ try:
     print(f"✅ Loaded: {df.shape}")
 except FileNotFoundError:
     print("⚠️  Kaggle path not found, trying local path...")
-    CSV_PATH = '../../data/sample_kaggle/features_sepsis_6h.csv'
+    CSV_PATH = "../../data/sample_kaggle/features_sepsis_6h.csv"
     df = pd.read_csv(CSV_PATH)
     print(f"✅ Loaded from local: {df.shape}")
 
@@ -56,8 +64,8 @@ except FileNotFoundError:
 print("\n🔧 Preparing features...")
 
 # Remove IDs and label
-ID_COLS = ['subject_id', 'hadm_id', 'stay_id']
-LABEL_COL = 'sepsis_label'
+ID_COLS = ["subject_id", "hadm_id", "stay_id"]
+LABEL_COL = "sepsis_label"
 
 # Extract features (exactly 42 features from CSV)
 feature_cols = [col for col in df.columns if col not in ID_COLS + [LABEL_COL]]
@@ -86,10 +94,7 @@ print(f"   ... ({len(feature_names)} total)")
 print("\n✂️  Splitting data...")
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
-    test_size=0.2,
-    random_state=42,
-    stratify=y
+    X, y, test_size=0.2, random_state=42, stratify=y
 )
 
 print(f"✅ Train: {X_train.shape}, Positive: {y_train.mean():.1%}")
@@ -104,8 +109,12 @@ print("\n⚖️  Balancing classes with SMOTE...")
 smote = SMOTE(random_state=42, k_neighbors=5)
 X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
 
-print(f"✅ Before SMOTE: {len(y_train)} samples, {y_train.sum()} positive ({y_train.mean():.1%})")
-print(f"✅ After SMOTE: {len(y_train_balanced)} samples, {y_train_balanced.sum()} positive ({y_train_balanced.mean():.1%})")
+print(
+    f"✅ Before SMOTE: {len(y_train)} samples, {y_train.sum()} positive ({y_train.mean():.1%})"
+)
+print(
+    f"✅ After SMOTE: {len(y_train_balanced)} samples, {y_train_balanced.sum()} positive ({y_train_balanced.mean():.1%})"
+)
 
 # ============================================================================
 # 5. TRAIN LIGHTGBM MODEL
@@ -115,33 +124,41 @@ print("\n🚀 Training LightGBM model...")
 
 # Hyperparameters (tuned for sepsis prediction)
 params = {
-    'objective': 'binary',
-    'metric': 'auc',
-    'boosting_type': 'gbdt',
-    'num_leaves': 31,
-    'learning_rate': 0.05,
-    'feature_fraction': 0.9,
-    'bagging_fraction': 0.8,
-    'bagging_freq': 5,
-    'max_depth': -1,
-    'min_child_samples': 20,
-    'reg_alpha': 0.1,
-    'reg_lambda': 0.1,
-    'verbose': -1,
-    'device': 'gpu',  # Comment this line nếu không có GPU
-    'gpu_platform_id': 0,
-    'gpu_device_id': 0,
+    "objective": "binary",
+    "metric": "auc",
+    "boosting_type": "gbdt",
+    "num_leaves": 31,
+    "learning_rate": 0.05,
+    "feature_fraction": 0.9,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 5,
+    "max_depth": -1,
+    "min_child_samples": 20,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.1,
+    "verbose": -1,
+    "device": "gpu",  # Comment this line nếu không có GPU
+    "gpu_platform_id": 0,
+    "gpu_device_id": 0,
 }
 
 # Create dataset (convert to numpy arrays for compatibility)
 train_data = lgb.Dataset(
-    X_train_balanced.values if hasattr(X_train_balanced, 'values') else X_train_balanced,
-    label=y_train_balanced.values if hasattr(y_train_balanced, 'values') else y_train_balanced
+    (
+        X_train_balanced.values
+        if hasattr(X_train_balanced, "values")
+        else X_train_balanced
+    ),
+    label=(
+        y_train_balanced.values
+        if hasattr(y_train_balanced, "values")
+        else y_train_balanced
+    ),
 )
 valid_data = lgb.Dataset(
-    X_test.values if hasattr(X_test, 'values') else X_test,
-    label=y_test.values if hasattr(y_test, 'values') else y_test,
-    reference=train_data
+    X_test.values if hasattr(X_test, "values") else X_test,
+    label=y_test.values if hasattr(y_test, "values") else y_test,
+    reference=train_data,
 )
 
 # Train with early stopping
@@ -151,11 +168,8 @@ model = lgb.train(
     train_data,
     num_boost_round=1000,
     valid_sets=[train_data, valid_data],
-    valid_names=['train', 'valid'],
-    callbacks=[
-        lgb.early_stopping(stopping_rounds=50),
-        lgb.log_evaluation(period=100)
-    ]
+    valid_names=["train", "valid"],
+    callbacks=[lgb.early_stopping(stopping_rounds=50), lgb.log_evaluation(period=100)],
 )
 
 print(f"✅ Training completed! Best iteration: {model.best_iteration}")
@@ -202,37 +216,39 @@ print(f"\n{classification_report(y_test, y_pred)}")
 
 print("\n🔍 Feature Importance (Top 15)...")
 
-feature_importance = pd.DataFrame({
-    'feature': feature_names,
-    'importance': model.feature_importance(importance_type='gain')
-})
-feature_importance = feature_importance.sort_values('importance', ascending=False)
+feature_importance = pd.DataFrame(
+    {
+        "feature": feature_names,
+        "importance": model.feature_importance(importance_type="gain"),
+    }
+)
+feature_importance = feature_importance.sort_values("importance", ascending=False)
 
 print(feature_importance.head(15).to_string(index=False))
 
 # Plot
 plt.figure(figsize=(10, 8))
 top_20 = feature_importance.head(20)
-plt.barh(top_20['feature'], top_20['importance'])
-plt.xlabel('Importance (Gain)')
-plt.title('Top 20 Feature Importance - Sepsis Model V2')
+plt.barh(top_20["feature"], top_20["importance"])
+plt.xlabel("Importance (Gain)")
+plt.title("Top 20 Feature Importance - Sepsis Model V2")
 plt.gca().invert_yaxis()
 plt.tight_layout()
-plt.savefig('sepsis_feature_importance_v2.png', dpi=150, bbox_inches='tight')
+plt.savefig("sepsis_feature_importance_v2.png", dpi=150, bbox_inches="tight")
 print("✅ Saved: sepsis_feature_importance_v2.png")
 
 # ROC Curve
 plt.figure(figsize=(8, 6))
 fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
-plt.plot(fpr, tpr, label=f'AUC = {auc:.4f}', linewidth=2)
-plt.plot([0, 1], [0, 1], 'k--', label='Random')
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('ROC Curve - Sepsis Model V2')
+plt.plot(fpr, tpr, label=f"AUC = {auc:.4f}", linewidth=2)
+plt.plot([0, 1], [0, 1], "k--", label="Random")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve - Sepsis Model V2")
 plt.legend()
 plt.grid(alpha=0.3)
 plt.tight_layout()
-plt.savefig('sepsis_roc_curve_v2.png', dpi=150, bbox_inches='tight')
+plt.savefig("sepsis_roc_curve_v2.png", dpi=150, bbox_inches="tight")
 print("✅ Saved: sepsis_roc_curve_v2.png")
 
 # ============================================================================
@@ -242,39 +258,39 @@ print("✅ Saved: sepsis_roc_curve_v2.png")
 print("\n💾 Saving model and metadata...")
 
 # Save model
-joblib.dump(model, 'sepsis_lightgbm_v2.pkl')
+joblib.dump(model, "sepsis_lightgbm_v2.pkl")
 print("✅ Saved: sepsis_lightgbm_v2.pkl")
 
 # Save feature names
-joblib.dump(feature_names, 'sepsis_feature_names_v2.pkl')
+joblib.dump(feature_names, "sepsis_feature_names_v2.pkl")
 print("✅ Saved: sepsis_feature_names_v2.pkl")
 
 # Save feature importance
-feature_importance.to_csv('sepsis_feature_importance_v2.csv', index=False)
+feature_importance.to_csv("sepsis_feature_importance_v2.csv", index=False)
 print("✅ Saved: sepsis_feature_importance_v2.csv")
 
 # Save metadata
 metadata = {
-    'model_type': 'LightGBM',
-    'model_version': 'v2.0',
-    'task': 'Sepsis Prediction (6h window)',
-    'num_features': len(feature_names),
-    'feature_names': feature_names,
-    'training_samples': len(y_train_balanced),
-    'test_samples': len(y_test),
-    'class_balance_method': 'SMOTE',
-    'metrics': {
-        'auc_roc': float(auc),
-        'accuracy': float(acc),
-        'precision': float(precision),
-        'recall': float(recall),
-        'f1_score': float(f1)
+    "model_type": "LightGBM",
+    "model_version": "v2.0",
+    "task": "Sepsis Prediction (6h window)",
+    "num_features": len(feature_names),
+    "feature_names": feature_names,
+    "training_samples": len(y_train_balanced),
+    "test_samples": len(y_test),
+    "class_balance_method": "SMOTE",
+    "metrics": {
+        "auc_roc": float(auc),
+        "accuracy": float(acc),
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1_score": float(f1),
     },
-    'best_iteration': int(model.best_iteration),
-    'hyperparameters': params
+    "best_iteration": int(model.best_iteration),
+    "hyperparameters": params,
 }
 
-with open('sepsis_model_metadata_v2.json', 'w') as f:
+with open("sepsis_model_metadata_v2.json", "w") as f:
     json.dump(metadata, f, indent=2)
 print("✅ Saved: sepsis_model_metadata_v2.json")
 
@@ -282,9 +298,9 @@ print("✅ Saved: sepsis_model_metadata_v2.json")
 # DONE
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("🎉 TRAINING COMPLETED!")
-print("="*80)
+print("=" * 80)
 print("\n📥 Download these files from Kaggle Output:")
 print("   1. sepsis_lightgbm_v2.pkl (~2-5 MB)")
 print("   2. sepsis_feature_names_v2.pkl")
@@ -293,4 +309,4 @@ print("   4. sepsis_feature_importance_v2.csv")
 print("   5. sepsis_feature_importance_v2.png")
 print("   6. sepsis_roc_curve_v2.png")
 print("\n🚀 Copy files to: api/models/")
-print("="*80)
+print("=" * 80)

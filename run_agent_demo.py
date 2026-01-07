@@ -9,8 +9,8 @@ This script demonstrates the agent-based architecture:
 4. Validate quality using DataQualityAgent
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Setup Python path
@@ -21,11 +21,11 @@ from agents.orchestrator import WorkflowOrchestrator
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('logs/agent_demo.log')
-    ]
+        logging.FileHandler("logs/agent_demo.log"),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def main():
 
     # Step 1: Check sample data
     print("\n[Step 1] Checking sample data...")
-    data_dir = Path('data/sample')
+    data_dir = Path("data/sample")
 
     if not data_dir.exists():
         print(f"\n❌ Sample data not found at: {data_dir}")
@@ -55,7 +55,7 @@ def main():
         print("   python scripts/generate_sample_data.py")
         sys.exit(1)
 
-    files = list(data_dir.glob('*.csv'))
+    files = list(data_dir.glob("*.csv"))
     print(f"✓ Found {len(files)} CSV files:")
     for f in files:
         size_mb = f.stat().st_size / 1024 / 1024
@@ -74,17 +74,17 @@ def main():
     print("\n[Step 3] Execution Results")
     print("=" * 80)
 
-    if result['status'] == 'success':
+    if result["status"] == "success":
         print("✓ Status: SUCCESS")
         print(f"✓ Tables ingested: {result.get('tables_ingested', 0)}")
 
         print("\nDetails:")
-        for table_name, table_result in result.get('results', {}).items():
+        for table_name, table_result in result.get("results", {}).items():
             print(f"\n{table_name}:")
-            if 'results' in table_result and 'ingestion' in table_result['results']:
-                ing_result = table_result['results']['ingestion']
-                if 'output' in ing_result:
-                    output = ing_result['output']
+            if "results" in table_result and "ingestion" in table_result["results"]:
+                ing_result = table_result["results"]["ingestion"]
+                if "output" in ing_result:
+                    output = ing_result["output"]
                     print(f"  - Rows ingested: {output.get('rows_ingested', 0)}")
                     print(f"  - Success rate: {output.get('success_rate', 0):.1%}")
 

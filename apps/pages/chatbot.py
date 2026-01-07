@@ -117,7 +117,9 @@ def show_chatbot():
     st.markdown("---")
 
     # User input
-    user_input = st.chat_input("💬 Ask a medical question or request clinical guidance...")
+    user_input = st.chat_input(
+        "💬 Ask a medical question or request clinical guidance..."
+    )
 
     if user_input:
         # Add user message
@@ -309,9 +311,7 @@ def _save_chat_history(question: str, answer: str):
 
     # Save to file
     try:
-        history_file = (
-            Path(__file__).parent.parent / ".streamlit" / "chat_history.json"
-        )
+        history_file = Path(__file__).parent.parent / ".streamlit" / "chat_history.json"
         history_file.parent.mkdir(parents=True, exist_ok=True)
         with open(history_file, "w") as f:
             json.dump(st.session_state.chat_history[-100:], f, indent=2)

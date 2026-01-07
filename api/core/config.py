@@ -56,8 +56,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:8501",  # Streamlit local
         "http://localhost:3000",  # React local
-        "https://*.vercel.app",   # Vercel deployments
-        "https://*.onrender.com", # Render deployments
+        "https://*.vercel.app",  # Vercel deployments
+        "https://*.onrender.com",  # Render deployments
     ]
 
     @field_validator("CORS_ORIGINS", mode="before")
@@ -78,7 +78,8 @@ class Settings(BaseSettings):
     class Config:
         # Look for .env in parent directory (project root)
         from pathlib import Path
-        env_file = str(Path(__file__).parent.parent.parent / '.env')
+
+        env_file = str(Path(__file__).parent.parent.parent / ".env")
         case_sensitive = True
         extra = "ignore"  # Ignore extra fields from .env
 

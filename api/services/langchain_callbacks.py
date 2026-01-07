@@ -17,8 +17,7 @@ from langchain_core.outputs import LLMResult
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -71,10 +70,7 @@ class MedicalChatbotCallbackHandler(BaseCallbackHandler):
         self.call_history: List[Dict[str, Any]] = []
 
     def on_llm_start(
-        self,
-        serialized: Dict[str, Any],
-        prompts: List[str],
-        **kwargs: Any
+        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
     ) -> None:
         """Called when LLM starts running."""
         self.start_time = time.time()
@@ -83,11 +79,7 @@ class MedicalChatbotCallbackHandler(BaseCallbackHandler):
         logger.info(f"LLM call #{self.llm_calls} started")
         logger.debug(f"Prompt length: {len(prompts[0])} chars")
 
-    def on_llm_end(
-        self,
-        response: LLMResult,
-        **kwargs: Any
-    ) -> None:
+    def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
         """Called when LLM ends running."""
         self.end_time = time.time()
         self.latency_ms = (self.end_time - self.start_time) * 1000
@@ -132,37 +124,22 @@ class MedicalChatbotCallbackHandler(BaseCallbackHandler):
             if self.log_to_file and self.metrics_file:
                 self._write_metrics_to_file(call_record)
 
-    def on_llm_error(
-        self,
-        error: Exception,
-        **kwargs: Any
-    ) -> None:
+    def on_llm_error(self, error: Exception, **kwargs: Any) -> None:
         """Called when LLM errors."""
         self.errors += 1
         logger.error(f"LLM error #{self.errors}: {error}", exc_info=True)
 
     def on_chain_start(
-        self,
-        serialized: Dict[str, Any],
-        inputs: Dict[str, Any],
-        **kwargs: Any
+        self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
     ) -> None:
         """Called when chain starts running."""
         logger.debug("Chain started")
 
-    def on_chain_end(
-        self,
-        outputs: Dict[str, Any],
-        **kwargs: Any
-    ) -> None:
+    def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
         """Called when chain ends running."""
         logger.debug("Chain completed")
 
-    def on_chain_error(
-        self,
-        error: Exception,
-        **kwargs: Any
-    ) -> None:
+    def on_chain_error(self, error: Exception, **kwargs: Any) -> None:
         """Called when chain errors."""
         logger.error(f"Chain error: {error}", exc_info=True)
 
@@ -198,8 +175,9 @@ class MedicalChatbotCallbackHandler(BaseCallbackHandler):
         """Write metrics to file."""
         try:
             import json
-            with open(self.metrics_file, 'a') as f:
-                f.write(json.dumps(metrics) + '\n')
+
+            with open(self.metrics_file, "a") as f:
+                f.write(json.dumps(metrics) + "\n")
         except Exception as e:
             logger.error(f"Failed to write metrics to file: {e}")
 
@@ -218,8 +196,9 @@ class MedicalChatbotCallbackHandler(BaseCallbackHandler):
             "total_cost_usd": round(self.total_cost, 6),
             "total_errors": self.errors,
             "average_latency_ms": round(
-                sum(c["latency_ms"] for c in self.call_history) / max(len(self.call_history), 1),
-                2
+                sum(c["latency_ms"] for c in self.call_history)
+                / max(len(self.call_history), 1),
+                2,
             ),
             "call_history": self.call_history,
         }
@@ -271,20 +250,13 @@ class StreamlitCallbackHandler(BaseCallbackHandler):
         self.container = streamlit_container
 
     def on_llm_start(
-        self,
-        serialized: Dict[str, Any],
-        prompts: List[str],
-        **kwargs: Any
+        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
     ) -> None:
         """Update Streamlit UI when LLM starts."""
         if self.container:
             self.container.info("🤖 Generating response...")
 
-    def on_llm_end(
-        self,
-        response: LLMResult,
-        **kwargs: Any
-    ) -> None:
+    def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
         """Update Streamlit UI when LLM ends."""
         if self.container:
             self.container.success("✅ Response generated")
@@ -303,10 +275,7 @@ class PIIDetectionCallbackHandler(BaseCallbackHandler):
         self.pii_events: List[Dict[str, Any]] = []
 
     def log_pii_detection(
-        self,
-        query: str,
-        entities_detected: List[Dict[str, Any]],
-        redacted_query: str
+        self, query: str, entities_detected: List[Dict[str, Any]], redacted_query: str
     ) -> None:
         """
         Log PII detection event.
@@ -346,7 +315,9 @@ class PIIDetectionCallbackHandler(BaseCallbackHandler):
         entity_type_counts = {}
         for event in self.pii_events:
             for entity_type in event["entity_types"]:
-                entity_type_counts[entity_type] = entity_type_counts.get(entity_type, 0) + 1
+                entity_type_counts[entity_type] = (
+                    entity_type_counts.get(entity_type, 0) + 1
+                )
 
         return {
             "total_events": len(self.pii_events),
@@ -384,10 +355,12 @@ def get_pii_callback() -> PIIDetectionCallbackHandler:
 
 if __name__ == "__main__":
     # Example usage
-    callback = MedicalChatbotCallbackHandler(log_to_file=True, metrics_file="metrics.jsonl")
+    callback = MedicalChatbotCallbackHandler(
+        log_to_file=True, metrics_file="metrics.jsonl"
+    )
 
     # Simulate LLM calls
-    from langchain.schema import LLMResult, Generation
+    from langchain.schema import Generation, LLMResult
 
     callback.on_llm_start({}, ["Test prompt"])
 
@@ -400,7 +373,7 @@ if __name__ == "__main__":
                 "completion_tokens": 100,
                 "total_tokens": 150,
             }
-        }
+        },
     )
 
     callback.on_llm_end(result)

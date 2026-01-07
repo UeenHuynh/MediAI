@@ -3,7 +3,8 @@ Test multiple scenarios to check if model predictions vary correctly
 """
 
 import sys
-sys.path.append('/home/neeyuhuynh/Desktop/MediAI/apps')
+
+sys.path.append("/home/neeyuhuynh/Desktop/MediAI/apps")
 
 from services.model_service import get_model_service
 
@@ -34,7 +35,7 @@ base_patient = {
     "pao2": 95.0,
     "paco2": 40.0,
     "bicarbonate": 24.0,
-    "albumin": 4.0
+    "albumin": 4.0,
 }
 
 scenarios = []
@@ -59,62 +60,57 @@ scenarios.append(("Severe hypoxia", hypoxia))
 
 # Scenario 5: Multi-organ failure
 mof = base_patient.copy()
-mof.update({
-    "age": 75,
-    "lactate": 7.0,
-    "sbp": 65,
-    "dbp": 40,
-    "heart_rate": 140,
-    "temperature": 39.5,
-    "respiratory_rate": 38,
-    "spo2": 82,
-    "gcs": 10,
-    "wbc": 25.0,
-    "creatinine": 4.0,
-    "bilirubin": 3.5,
-    "platelets": 60.0,
-    "hemoglobin": 7.5,
-    "ph": 7.15,
-    "pao2": 50.0,
-    "bicarbonate": 15.0,
-    "albumin": 2.0
-})
+mof.update(
+    {
+        "age": 75,
+        "lactate": 7.0,
+        "sbp": 65,
+        "dbp": 40,
+        "heart_rate": 140,
+        "temperature": 39.5,
+        "respiratory_rate": 38,
+        "spo2": 82,
+        "gcs": 10,
+        "wbc": 25.0,
+        "creatinine": 4.0,
+        "bilirubin": 3.5,
+        "platelets": 60.0,
+        "hemoglobin": 7.5,
+        "ph": 7.15,
+        "pao2": 50.0,
+        "bicarbonate": 15.0,
+        "albumin": 2.0,
+    }
+)
 scenarios.append(("Multi-organ failure (CRITICAL)", mof))
 
 # Scenario 6: Moderate sepsis
 moderate = base_patient.copy()
-moderate.update({
-    "age": 70,
-    "lactate": 3.0,
-    "sbp": 95,
-    "heart_rate": 110,
-    "temperature": 38.8,
-    "respiratory_rate": 25,
-    "wbc": 18.0,
-    "creatinine": 1.8,
-    "platelets": 120.0
-})
+moderate.update(
+    {
+        "age": 70,
+        "lactate": 3.0,
+        "sbp": 95,
+        "heart_rate": 110,
+        "temperature": 38.8,
+        "respiratory_rate": 25,
+        "wbc": 18.0,
+        "creatinine": 1.8,
+        "platelets": 120.0,
+    }
+)
 scenarios.append(("Moderate sepsis", moderate))
 
 # Scenario 7: Renal failure
 renal = base_patient.copy()
-renal.update({
-    "creatinine": 5.0,
-    "bun": 60.0,
-    "potassium": 6.0,
-    "lactate": 2.5
-})
+renal.update({"creatinine": 5.0, "bun": 60.0, "potassium": 6.0, "lactate": 2.5})
 scenarios.append(("Renal failure", renal))
 
 # Scenario 8: Respiratory distress
 respiratory = base_patient.copy()
-respiratory.update({
-    "respiratory_rate": 42,
-    "spo2": 85,
-    "pao2": 60.0,
-    "paco2": 60.0,
-    "ph": 7.25
-})
+respiratory.update(
+    {"respiratory_rate": 42, "spo2": 85, "pao2": 60.0, "paco2": 60.0, "ph": 7.25}
+)
 scenarios.append(("Respiratory distress", respiratory))
 
 print("=" * 100)
@@ -123,27 +119,27 @@ print("=" * 100)
 
 for name, patient in scenarios:
     result = model_service.predict_sepsis(patient)
-    risk_score = result.get('risk_score', 0)
-    risk_level = result.get('risk_level', 'Unknown')
-    risk_color = result.get('risk_color', '')
+    risk_score = result.get("risk_score", 0)
+    risk_level = result.get("risk_level", "Unknown")
+    risk_color = result.get("risk_color", "")
 
     print(f"\n{name:35} | Score: {risk_score:6.2%} | Level: {risk_color} {risk_level}")
 
     # Print key abnormal values
     abnormal = []
-    if patient['lactate'] > 2.0:
+    if patient["lactate"] > 2.0:
         abnormal.append(f"Lactate={patient['lactate']:.1f}")
-    if patient['sbp'] < 90:
+    if patient["sbp"] < 90:
         abnormal.append(f"SBP={patient['sbp']}")
-    if patient['heart_rate'] > 100:
+    if patient["heart_rate"] > 100:
         abnormal.append(f"HR={patient['heart_rate']}")
-    if patient['spo2'] < 92:
+    if patient["spo2"] < 92:
         abnormal.append(f"SpO2={patient['spo2']}")
-    if patient['wbc'] > 12 or patient['wbc'] < 4:
+    if patient["wbc"] > 12 or patient["wbc"] < 4:
         abnormal.append(f"WBC={patient['wbc']:.1f}")
-    if patient['creatinine'] > 1.5:
+    if patient["creatinine"] > 1.5:
         abnormal.append(f"Creat={patient['creatinine']:.1f}")
-    if patient['temperature'] > 38 or patient['temperature'] < 36:
+    if patient["temperature"] > 38 or patient["temperature"] < 36:
         abnormal.append(f"Temp={patient['temperature']:.1f}")
 
     if abnormal:

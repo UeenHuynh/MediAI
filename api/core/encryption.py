@@ -291,10 +291,10 @@ def _get_encryptor() -> DataEncryption:
 def encrypt_field(value: str) -> Optional[str]:
     """
     Encrypt a single field value.
-    
+
     Args:
         value: Plain text value to encrypt
-        
+
     Returns:
         Encrypted string or None if value is None/empty
     """
@@ -310,10 +310,10 @@ def encrypt_field(value: str) -> Optional[str]:
 def decrypt_field(encrypted_value: str) -> Optional[str]:
     """
     Decrypt a single field value.
-    
+
     Args:
         encrypted_value: Encrypted string to decrypt
-        
+
     Returns:
         Decrypted string or None if decryption fails
     """

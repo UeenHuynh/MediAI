@@ -4,13 +4,14 @@ Vital Signs CRUD Service
 Handles all database operations for vital signs management.
 """
 
-from typing import List, Optional, Tuple
 from datetime import datetime
-from sqlalchemy.orm import Session
+from typing import List, Optional, Tuple
+
+from schemas.vital import VitalCreate
 from sqlalchemy import desc
+from sqlalchemy.orm import Session
 
 from models.vital import Vital
-from schemas.vital import VitalCreate
 
 
 class VitalService:
@@ -18,9 +19,7 @@ class VitalService:
 
     @staticmethod
     def create_vital(
-        db: Session,
-        vital_data: VitalCreate,
-        recorded_by: Optional[int] = None
+        db: Session, vital_data: VitalCreate, recorded_by: Optional[int] = None
     ) -> Vital:
         """
         Create a new vital signs record
@@ -75,10 +74,7 @@ class VitalService:
 
     @staticmethod
     def list_vitals_for_patient(
-        db: Session,
-        patient_id: int,
-        skip: int = 0,
-        limit: int = 100
+        db: Session, patient_id: int, skip: int = 0, limit: int = 100
     ) -> Tuple[List[Vital], int]:
         """
         List all vital signs for a specific patient
@@ -98,9 +94,7 @@ class VitalService:
         total = query.count()
 
         # Get records ordered by most recent first
-        vitals = query.order_by(
-            desc(Vital.recorded_at)
-        ).offset(skip).limit(limit).all()
+        vitals = query.order_by(desc(Vital.recorded_at)).offset(skip).limit(limit).all()
 
         return vitals, total
 
@@ -117,11 +111,13 @@ class VitalService:
         Returns:
             List of most recent Vital objects
         """
-        return db.query(Vital).filter(
-            Vital.patient_id == patient_id
-        ).order_by(
-            desc(Vital.recorded_at)
-        ).limit(count).all()
+        return (
+            db.query(Vital)
+            .filter(Vital.patient_id == patient_id)
+            .order_by(desc(Vital.recorded_at))
+            .limit(count)
+            .all()
+        )
 
     @staticmethod
     def delete_vital(db: Session, vital_id: int) -> bool:

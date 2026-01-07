@@ -18,14 +18,14 @@ from api.core.vector_store import VectorStore
 from api.services.document_processor import MedicalDocumentProcessor
 from api.services.embedding_service import MedicalEmbeddingService
 from api.services.hybrid_rag import HybridRAGPipeline
-from api.services.rag_pipeline import RAGPipeline
-from api.services.safety_guardrails import SafetyGuardrails
 
 # Import LangChain integration
 from api.services.langchain_medical_bot import (
     ProductionMedicalChatbot,
     create_medical_chatbot,
 )
+from api.services.rag_pipeline import RAGPipeline
+from api.services.safety_guardrails import SafetyGuardrails
 
 # Import prompt enhancer
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -105,7 +105,9 @@ class RetrievalOnlyPipeline:
         self.document_processor = MedicalDocumentProcessor()
         self.hybrid_rag = hybrid_rag
 
-    def retrieve(self, query, top_k=5, category=None, use_hybrid=True, use_query_expansion=True):
+    def retrieve(
+        self, query, top_k=5, category=None, use_hybrid=True, use_query_expansion=True
+    ):
         """Retrieve relevant documents using HybridRAG if available"""
         # Use HybridRAG pipeline if available (includes PubMed + Scholar)
         if self.hybrid_rag:
@@ -169,14 +171,16 @@ class RetrievalOnlyPipeline:
             answer += f"**Relevance Score:** {doc.get('hybrid_score', doc.get('similarity', 0)):.2%}\n\n"
 
             # Show preview
-            content = doc['content']
+            content = doc["content"]
             if len(content) > 500:
                 content = content[:500] + "..."
             answer += f"{content}\n\n"
             answer += "---\n\n"
 
         answer += "\n\n**💡 To enable AI-powered answers:**\n"
-        answer += "1. Get **Groq API key**: https://console.groq.com/ (Free: 30 req/min)\n"
+        answer += (
+            "1. Get **Groq API key**: https://console.groq.com/ (Free: 30 req/min)\n"
+        )
         answer += "2. Add to `.env.chatbot`: `GROQ_API_KEY=your_key_here`\n"
         answer += "3. Restart app\n"
 
@@ -193,7 +197,11 @@ class RetrievalOnlyPipeline:
         return {
             "answer": answer,
             "citations": citations,
-            "confidence": sum(c["similarity"] for c in citations) / len(citations) if citations else 0,
+            "confidence": (
+                sum(c["similarity"] for c in citations) / len(citations)
+                if citations
+                else 0
+            ),
             "num_sources": len(docs),
         }
 
@@ -363,19 +371,28 @@ def show_chatbot():
                         with st.expander("📚 Sources & References", expanded=True):
                             for citation in message["citations"]:
                                 # Get citation number/id (LangChain uses "number", legacy uses "id")
-                                cite_num = citation.get("number", citation.get("id", "?"))
+                                cite_num = citation.get(
+                                    "number", citation.get("id", "?")
+                                )
                                 source = citation.get("source", "Unknown Source")
 
                                 # Format citation with PubMed link if available
                                 if citation.get("pmid"):
                                     pmid = citation["pmid"]
-                                    url = citation.get("url", f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/")
-                                    st.markdown(f"**[{cite_num}]** 📄 [{source}]({url})")
+                                    url = citation.get(
+                                        "url",
+                                        f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+                                    )
+                                    st.markdown(
+                                        f"**[{cite_num}]** 📄 [{source}]({url})"
+                                    )
                                     st.caption(f"PMID: {pmid}")
                                 elif citation.get("url"):
                                     # Citation with URL (Semantic Scholar, etc.)
                                     url = citation["url"]
-                                    st.markdown(f"**[{cite_num}]** 🔗 [{source}]({url})")
+                                    st.markdown(
+                                        f"**[{cite_num}]** 🔗 [{source}]({url})"
+                                    )
                                 else:
                                     # Regular citation without link
                                     st.markdown(f"**[{cite_num}]** 📚 {source}")
@@ -384,7 +401,9 @@ def show_chatbot():
 
                                 # Show relevance score if available
                                 if citation.get("similarity"):
-                                    st.caption(f"Relevance: {citation['similarity']:.2%}")
+                                    st.caption(
+                                        f"Relevance: {citation['similarity']:.2%}"
+                                    )
 
                                 st.divider()
 
@@ -445,7 +464,7 @@ def show_chatbot():
             "🚀 Auto-enhance prompts",
             value=st.session_state.get("auto_enhance_prompts", True),
             help="Automatically enhance short medical queries into detailed, structured prompts",
-            key="auto_enhance_prompts"
+            key="auto_enhance_prompts",
         )
 
     # Custom chat input with enhancement indicator
@@ -460,7 +479,7 @@ def show_chatbot():
             st.markdown(
                 "<div style='margin-top: 8px; text-align: center;'>🚀</div>",
                 unsafe_allow_html=True,
-                help="Auto-enhancement enabled"
+                help="Auto-enhancement enabled",
             )
 
     if user_input:
@@ -475,7 +494,9 @@ def show_chatbot():
             if was_enhanced:
                 # Show enhancement notification
                 with st.container():
-                    st.info(f"🚀 **Prompt được tăng cường tự động**\n\n**Câu hỏi gốc:** {original_query}")
+                    st.info(
+                        f"🚀 **Prompt được tăng cường tự động**\n\n**Câu hỏi gốc:** {original_query}"
+                    )
                     user_input = enhanced_query
                     # Use original query for better PubMed/Scholar search results
                     enhanced_query_for_search = original_query
@@ -492,7 +513,11 @@ def show_chatbot():
         # Generate response using RAG with LangChain if available
         # Use fewer documents when prompt is enhanced to avoid token limit
         response = generate_rag_response(
-            user_input, rag_pipeline, safety, langchain_bot, st.session_state.rag_enabled
+            user_input,
+            rag_pipeline,
+            safety,
+            langchain_bot,
+            st.session_state.rag_enabled,
         )
 
         # Add assistant message with metadata
@@ -524,7 +549,7 @@ def generate_rag_response(
     rag_pipeline,
     safety: SafetyGuardrails,
     langchain_bot: ProductionMedicalChatbot = None,
-    use_rag: bool = True
+    use_rag: bool = True,
 ) -> dict:
     """
     Generate AI response using RAG pipeline with LangChain integration.
@@ -578,10 +603,12 @@ def generate_rag_response(
                 )
 
                 # Step 2: Format context for LangChain
-                context_text = "\n\n".join([
-                    f"[{i+1}] {doc.get('content', '')[:1000]}"
-                    for i, doc in enumerate(retrieved_docs)
-                ])
+                context_text = "\n\n".join(
+                    [
+                        f"[{i+1}] {doc.get('content', '')[:1000]}"
+                        for i, doc in enumerate(retrieved_docs)
+                    ]
+                )
 
                 # Step 3: Query LangChain bot with retrieved context
                 langchain_result = langchain_bot.query(
@@ -592,9 +619,7 @@ def generate_rag_response(
 
                 # Step 4: Process response through safety guardrails
                 answer = safety.process_response(
-                    langchain_result["answer"],
-                    query_safety,
-                    is_demo=True
+                    langchain_result["answer"], query_safety, is_demo=True
                 )
 
                 # Step 5: Build result with LangChain metadata
@@ -656,9 +681,7 @@ def _save_chat_history(question: str, answer: str):
 
     # Save to file
     try:
-        history_file = (
-            Path(__file__).parent.parent / ".streamlit" / "chat_history.json"
-        )
+        history_file = Path(__file__).parent.parent / ".streamlit" / "chat_history.json"
         history_file.parent.mkdir(parents=True, exist_ok=True)
         with open(history_file, "w") as f:
             json.dump(st.session_state.chat_history[-100:], f, indent=2)

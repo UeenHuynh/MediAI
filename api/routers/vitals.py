@@ -5,13 +5,13 @@ Endpoints for vital signs management.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
 
 from core.database import get_db
-from schemas.vital import VitalCreate, VitalResponse, VitalListResponse
-from services.vital_service import VitalService
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from schemas.vital import VitalCreate, VitalListResponse, VitalResponse
 from services.patient_service import PatientService
+from services.vital_service import VitalService
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/vitals", tags=["vitals"])
     "/",
     response_model=VitalResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Record vital signs"
+    summary="Record vital signs",
 )
 def create_vital(
     vital_data: VitalCreate,
@@ -47,7 +47,7 @@ def create_vital(
         if not patient:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Patient with ID {vital_data.patient_id} not found"
+                detail=f"Patient with ID {vital_data.patient_id} not found",
             )
 
         # Create vital record
@@ -62,14 +62,12 @@ def create_vital(
         logger.error(f"Error creating vital record: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create vital record"
+            detail="Failed to create vital record",
         )
 
 
 @router.get(
-    "/{vital_id}",
-    response_model=VitalResponse,
-    summary="Get vital signs by ID"
+    "/{vital_id}", response_model=VitalResponse, summary="Get vital signs by ID"
 )
 def get_vital(
     vital_id: int,
@@ -84,7 +82,7 @@ def get_vital(
     if not vital:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Vital record with ID {vital_id} not found"
+            detail=f"Vital record with ID {vital_id} not found",
         )
 
     return vital
@@ -93,7 +91,7 @@ def get_vital(
 @router.get(
     "/patient/{patient_id}",
     response_model=VitalListResponse,
-    summary="Get all vitals for a patient"
+    summary="Get all vitals for a patient",
 )
 def list_patient_vitals(
     patient_id: int,
@@ -114,29 +112,21 @@ def list_patient_vitals(
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Patient with ID {patient_id} not found"
+            detail=f"Patient with ID {patient_id} not found",
         )
 
     skip = (page - 1) * page_size
     vitals, total = VitalService.list_vitals_for_patient(
-        db,
-        patient_id=patient_id,
-        skip=skip,
-        limit=page_size
+        db, patient_id=patient_id, skip=skip, limit=page_size
     )
 
-    return VitalListResponse(
-        total=total,
-        vitals=vitals,
-        page=page,
-        page_size=page_size
-    )
+    return VitalListResponse(total=total, vitals=vitals, page=page, page_size=page_size)
 
 
 @router.get(
     "/patient/{patient_id}/latest",
     response_model=VitalResponse,
-    summary="Get latest vital signs"
+    summary="Get latest vital signs",
 )
 def get_latest_vitals(
     patient_id: int,
@@ -151,7 +141,7 @@ def get_latest_vitals(
     if not vitals:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No vital signs found for patient {patient_id}"
+            detail=f"No vital signs found for patient {patient_id}",
         )
 
     return vitals[0]
@@ -160,7 +150,7 @@ def get_latest_vitals(
 @router.delete(
     "/{vital_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete vital signs record"
+    summary="Delete vital signs record",
 )
 def delete_vital(
     vital_id: int,
@@ -175,7 +165,7 @@ def delete_vital(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Vital record with ID {vital_id} not found"
+            detail=f"Vital record with ID {vital_id} not found",
         )
 
     logger.info(f"Deleted vital record ID: {vital_id}")

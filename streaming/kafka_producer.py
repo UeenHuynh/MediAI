@@ -11,16 +11,19 @@ Learning Objectives:
 
 import json
 import logging
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 try:
     from kafka import KafkaProducer
     from kafka.errors import KafkaError
+
     KAFKA_AVAILABLE = True
 except ImportError:
     KAFKA_AVAILABLE = False
-    logging.warning("kafka-python not installed. Install with: pip install kafka-python")
+    logging.warning(
+        "kafka-python not installed. Install with: pip install kafka-python"
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -37,11 +40,7 @@ class EventProducer:
     - Error handling
     """
 
-    def __init__(
-        self,
-        bootstrap_servers: str = "localhost:9092",
-        enabled: bool = True
-    ):
+    def __init__(self, bootstrap_servers: str = "localhost:9092", enabled: bool = True):
         self.enabled = enabled and KAFKA_AVAILABLE
         self.producer: Optional[KafkaProducer] = None
 
@@ -49,12 +48,12 @@ class EventProducer:
             try:
                 self.producer = KafkaProducer(
                     bootstrap_servers=bootstrap_servers,
-                    value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+                    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
                     # Learning: These configs affect reliability vs performance
-                    acks='all',  # Wait for all replicas (most reliable)
-                    retries=3,   # Retry failed sends
+                    acks="all",  # Wait for all replicas (most reliable)
+                    retries=3,  # Retry failed sends
                     max_in_flight_requests_per_connection=1,  # Guarantee ordering
-                    compression_type='gzip',  # Reduce network bandwidth
+                    compression_type="gzip",  # Reduce network bandwidth
                 )
                 logger.info(f"✅ Kafka producer connected to {bootstrap_servers}")
             except Exception as e:
@@ -66,7 +65,7 @@ class EventProducer:
         prediction_type: str,
         patient_id: str,
         prediction_result: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Send prediction event to Kafka.
@@ -89,7 +88,7 @@ class EventProducer:
             "timestamp": datetime.utcnow().isoformat(),
             "patient_id": patient_id,
             "prediction": prediction_result,
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         topic = f"predictions.{prediction_type}"
@@ -126,23 +125,16 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     # Initialize producer
-    producer = EventProducer(
-        bootstrap_servers="localhost:9092",
-        enabled=True
-    )
+    producer = EventProducer(bootstrap_servers="localhost:9092", enabled=True)
 
     # Send test event
-    test_prediction = {
-        "risk_score": 0.75,
-        "risk_level": "HIGH",
-        "confidence": 0.92
-    }
+    test_prediction = {"risk_score": 0.75, "risk_level": "HIGH", "confidence": 0.92}
 
     success = producer.send_prediction_event(
         prediction_type="sepsis",
         patient_id="patient_12345",
         prediction_result=test_prediction,
-        metadata={"model_version": "v1.0"}
+        metadata={"model_version": "v1.0"},
     )
 
     print(f"Event sent: {success}")

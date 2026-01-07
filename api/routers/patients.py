@@ -6,17 +6,17 @@ Endpoints for patient management (CRUD operations).
 
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
 
 from core.database import get_db
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from schemas.patient import (
     PatientCreate,
-    PatientUpdate,
-    PatientResponse,
     PatientListResponse,
+    PatientResponse,
+    PatientUpdate,
 )
 from services.patient_service import PatientService
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/patients", tags=["patients"])
     "/",
     response_model=PatientResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Create a new patient"
+    summary="Create a new patient",
 )
 def create_patient(
     patient_data: PatientCreate,
@@ -54,7 +54,7 @@ def create_patient(
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Patient with code '{patient_data.patient_code}' already exists"
+                detail=f"Patient with code '{patient_data.patient_code}' already exists",
             )
 
         # Create patient
@@ -70,14 +70,12 @@ def create_patient(
         logger.error(f"Error creating patient: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create patient"
+            detail="Failed to create patient",
         )
 
 
 @router.get(
-    "/{patient_id}",
-    response_model=PatientResponse,
-    summary="Get patient by ID"
+    "/{patient_id}", response_model=PatientResponse, summary="Get patient by ID"
 )
 def get_patient(
     patient_id: int,
@@ -96,16 +94,14 @@ def get_patient(
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Patient with ID {patient_id} not found"
+            detail=f"Patient with ID {patient_id} not found",
         )
 
     return patient
 
 
 @router.get(
-    "/",
-    response_model=PatientListResponse,
-    summary="List patients with pagination"
+    "/", response_model=PatientListResponse, summary="List patients with pagination"
 )
 def list_patients(
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
@@ -131,11 +127,7 @@ def list_patients(
     """
     skip = (page - 1) * page_size
     patients, total = PatientService.list_patients(
-        db,
-        skip=skip,
-        limit=page_size,
-        department=department,
-        search=search
+        db, skip=skip, limit=page_size, department=department, search=search
     )
 
     total_pages = (total + page_size - 1) // page_size
@@ -145,15 +137,11 @@ def list_patients(
         patients=patients,
         page=page,
         page_size=page_size,
-        total_pages=total_pages
+        total_pages=total_pages,
     )
 
 
-@router.put(
-    "/{patient_id}",
-    response_model=PatientResponse,
-    summary="Update patient"
-)
+@router.put("/{patient_id}", response_model=PatientResponse, summary="Update patient")
 def update_patient(
     patient_id: int,
     patient_data: PatientUpdate,
@@ -175,7 +163,7 @@ def update_patient(
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Patient with ID {patient_id} not found"
+            detail=f"Patient with ID {patient_id} not found",
         )
 
     logger.info(f"Updated patient: {patient.patient_code}")
@@ -185,7 +173,7 @@ def update_patient(
 @router.delete(
     "/{patient_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete patient (soft delete)"
+    summary="Delete patient (soft delete)",
 )
 def delete_patient(
     patient_id: int,
@@ -204,7 +192,7 @@ def delete_patient(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Patient with ID {patient_id} not found"
+            detail=f"Patient with ID {patient_id} not found",
         )
 
     logger.info(f"Deleted patient ID: {patient_id}")
@@ -214,7 +202,7 @@ def delete_patient(
 @router.get(
     "/code/{patient_code}",
     response_model=PatientResponse,
-    summary="Get patient by code"
+    summary="Get patient by code",
 )
 def get_patient_by_code(
     patient_code: str,
@@ -233,7 +221,7 @@ def get_patient_by_code(
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Patient with code '{patient_code}' not found"
+            detail=f"Patient with code '{patient_code}' not found",
         )
 
     return patient

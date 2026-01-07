@@ -53,9 +53,7 @@ def main():
             )
 
             # Chunk
-            chunks = document_processor.chunk_document(
-                doc["content"], doc["metadata"]
-            )
+            chunks = document_processor.chunk_document(doc["content"], doc["metadata"])
 
             if not chunks:
                 print(f"  ⚠ No chunks for {doc['source']}")

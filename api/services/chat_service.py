@@ -4,15 +4,15 @@ Chat Service
 Handles database operations for chat sessions and messages.
 """
 
-from typing import List, Optional, Tuple
-from datetime import datetime
-from uuid import UUID
 import logging
+from datetime import datetime
+from typing import List, Optional, Tuple
+from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from sqlalchemy.orm import Session
 
-from models.chat import ChatSession, ChatMessage
+from models.chat import ChatMessage, ChatSession
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +24,7 @@ class ChatService:
 
     @staticmethod
     def create_session(
-        db: Session,
-        user_id: int,
-        title: Optional[str] = None
+        db: Session, user_id: int, title: Optional[str] = None
     ) -> ChatSession:
         """
         Create a new chat session.
@@ -64,10 +62,11 @@ class ChatService:
         Returns:
             ChatSession object or None if not found
         """
-        return db.query(ChatSession).filter(
-            ChatSession.session_id == session_id,
-            ChatSession.is_active == True
-        ).first()
+        return (
+            db.query(ChatSession)
+            .filter(ChatSession.session_id == session_id, ChatSession.is_active == True)
+            .first()
+        )
 
     @staticmethod
     def get_session_by_id(db: Session, id: int) -> Optional[ChatSession]:
@@ -81,17 +80,15 @@ class ChatService:
         Returns:
             ChatSession object or None if not found
         """
-        return db.query(ChatSession).filter(
-            ChatSession.id == id,
-            ChatSession.is_active == True
-        ).first()
+        return (
+            db.query(ChatSession)
+            .filter(ChatSession.id == id, ChatSession.is_active == True)
+            .first()
+        )
 
     @staticmethod
     def list_user_sessions(
-        db: Session,
-        user_id: int,
-        skip: int = 0,
-        limit: int = 50
+        db: Session, user_id: int, skip: int = 0, limit: int = 50
     ) -> Tuple[List[ChatSession], int]:
         """
         List all chat sessions for a user.
@@ -106,22 +103,22 @@ class ChatService:
             Tuple of (list of sessions, total count)
         """
         query = db.query(ChatSession).filter(
-            ChatSession.user_id == user_id,
-            ChatSession.is_active == True
+            ChatSession.user_id == user_id, ChatSession.is_active == True
         )
 
         total = query.count()
-        sessions = query.order_by(
-            desc(ChatSession.last_activity_at)
-        ).offset(skip).limit(limit).all()
+        sessions = (
+            query.order_by(desc(ChatSession.last_activity_at))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
         return sessions, total
 
     @staticmethod
     def update_session_title(
-        db: Session,
-        session_id: UUID,
-        title: str
+        db: Session, session_id: UUID, title: str
     ) -> Optional[ChatSession]:
         """
         Update session title (e.g., from first message).
@@ -178,7 +175,7 @@ class ChatService:
         redaction_applied: Optional[dict] = None,
         model_name: Optional[str] = None,
         tokens_used: Optional[int] = None,
-        processing_time_ms: Optional[int] = None
+        processing_time_ms: Optional[int] = None,
     ) -> Optional[ChatMessage]:
         """
         Add a message to a chat session.
@@ -236,9 +233,7 @@ class ChatService:
 
     @staticmethod
     def get_session_messages(
-        db: Session,
-        session_id: UUID,
-        limit: int = 100
+        db: Session, session_id: UUID, limit: int = 100
     ) -> List[ChatMessage]:
         """
         Get all messages for a session.
@@ -251,17 +246,17 @@ class ChatService:
         Returns:
             List of ChatMessage objects
         """
-        return db.query(ChatMessage).filter(
-            ChatMessage.session_id == session_id
-        ).order_by(
-            ChatMessage.created_at.asc()
-        ).limit(limit).all()
+        return (
+            db.query(ChatMessage)
+            .filter(ChatMessage.session_id == session_id)
+            .order_by(ChatMessage.created_at.asc())
+            .limit(limit)
+            .all()
+        )
 
     @staticmethod
     def get_recent_messages(
-        db: Session,
-        session_id: UUID,
-        count: int = 5
+        db: Session, session_id: UUID, count: int = 5
     ) -> List[ChatMessage]:
         """
         Get the most recent messages for context.
@@ -274,20 +269,20 @@ class ChatService:
         Returns:
             List of recent ChatMessage objects (oldest to newest)
         """
-        messages = db.query(ChatMessage).filter(
-            ChatMessage.session_id == session_id
-        ).order_by(
-            desc(ChatMessage.created_at)
-        ).limit(count).all()
+        messages = (
+            db.query(ChatMessage)
+            .filter(ChatMessage.session_id == session_id)
+            .order_by(desc(ChatMessage.created_at))
+            .limit(count)
+            .all()
+        )
 
         # Return in chronological order
         return list(reversed(messages))
 
     @staticmethod
     def get_or_create_session(
-        db: Session,
-        session_id_str: Optional[str],
-        user_id: int
+        db: Session, session_id_str: Optional[str], user_id: int
     ) -> Tuple[ChatSession, bool]:
         """
         Get existing session or create new one.

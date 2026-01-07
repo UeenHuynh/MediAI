@@ -7,8 +7,8 @@ Detects and masks Personally Identifiable Information using:
 
 import logging
 import re
-from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -16,12 +16,13 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PIIMatch:
     """Detected PII match"""
-    text: str           # Original text
-    token: str          # Replacement token (e.g., <EMAIL_1>)
-    pii_type: str       # Type: email, phone, ssn, person, etc.
-    start: int          # Start position
-    end: int            # End position
-    confidence: float   # Detection confidence (0-1)
+
+    text: str  # Original text
+    token: str  # Replacement token (e.g., <EMAIL_1>)
+    pii_type: str  # Type: email, phone, ssn, person, etc.
+    start: int  # Start position
+    end: int  # End position
+    confidence: float  # Detection confidence (0-1)
 
 
 class PIIMasker:
@@ -32,13 +33,13 @@ class PIIMasker:
 
     # Regex patterns for common PII
     PATTERNS = {
-        "email": r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-        "phone": r'\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b',
-        "ssn": r'\b\d{3}-\d{2}-\d{4}\b',
-        "credit_card": r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b',
-        "date_of_birth": r'\b\d{1,2}/\d{1,2}/\d{2,4}\b',
-        "zip_code": r'\b\d{5}(?:-\d{4})?\b',
-        "ip_address": r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
+        "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+        "phone": r"\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b",
+        "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
+        "credit_card": r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b",
+        "date_of_birth": r"\b\d{1,2}/\d{1,2}/\d{2,4}\b",
+        "zip_code": r"\b\d{5}(?:-\d{4})?\b",
+        "ip_address": r"\b(?:\d{1,3}\.){3}\d{1,3}\b",
     }
 
     def __init__(self, use_spacy: bool = True, spacy_model: str = "en_core_web_sm"):
@@ -62,6 +63,7 @@ class PIIMasker:
         if use_spacy:
             try:
                 import spacy
+
                 self.nlp = spacy.load(spacy_model)
                 logger.info(f"✅ spaCy model loaded: {spacy_model}")
             except Exception as e:
@@ -87,7 +89,12 @@ class PIIMasker:
             }
         """
         if not text:
-            return text, {"pii_detected": False, "pii_types": [], "num_matches": 0, "matches": []}
+            return text, {
+                "pii_detected": False,
+                "pii_types": [],
+                "num_matches": 0,
+                "matches": [],
+            }
 
         matches: List[PIIMatch] = []
 
@@ -105,9 +112,7 @@ class PIIMasker:
         masked_text = text
         for match in matches:
             masked_text = (
-                masked_text[:match.start] +
-                match.token +
-                masked_text[match.end:]
+                masked_text[: match.start] + match.token + masked_text[match.end :]
             )
 
             # Store mapping
@@ -241,7 +246,9 @@ class PIIMasker:
         """
         if session_id:
             # Remove only session-specific mappings
-            keys_to_remove = [k for k in self.token_mapping.keys() if k.startswith(f"{session_id}:")]
+            keys_to_remove = [
+                k for k in self.token_mapping.keys() if k.startswith(f"{session_id}:")
+            ]
             for key in keys_to_remove:
                 del self.token_mapping[key]
             logger.info(f"Reset PII mappings for session: {session_id}")
@@ -280,30 +287,30 @@ if __name__ == "__main__":
 
     print("Original text:")
     print(test_text)
-    print("\n" + "="*60 + "\n")
+    print("\n" + "=" * 60 + "\n")
 
     # Mask PII
     masked_text, metadata = masker.mask(test_text, session_id="test_session")
 
     print("Masked text:")
     print(masked_text)
-    print("\n" + "="*60 + "\n")
+    print("\n" + "=" * 60 + "\n")
 
     print("Metadata:")
     print(f"PII detected: {metadata['pii_detected']}")
     print(f"PII types: {metadata['pii_types']}")
     print(f"Number of matches: {metadata['num_matches']}")
     print("\nMatches:")
-    for match in metadata['matches']:
+    for match in metadata["matches"]:
         print(f"  - {match.pii_type}: '{match.text}' → {match.token}")
 
-    print("\n" + "="*60 + "\n")
+    print("\n" + "=" * 60 + "\n")
 
     # Unmask
     unmasked_text = masker.unmask(masked_text, session_id="test_session")
     print("Unmasked text:")
     print(unmasked_text)
 
-    print("\n" + "="*60 + "\n")
+    print("\n" + "=" * 60 + "\n")
     print("Stats:")
     print(masker.get_stats())

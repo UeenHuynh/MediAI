@@ -4,13 +4,14 @@ Unit tests for Vital Signs Service
 Tests CRUD operations for vital signs management with mocked database.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime
-
 # Import the service under test
 import sys
-sys.path.insert(0, '/home/neeyuhuynh/Desktop/MediAI')
+from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
+sys.path.insert(0, "/home/neeyuhuynh/Desktop/MediAI")
 
 from api.services.vital_service import VitalService
 
@@ -64,7 +65,7 @@ class TestVitalService:
         vital.recorded_at = datetime(2026, 1, 7, 10, 0, 0)
         return vital
 
-    @patch('api.services.vital_service.Vital')
+    @patch("api.services.vital_service.Vital")
     def test_create_vital_success(self, MockVital, mock_db, sample_vital_data):
         """Test successful vital signs creation."""
         # Setup
@@ -80,7 +81,7 @@ class TestVitalService:
         mock_db.commit.assert_called_once()
         mock_db.refresh.assert_called_once()
 
-    @patch('api.services.vital_service.Vital')
+    @patch("api.services.vital_service.Vital")
     def test_create_vital_uses_current_time_if_not_provided(self, MockVital, mock_db):
         """Test that current time is used if recorded_at not provided."""
         # Setup
@@ -221,7 +222,7 @@ class TestVitalService:
         # Verify
         assert len(result) == 5
 
-    @patch.object(VitalService, 'get_vital')
+    @patch.object(VitalService, "get_vital")
     def test_delete_vital_success(self, mock_get_vital, mock_db, mock_vital):
         """Test deleting a vital record."""
         # Setup
@@ -235,7 +236,7 @@ class TestVitalService:
         mock_db.delete.assert_called_once_with(mock_vital)
         mock_db.commit.assert_called_once()
 
-    @patch.object(VitalService, 'get_vital')
+    @patch.object(VitalService, "get_vital")
     def test_delete_vital_not_found(self, mock_get_vital, mock_db):
         """Test deleting non-existent vital record."""
         # Setup
@@ -279,7 +280,7 @@ class TestVitalServiceValidation:
         mock_data.bmi = None
         mock_data.notes = None
 
-        with patch('api.services.vital_service.Vital') as MockVital:
+        with patch("api.services.vital_service.Vital") as MockVital:
             # Execute
             VitalService.create_vital(mock_db, mock_data)
 
@@ -307,15 +308,15 @@ class TestVitalServiceValidation:
         mock_data.bmi = None
         mock_data.notes = None
 
-        with patch('api.services.vital_service.Vital') as MockVital:
+        with patch("api.services.vital_service.Vital") as MockVital:
             VitalService.create_vital(mock_db, mock_data)
-            
+
             # Verify the call includes GCS values
             call_kwargs = MockVital.call_args[1]
-            assert call_kwargs['gcs_eye'] == 4
-            assert call_kwargs['gcs_verbal'] == 5
-            assert call_kwargs['gcs_motor'] == 6
-            assert call_kwargs['gcs_total'] == 15
+            assert call_kwargs["gcs_eye"] == 4
+            assert call_kwargs["gcs_verbal"] == 5
+            assert call_kwargs["gcs_motor"] == 6
+            assert call_kwargs["gcs_total"] == 15
 
 
 if __name__ == "__main__":

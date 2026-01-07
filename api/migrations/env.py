@@ -18,12 +18,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import settings
 from core.database import Base
 
+from models.chat import ChatMessage, ChatSession  # noqa: F401
+from models.patient import Patient  # noqa: F401
+from models.prediction import Prediction  # noqa: F401
+
 # Import all models here so Alembic can detect them
 from models.user import User  # noqa: F401
-from models.patient import Patient  # noqa: F401
 from models.vital import Vital  # noqa: F401
-from models.prediction import Prediction  # noqa: F401
-from models.chat import ChatSession, ChatMessage  # noqa: F401
 
 # Alembic Config object
 config = context.config
@@ -42,11 +43,11 @@ target_metadata = Base.metadata
 def run_migrations_offline() -> None:
     """
     Run migrations in 'offline' mode.
-    
+
     This configures the context with just a URL and not an Engine,
     though an Engine is also acceptable here. By skipping the Engine
     creation we don't even need a DBAPI to be available.
-    
+
     Calls to context.execute() here emit the given string to the
     script output.
     """
@@ -65,7 +66,7 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     """
     Run migrations in 'online' mode.
-    
+
     In this scenario we need to create an Engine and associate a
     connection with the context.
     """

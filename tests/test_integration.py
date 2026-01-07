@@ -3,10 +3,11 @@ Integration tests for MediAI platform
 Run with: pytest tests/test_integration.py -v
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
 
 api_path = Path(__file__).parent.parent / "api"
 apps_path = Path(__file__).parent.parent / "apps"
@@ -26,10 +27,7 @@ class TestEndToEndPrediction:
         """Test complete sepsis prediction from API request to response"""
         response = client.post(
             "/api/v1/predict/sepsis",
-            json={
-                "patient_id": "TEST-001",
-                "features": sample_sepsis_features
-            }
+            json={"patient_id": "TEST-001", "features": sample_sepsis_features},
         )
 
         # Check response status
@@ -55,10 +53,7 @@ class TestEndToEndPrediction:
         """Test complete mortality prediction workflow"""
         response = client.post(
             "/api/v1/predict/mortality",
-            json={
-                "patient_id": "TEST-002",
-                "features": sample_mortality_features
-            }
+            json={"patient_id": "TEST-002", "features": sample_mortality_features},
         )
 
         assert response.status_code == 200
@@ -108,8 +103,8 @@ class TestEndToEndPrediction:
                 "/api/v1/predict/sepsis",
                 json={
                     "patient_id": "TEST-CONSISTENCY",
-                    "features": sample_sepsis_features
-                }
+                    "features": sample_sepsis_features,
+                },
             )
             responses.append(response.json())
 
@@ -134,8 +129,8 @@ class TestAPIValidation:
                 "features": {
                     "age": 200,  # Invalid
                     "gender": "M",
-                }
-            }
+                },
+            },
         )
 
         assert response.status_code == 422
@@ -149,8 +144,8 @@ class TestAPIValidation:
                 "features": {
                     "age": 65,
                     # Missing other required fields
-                }
-            }
+                },
+            },
         )
 
         assert response.status_code == 422
@@ -164,8 +159,8 @@ class TestAPIValidation:
                 "features": {
                     "age": 65,
                     "gender": "X",  # Invalid
-                }
-            }
+                },
+            },
         )
 
         assert response.status_code == 422

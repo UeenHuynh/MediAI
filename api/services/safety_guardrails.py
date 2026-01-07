@@ -126,7 +126,9 @@ class SafetyGuardrails:
                 return f"respiratory_rate_{rr}"
 
         # Oxygen saturation
-        spo2_match = re.search(r"(?:spo2|oxygen sat|o2 sat).*?(\d+)", query, re.IGNORECASE)
+        spo2_match = re.search(
+            r"(?:spo2|oxygen sat|o2 sat).*?(\d+)", query, re.IGNORECASE
+        )
         if spo2_match:
             spo2 = int(spo2_match.group(1))
             min_spo2, _ = self.emergency_vitals["oxygen_saturation"]

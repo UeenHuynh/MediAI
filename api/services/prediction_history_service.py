@@ -4,11 +4,12 @@ Prediction History Service
 Handles saving and retrieving prediction history from database.
 """
 
-from typing import List, Optional, Tuple
 from datetime import datetime
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
 from decimal import Decimal
+from typing import List, Optional, Tuple
+
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
 
 from models.prediction import Prediction
 
@@ -28,7 +29,7 @@ class PredictionHistoryService:
         shap_values: Optional[dict] = None,
         top_features: Optional[dict] = None,
         patient_id: Optional[int] = None,
-        predicted_by: Optional[int] = None
+        predicted_by: Optional[int] = None,
     ) -> Prediction:
         """
         Save a prediction to the database
@@ -98,7 +99,7 @@ class PredictionHistoryService:
         patient_id: int,
         prediction_type: Optional[str] = None,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> Tuple[List[Prediction], int]:
         """
         List all predictions for a specific patient
@@ -122,9 +123,12 @@ class PredictionHistoryService:
         total = query.count()
 
         # Get records ordered by most recent first
-        predictions = query.order_by(
-            desc(Prediction.predicted_at)
-        ).offset(skip).limit(limit).all()
+        predictions = (
+            query.order_by(desc(Prediction.predicted_at))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
         return predictions, total
 
@@ -134,7 +138,7 @@ class PredictionHistoryService:
         prediction_type: Optional[str] = None,
         risk_category: Optional[str] = None,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> Tuple[List[Prediction], int]:
         """
         List all predictions with optional filters
@@ -161,17 +165,18 @@ class PredictionHistoryService:
         total = query.count()
 
         # Get records ordered by most recent first
-        predictions = query.order_by(
-            desc(Prediction.predicted_at)
-        ).offset(skip).limit(limit).all()
+        predictions = (
+            query.order_by(desc(Prediction.predicted_at))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
         return predictions, total
 
     @staticmethod
     def get_latest_prediction_for_patient(
-        db: Session,
-        patient_id: int,
-        prediction_type: str
+        db: Session, patient_id: int, prediction_type: str
     ) -> Optional[Prediction]:
         """
         Get the most recent prediction for a patient
@@ -184,19 +189,22 @@ class PredictionHistoryService:
         Returns:
             Most recent Prediction object or None
         """
-        return db.query(Prediction).filter(
-            Prediction.patient_id == patient_id,
-            Prediction.prediction_type == prediction_type
-        ).order_by(
-            desc(Prediction.predicted_at)
-        ).first()
+        return (
+            db.query(Prediction)
+            .filter(
+                Prediction.patient_id == patient_id,
+                Prediction.prediction_type == prediction_type,
+            )
+            .order_by(desc(Prediction.predicted_at))
+            .first()
+        )
 
     @staticmethod
     def update_outcome(
         db: Session,
         prediction_id: int,
         actual_outcome: bool,
-        outcome_notes: Optional[str] = None
+        outcome_notes: Optional[str] = None,
     ) -> Optional[Prediction]:
         """
         Update the actual outcome for a prediction (for model evaluation)
@@ -224,8 +232,7 @@ class PredictionHistoryService:
 
     @staticmethod
     def get_prediction_statistics(
-        db: Session,
-        prediction_type: Optional[str] = None
+        db: Session, prediction_type: Optional[str] = None
     ) -> dict:
         """
         Get statistics about predictions
@@ -250,36 +257,36 @@ class PredictionHistoryService:
                 "total_predictions": 0,
                 "by_risk_category": {},
                 "by_type": {},
-                "avg_risk_percentage": 0
+                "avg_risk_percentage": 0,
             }
 
         # Group by risk category
         risk_stats = db.query(
-            Prediction.risk_category,
-            func.count(Prediction.id)
+            Prediction.risk_category, func.count(Prediction.id)
         ).group_by(Prediction.risk_category)
 
         if prediction_type:
-            risk_stats = risk_stats.filter(Prediction.prediction_type == prediction_type)
+            risk_stats = risk_stats.filter(
+                Prediction.prediction_type == prediction_type
+            )
 
         by_risk = {category: count for category, count in risk_stats.all()}
 
         # Group by prediction type
-        type_stats = db.query(
-            Prediction.prediction_type,
-            func.count(Prediction.id)
-        ).group_by(Prediction.prediction_type).all()
+        type_stats = (
+            db.query(Prediction.prediction_type, func.count(Prediction.id))
+            .group_by(Prediction.prediction_type)
+            .all()
+        )
 
         by_type = {ptype: count for ptype, count in type_stats}
 
         # Average risk percentage
-        avg_risk = query.with_entities(
-            func.avg(Prediction.risk_percentage)
-        ).scalar()
+        avg_risk = query.with_entities(func.avg(Prediction.risk_percentage)).scalar()
 
         return {
             "total_predictions": total_predictions,
             "by_risk_category": by_risk,
             "by_type": by_type,
-            "avg_risk_percentage": float(avg_risk) if avg_risk else 0
+            "avg_risk_percentage": float(avg_risk) if avg_risk else 0,
         }

@@ -3,28 +3,31 @@ Pydantic schemas for Patient API
 """
 
 from datetime import date, datetime
-from typing import Optional, List
+from typing import List, Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 
 class PatientBase(BaseModel):
     """Base patient schema"""
+
     full_name: str = Field(..., min_length=1, max_length=100)
     date_of_birth: Optional[date] = None
     gender: Optional[str] = Field(None, pattern="^(M|F|Other)$")
     department: Optional[str] = Field(None, max_length=100)
     chief_complaint: Optional[str] = None
 
-    @field_validator('gender')
+    @field_validator("gender")
     @classmethod
     def validate_gender(cls, v):
-        if v and v not in ['M', 'F', 'Other']:
-            raise ValueError('Gender must be M, F, or Other')
+        if v and v not in ["M", "F", "Other"]:
+            raise ValueError("Gender must be M, F, or Other")
         return v
 
 
 class PatientCreate(PatientBase):
     """Schema for creating a new patient"""
+
     patient_code: str = Field(..., min_length=1, max_length=50)
     admission_date: Optional[datetime] = None
 
@@ -41,6 +44,7 @@ class PatientCreate(PatientBase):
 
 class PatientUpdate(BaseModel):
     """Schema for updating patient data"""
+
     full_name: Optional[str] = Field(None, min_length=1, max_length=100)
     date_of_birth: Optional[date] = None
     gender: Optional[str] = Field(None, pattern="^(M|F|Other)$")
@@ -57,6 +61,7 @@ class PatientUpdate(BaseModel):
 
 class PatientResponse(PatientBase):
     """Schema for patient response"""
+
     id: int
     patient_code: str
     admission_date: Optional[datetime] = None
@@ -72,6 +77,7 @@ class PatientResponse(PatientBase):
 
 class PatientListResponse(BaseModel):
     """Schema for paginated patient list"""
+
     total: int
     patients: List[PatientResponse]
     page: int

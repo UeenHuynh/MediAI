@@ -3,9 +3,10 @@ Unit tests for model service
 Run with: pytest tests/test_model_service.py -v
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add apps to path
 apps_path = Path(__file__).parent.parent / "apps"
@@ -25,17 +26,27 @@ class TestModelService:
     def test_model_loading(self):
         """Test that models load successfully"""
         assert self.service.sepsis_model is not None, "Sepsis model should be loaded"
-        assert self.service.mortality_model is not None, "Mortality model should be loaded"
-        assert self.service.sepsis_features is not None, "Sepsis features should be loaded"
-        assert self.service.mortality_features is not None, "Mortality features should be loaded"
+        assert (
+            self.service.mortality_model is not None
+        ), "Mortality model should be loaded"
+        assert (
+            self.service.sepsis_features is not None
+        ), "Sepsis features should be loaded"
+        assert (
+            self.service.mortality_features is not None
+        ), "Mortality features should be loaded"
 
     def test_sepsis_feature_count(self):
         """Test sepsis model has correct number of features"""
-        assert len(self.service.sepsis_features) == 42, "Sepsis model should have 42 features"
+        assert (
+            len(self.service.sepsis_features) == 42
+        ), "Sepsis model should have 42 features"
 
     def test_mortality_feature_count(self):
         """Test mortality model has correct number of features"""
-        assert len(self.service.mortality_features) == 13, "Mortality model should have 13 features"
+        assert (
+            len(self.service.mortality_features) == 13
+        ), "Mortality model should have 13 features"
 
     def test_sepsis_prediction_low_risk(self, low_risk_sepsis_features):
         """Test sepsis prediction with low risk patient"""

@@ -3,19 +3,23 @@ Pydantic schemas for Vital Signs API
 """
 
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, Field
 from decimal import Decimal
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class VitalBase(BaseModel):
     """Base vital signs schema"""
+
     # Vital Signs
     heart_rate: Optional[int] = Field(None, ge=0, le=300)
     systolic_bp: Optional[int] = Field(None, ge=0, le=300)
     diastolic_bp: Optional[int] = Field(None, ge=0, le=200)
     mean_arterial_pressure: Optional[Decimal] = Field(None, ge=0, le=250)
-    temperature: Optional[Decimal] = Field(None, ge=30, le=45, description="Temperature in Celsius")
+    temperature: Optional[Decimal] = Field(
+        None, ge=30, le=45, description="Temperature in Celsius"
+    )
     respiratory_rate: Optional[int] = Field(None, ge=0, le=100)
     spo2: Optional[int] = Field(None, ge=0, le=100, description="Oxygen saturation %")
 
@@ -36,12 +40,14 @@ class VitalBase(BaseModel):
 
 class VitalCreate(VitalBase):
     """Schema for creating vital signs record"""
+
     patient_id: int
     recorded_at: Optional[datetime] = None
 
 
 class VitalResponse(VitalBase):
     """Schema for vital signs response"""
+
     id: int
     patient_id: int
     recorded_at: datetime
@@ -52,6 +58,7 @@ class VitalResponse(VitalBase):
 
 class VitalListResponse(BaseModel):
     """Schema for paginated vitals list"""
+
     total: int
     vitals: List[VitalResponse]
     page: int

@@ -21,11 +21,11 @@ import argparse
 import logging
 import sys
 import time
-from pathlib import Path
-from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import pandas as pd
 import psycopg2
@@ -33,8 +33,7 @@ from tqdm import tqdm
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -43,8 +42,10 @@ logger = logging.getLogger(__name__)
 # BASE AGENT (Normally in agents/core/base_agent.py)
 # ============================================================================
 
+
 class AgentStatus(Enum):
     """Agent execution status."""
+
     IDLE = "idle"
     RUNNING = "running"
     SUCCESS = "success"
@@ -65,10 +66,10 @@ class AgentResult:
 
     def to_dict(self) -> dict:
         return {
-            'status': self.status.value,
-            'output': self.output,
-            'errors': self.errors,
-            'timestamp': self.timestamp.isoformat()
+            "status": self.status.value,
+            "output": self.output,
+            "errors": self.errors,
+            "timestamp": self.timestamp.isoformat(),
         }
 
 
@@ -108,9 +109,7 @@ class BaseAgent(ABC):
             if not validation.is_valid:
                 logger.error(f"Validation failed: {validation.errors}")
                 return AgentResult(
-                    status=AgentStatus.FAILED,
-                    output=None,
-                    errors=validation.errors
+                    status=AgentStatus.FAILED, output=None, errors=validation.errors
                 )
 
             # Step 2: Execute core logic
@@ -120,19 +119,12 @@ class BaseAgent(ABC):
             self.status = AgentStatus.SUCCESS
             logger.info(f"[{self.name}] Execution completed successfully")
 
-            return AgentResult(
-                status=AgentStatus.SUCCESS,
-                output=output
-            )
+            return AgentResult(status=AgentStatus.SUCCESS, output=output)
 
         except Exception as e:
             logger.exception(f"[{self.name}] Execution failed")
             self.status = AgentStatus.FAILED
-            return AgentResult(
-                status=AgentStatus.FAILED,
-                output=None,
-                errors=[str(e)]
-            )
+            return AgentResult(status=AgentStatus.FAILED, output=None, errors=[str(e)])
 
     @abstractmethod
     def _execute(self, context: Dict[str, Any]) -> Any:
@@ -149,6 +141,7 @@ class BaseAgent(ABC):
 # DATA INGESTION AGENT
 # ============================================================================
 
+
 class DataIngestionAgent(BaseAgent):
     """
     Agent for ingesting CSV data into PostgreSQL.
@@ -162,8 +155,7 @@ class DataIngestionAgent(BaseAgent):
 
     def __init__(self, db_connection_string: str):
         super().__init__(
-            name="DataIngestionAgent",
-            description="Ingest CSV data into PostgreSQL"
+            name="DataIngestionAgent", description="Ingest CSV data into PostgreSQL"
         )
         self.db_connection_string = db_connection_string
         self.batch_size = 10000
@@ -174,24 +166,24 @@ class DataIngestionAgent(BaseAgent):
         errors = []
 
         # Check required fields
-        if 'source_file' not in context:
+        if "source_file" not in context:
             errors.append("Missing required field: source_file")
 
-        if 'target_table' not in context:
+        if "target_table" not in context:
             errors.append("Missing required field: target_table")
 
         # Validate file exists
-        if 'source_file' in context:
-            source_file = Path(context['source_file'])
+        if "source_file" in context:
+            source_file = Path(context["source_file"])
             if not source_file.exists():
                 errors.append(f"Source file not found: {source_file}")
-            elif not source_file.suffix == '.csv':
+            elif not source_file.suffix == ".csv":
                 errors.append(f"Source file must be CSV: {source_file}")
 
         # Validate table name
-        if 'target_table' in context:
-            target_table = context['target_table']
-            if '.' not in target_table:
+        if "target_table" in context:
+            target_table = context["target_table"]
+            if "." not in target_table:
                 errors.append("target_table must include schema (e.g., raw.icustays)")
 
         if errors:
@@ -209,9 +201,9 @@ class DataIngestionAgent(BaseAgent):
         Returns:
             Dict with ingestion statistics
         """
-        source_file = context['source_file']
-        target_table = context['target_table']
-        batch_size = context.get('batch_size', self.batch_size)
+        source_file = context["source_file"]
+        target_table = context["target_table"]
+        batch_size = context.get("batch_size", self.batch_size)
 
         logger.info(f"Ingesting {source_file} → {target_table}")
 
@@ -242,12 +234,12 @@ class DataIngestionAgent(BaseAgent):
 
             # Return statistics
             result = {
-                'source_file': source_file,
-                'target_table': target_table,
-                'total_rows': total_rows,
-                'rows_ingested': rows_ingested,
-                'rows_failed': rows_failed,
-                'success_rate': rows_ingested / total_rows if total_rows > 0 else 0
+                "source_file": source_file,
+                "target_table": target_table,
+                "total_rows": total_rows,
+                "rows_ingested": rows_ingested,
+                "rows_failed": rows_failed,
+                "success_rate": rows_ingested / total_rows if total_rows > 0 else 0,
             }
 
             logger.info(
@@ -272,7 +264,7 @@ class DataIngestionAgent(BaseAgent):
                 if attempt == self.max_retries - 1:
                     raise
 
-                delay = 2 ** attempt
+                delay = 2**attempt
                 logger.warning(
                     f"Connection failed (attempt {attempt + 1}/{self.max_retries}), "
                     f"retrying in {delay}s..."
@@ -280,10 +272,7 @@ class DataIngestionAgent(BaseAgent):
                 time.sleep(delay)
 
     def _insert_batch(
-        self,
-        conn: psycopg2.extensions.connection,
-        df: pd.DataFrame,
-        table_name: str
+        self, conn: psycopg2.extensions.connection, df: pd.DataFrame, table_name: str
     ):
         """Insert batch into database."""
         cursor = conn.cursor()
@@ -293,9 +282,11 @@ class DataIngestionAgent(BaseAgent):
             cursor.execute("BEGIN")
 
             # Generate INSERT statement
-            columns = ', '.join(df.columns)
-            placeholders = ', '.join(['%s'] * len(df.columns))
-            insert_query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+            columns = ", ".join(df.columns)
+            placeholders = ", ".join(["%s"] * len(df.columns))
+            insert_query = (
+                f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+            )
 
             # Execute batch insert
             for row in df.itertuples(index=False):
@@ -318,31 +309,26 @@ class DataIngestionAgent(BaseAgent):
 # MAIN EXECUTION
 # ============================================================================
 
+
 def main():
     """Main execution function."""
     parser = argparse.ArgumentParser(
-        description='Data Ingestion Agent - Load CSV into PostgreSQL'
+        description="Data Ingestion Agent - Load CSV into PostgreSQL"
+    )
+    parser.add_argument("--source-file", required=True, help="Path to source CSV file")
+    parser.add_argument(
+        "--target-table", required=True, help="Target table (e.g., raw.icustays)"
     )
     parser.add_argument(
-        '--source-file',
-        required=True,
-        help='Path to source CSV file'
-    )
-    parser.add_argument(
-        '--target-table',
-        required=True,
-        help='Target table (e.g., raw.icustays)'
-    )
-    parser.add_argument(
-        '--batch-size',
+        "--batch-size",
         type=int,
         default=10000,
-        help='Batch size for insertion (default: 10000)'
+        help="Batch size for insertion (default: 10000)",
     )
     parser.add_argument(
-        '--database-url',
-        default='postgresql://postgres:password@localhost:5432/mimic_iv',
-        help='PostgreSQL connection string'
+        "--database-url",
+        default="postgresql://postgres:password@localhost:5432/mimic_iv",
+        help="PostgreSQL connection string",
     )
 
     args = parser.parse_args()
@@ -352,9 +338,9 @@ def main():
 
     # Execute
     context = {
-        'source_file': args.source_file,
-        'target_table': args.target_table,
-        'batch_size': args.batch_size
+        "source_file": args.source_file,
+        "target_table": args.target_table,
+        "batch_size": args.batch_size,
     }
 
     result = agent.execute(context)
@@ -383,5 +369,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

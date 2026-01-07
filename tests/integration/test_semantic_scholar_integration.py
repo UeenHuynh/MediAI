@@ -5,9 +5,10 @@ Tests real API integration (requires internet connection).
 Can be run with pytest -m integration to separate from unit tests.
 """
 
-import pytest
 import os
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
+import pytest
 
 from api.services.hybrid_rag import HybridRAGPipeline
 
@@ -23,7 +24,7 @@ class TestSemanticScholarIntegration:
 
     @pytest.mark.skipif(
         not os.getenv("RUN_API_TESTS"),
-        reason="Set RUN_API_TESTS=1 to run live API tests"
+        reason="Set RUN_API_TESTS=1 to run live API tests",
     )
     def test_semantic_scholar_live_api(self, hybrid_rag):
         """Test live Semantic Scholar API call."""
@@ -40,7 +41,7 @@ class TestSemanticScholarIntegration:
             assert "title" in paper["metadata"]
             assert "year" in paper["metadata"]
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_semantic_scholar_api_structure(self, mock_get, hybrid_rag):
         """Test Semantic Scholar API response parsing."""
         # Mock API response
@@ -51,16 +52,13 @@ class TestSemanticScholarIntegration:
                 {
                     "title": "Early Goal-Directed Therapy in Sepsis",
                     "abstract": "Sepsis is a life-threatening condition...",
-                    "authors": [
-                        {"name": "John Smith"},
-                        {"name": "Jane Doe"}
-                    ],
+                    "authors": [{"name": "John Smith"}, {"name": "Jane Doe"}],
                     "year": 2020,
                     "citationCount": 150,
                     "url": "https://semanticscholar.org/paper/123",
                     "tldr": {"text": "Early treatment improves survival"},
                     "publicationTypes": ["Review"],
-                    "fieldsOfStudy": ["Medicine"]
+                    "fieldsOfStudy": ["Medicine"],
                 }
             ]
         }
@@ -79,7 +77,7 @@ class TestSemanticScholarIntegration:
         assert paper["tier"] == "scholar"
         assert paper["score"] > 0.75  # High citation count should boost score
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_semantic_scholar_medical_filtering(self, mock_get, hybrid_rag):
         """Test medical keyword filtering."""
         # Mock response with one medical and one non-medical paper
@@ -104,7 +102,7 @@ class TestSemanticScholarIntegration:
                     "citationCount": 100,
                     "url": "https://test.com/2",
                     "publicationTypes": [],
-                }
+                },
             ]
         }
         mock_get.return_value = mock_response
@@ -116,7 +114,7 @@ class TestSemanticScholarIntegration:
         assert "Clinical Treatment" in results[0]["content"]
         assert "Stock Market" not in str(results)
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_semantic_scholar_api_error_handling(self, mock_get, hybrid_rag):
         """Test handling of API errors."""
         # Mock 500 error
@@ -129,10 +127,11 @@ class TestSemanticScholarIntegration:
         # Should return empty list on error
         assert results == []
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_semantic_scholar_timeout_handling(self, mock_get, hybrid_rag):
         """Test handling of API timeouts."""
         import requests
+
         mock_get.side_effect = requests.exceptions.Timeout()
 
         results = hybrid_rag._search_scholar("sepsis", max_results=1)
@@ -140,7 +139,7 @@ class TestSemanticScholarIntegration:
         # Should handle timeout gracefully
         assert results == []
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_semantic_scholar_tldr_preference(self, mock_get, hybrid_rag):
         """Test TL;DR is used when available."""
         mock_response = Mock()
@@ -167,7 +166,7 @@ class TestSemanticScholarIntegration:
         assert "Short AI-generated summary" in results[0]["content"]
         assert results[0]["metadata"]["has_tldr"] is True
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_semantic_scholar_score_calculation(self, mock_get, hybrid_rag):
         """Test relevance score calculation."""
         mock_response = Mock()
@@ -192,7 +191,7 @@ class TestSemanticScholarIntegration:
         # Score should be boosted for: citations > 50, year >= 2020, Review type
         assert results[0]["score"] > 0.85  # Base 0.75 + bonuses
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_semantic_scholar_max_results_limit(self, mock_get, hybrid_rag):
         """Test max_results parameter is respected."""
         mock_response = Mock()
@@ -219,7 +218,7 @@ class TestSemanticScholarIntegration:
         # Should limit to max_results
         assert len(results) <= 3
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_semantic_scholar_api_key_usage(self, mock_get, hybrid_rag, monkeypatch):
         """Test API key is used when available."""
         monkeypatch.setenv("SEMANTIC_SCHOLAR_API_KEY", "test_api_key")
@@ -246,24 +245,28 @@ class TestHybridRAGWithSemanticScholar:
     def hybrid_rag(self):
         return HybridRAGPipeline()
 
-    @patch('api.services.hybrid_rag.HybridRAGPipeline._search_scholar')
-    @patch('api.services.hybrid_rag.HybridRAGPipeline._search_pubmed')
-    @patch('api.services.hybrid_rag.HybridRAGPipeline._search_qdrant')
-    @patch('api.services.hybrid_rag.HybridRAGPipeline._search_cag_cache')
+    @patch("api.services.hybrid_rag.HybridRAGPipeline._search_scholar")
+    @patch("api.services.hybrid_rag.HybridRAGPipeline._search_pubmed")
+    @patch("api.services.hybrid_rag.HybridRAGPipeline._search_qdrant")
+    @patch("api.services.hybrid_rag.HybridRAGPipeline._search_cag_cache")
     def test_hybrid_retrieve_includes_scholar(
         self, mock_cag, mock_qdrant, mock_pubmed, mock_scholar, hybrid_rag
     ):
         """Test Semantic Scholar is included in hybrid retrieval."""
         # Mock all tier results
         mock_cag.return_value = [{"content": "CAG result", "tier": "cag", "score": 0.9}]
-        mock_qdrant.return_value = [{"content": "Qdrant result", "tier": "qdrant", "score": 0.8}]
-        mock_pubmed.return_value = [{"content": "PubMed result", "tier": "pubmed", "score": 0.7}]
-        mock_scholar.return_value = [{"content": "Scholar result", "tier": "scholar", "score": 0.75}]
+        mock_qdrant.return_value = [
+            {"content": "Qdrant result", "tier": "qdrant", "score": 0.8}
+        ]
+        mock_pubmed.return_value = [
+            {"content": "PubMed result", "tier": "pubmed", "score": 0.7}
+        ]
+        mock_scholar.return_value = [
+            {"content": "Scholar result", "tier": "scholar", "score": 0.75}
+        ]
 
         results = hybrid_rag.retrieve(
-            query="sepsis treatment",
-            top_k=5,
-            use_scholar=True
+            query="sepsis treatment", top_k=5, use_scholar=True
         )
 
         # Verify Scholar was called
@@ -273,16 +276,13 @@ class TestHybridRAGWithSemanticScholar:
         scholar_results = [r for r in results if r.get("tier") == "scholar"]
         assert len(scholar_results) > 0
 
-    @patch('api.services.hybrid_rag.HybridRAGPipeline._search_scholar')
+    @patch("api.services.hybrid_rag.HybridRAGPipeline._search_scholar")
     def test_hybrid_retrieve_scholar_optional(self, mock_scholar, hybrid_rag):
         """Test Semantic Scholar is optional in hybrid retrieval."""
         mock_scholar.return_value = []
 
         # Call without Scholar
-        results = hybrid_rag.retrieve(
-            query="test",
-            use_scholar=False
-        )
+        results = hybrid_rag.retrieve(query="test", use_scholar=False)
 
         # Scholar should not be called
         mock_scholar.assert_not_called()
@@ -290,9 +290,4 @@ class TestHybridRAGWithSemanticScholar:
 
 # Pytest configuration
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "-m", "integration",
-        "--cov=api.services.hybrid_rag"
-    ])
+    pytest.main([__file__, "-v", "-m", "integration", "--cov=api.services.hybrid_rag"])

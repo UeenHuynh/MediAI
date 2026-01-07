@@ -1,14 +1,15 @@
 """Data engineering agents."""
 
-import psycopg2
-import pandas as pd
-from typing import Dict, Any, List
-from pathlib import Path
-from tqdm import tqdm
 import logging
 import subprocess
+from pathlib import Path
+from typing import Any, Dict, List
 
-from agents.core.base_agent import BaseAgent, AgentResult, ValidationResult, AgentStatus
+import pandas as pd
+import psycopg2
+from tqdm import tqdm
+
+from agents.core.base_agent import AgentResult, AgentStatus, BaseAgent, ValidationResult
 from agents.tools.database_tool import DatabaseTool
 from agents.tools.file_tool import FileTool
 
@@ -36,7 +37,7 @@ class DataIngestionAgent(BaseAgent):
         super().__init__(
             name="DataIngestionAgent",
             description="Ingest CSV data into PostgreSQL",
-            tools=[DatabaseTool(db_connection_string), FileTool()]
+            tools=[DatabaseTool(db_connection_string), FileTool()],
         )
         self.db_tool = self.tools[0]
         self.file_tool = self.tools[1]
@@ -47,22 +48,22 @@ class DataIngestionAgent(BaseAgent):
         errors = []
 
         # Check required fields
-        if 'source_file' not in context:
+        if "source_file" not in context:
             errors.append("Missing required field: source_file")
 
-        if 'target_table' not in context:
+        if "target_table" not in context:
             errors.append("Missing required field: target_table")
 
         # Validate file exists
-        if 'source_file' in context:
-            source_file = Path(context['source_file'])
+        if "source_file" in context:
+            source_file = Path(context["source_file"])
             if not source_file.exists():
                 errors.append(f"Source file does not exist: {source_file}")
 
         # Validate table name format
-        if 'target_table' in context:
-            target_table = context['target_table']
-            if '.' not in target_table:
+        if "target_table" in context:
+            target_table = context["target_table"]
+            if "." not in target_table:
                 errors.append("target_table must include schema (e.g., raw.icustays)")
 
         if errors:
@@ -85,10 +86,10 @@ class DataIngestionAgent(BaseAgent):
         Returns:
             Dict with ingestion statistics
         """
-        source_file = context['source_file']
-        target_table = context['target_table']
-        checkpoint_file = context.get('checkpoint_file')
-        batch_size = context.get('batch_size', self.batch_size)
+        source_file = context["source_file"]
+        target_table = context["target_table"]
+        checkpoint_file = context.get("checkpoint_file")
+        batch_size = context.get("batch_size", self.batch_size)
 
         logger.info(f"Starting ingestion: {source_file} → {target_table}")
 
@@ -96,7 +97,7 @@ class DataIngestionAgent(BaseAgent):
         start_row = 0
         if checkpoint_file and Path(checkpoint_file).exists():
             checkpoint = self.file_tool.load_json(checkpoint_file)
-            start_row = checkpoint.get('last_row', 0)
+            start_row = checkpoint.get("last_row", 0)
             logger.info(f"Resuming from row {start_row}")
 
         # Count total rows (for progress bar)
@@ -108,13 +109,13 @@ class DataIngestionAgent(BaseAgent):
         rows_failed = 0
 
         with tqdm(total=total_rows, initial=start_row, desc="Ingesting") as pbar:
-            for batch_df in pd.read_csv(source_file, chunksize=batch_size, skiprows=range(1, start_row + 1)):
+            for batch_df in pd.read_csv(
+                source_file, chunksize=batch_size, skiprows=range(1, start_row + 1)
+            ):
                 try:
                     # Insert batch
                     self.db_tool.insert_dataframe(
-                        df=batch_df,
-                        table_name=target_table,
-                        if_exists='append'
+                        df=batch_df, table_name=target_table, if_exists="append"
                     )
 
                     rows_ingested += len(batch_df)
@@ -123,8 +124,7 @@ class DataIngestionAgent(BaseAgent):
                     # Update checkpoint
                     if checkpoint_file:
                         self.file_tool.save_json(
-                            checkpoint_file,
-                            {'last_row': start_row + rows_ingested}
+                            checkpoint_file, {"last_row": start_row + rows_ingested}
                         )
 
                 except Exception as e:
@@ -134,12 +134,12 @@ class DataIngestionAgent(BaseAgent):
 
         # Return statistics
         result = {
-            'source_file': source_file,
-            'target_table': target_table,
-            'rows_ingested': rows_ingested,
-            'rows_failed': rows_failed,
-            'total_rows': total_rows,
-            'success_rate': rows_ingested / total_rows if total_rows > 0 else 0
+            "source_file": source_file,
+            "target_table": target_table,
+            "rows_ingested": rows_ingested,
+            "rows_failed": rows_failed,
+            "total_rows": total_rows,
+            "success_rate": rows_ingested / total_rows if total_rows > 0 else 0,
         }
 
         logger.info(f"Ingestion complete: {rows_ingested}/{total_rows} rows")
@@ -166,7 +166,7 @@ class DataTransformationAgent(BaseAgent):
         super().__init__(
             name="DataTransformationAgent",
             description="Run dbt transformations",
-            tools=[]
+            tools=[],
         )
         self.dbt_project_dir = Path(dbt_project_dir)
 
@@ -197,39 +197,37 @@ class DataTransformationAgent(BaseAgent):
         Returns:
             Dict with dbt execution results
         """
-        command = context.get('command', 'run')
-        models = context.get('models', [])
-        vars_dict = context.get('vars', {})
+        command = context.get("command", "run")
+        models = context.get("models", [])
+        vars_dict = context.get("vars", {})
 
         # Build dbt command
-        dbt_cmd = ['dbt', command]
+        dbt_cmd = ["dbt", command]
 
         if models:
-            dbt_cmd.extend(['--models', ' '.join(models)])
+            dbt_cmd.extend(["--models", " ".join(models)])
 
         if vars_dict:
             import json
-            dbt_cmd.extend(['--vars', json.dumps(vars_dict)])
+
+            dbt_cmd.extend(["--vars", json.dumps(vars_dict)])
 
         logger.info(f"Running dbt: {' '.join(dbt_cmd)}")
 
         # Execute dbt
         result = subprocess.run(
-            dbt_cmd,
-            cwd=self.dbt_project_dir,
-            capture_output=True,
-            text=True
+            dbt_cmd, cwd=self.dbt_project_dir, capture_output=True, text=True
         )
 
         # Parse result
         success = result.returncode == 0
 
         output = {
-            'command': ' '.join(dbt_cmd),
-            'success': success,
-            'stdout': result.stdout,
-            'stderr': result.stderr,
-            'return_code': result.returncode
+            "command": " ".join(dbt_cmd),
+            "success": success,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "return_code": result.returncode,
         }
 
         if not success:
@@ -254,7 +252,7 @@ class DataQualityAgent(BaseAgent):
         super().__init__(
             name="DataQualityAgent",
             description="Validate data quality",
-            tools=[DatabaseTool(db_connection_string)]
+            tools=[DatabaseTool(db_connection_string)],
         )
         self.db_tool = self.tools[0]
 
@@ -262,7 +260,7 @@ class DataQualityAgent(BaseAgent):
         """Validate quality check inputs."""
         errors = []
 
-        if 'table_name' not in context:
+        if "table_name" not in context:
             errors.append("Missing required field: table_name")
 
         if errors:
@@ -283,29 +281,29 @@ class DataQualityAgent(BaseAgent):
         Returns:
             Dict with quality check results
         """
-        table_name = context['table_name']
-        checks = context.get('checks', ['completeness', 'uniqueness'])
+        table_name = context["table_name"]
+        checks = context.get("checks", ["completeness", "uniqueness"])
 
         logger.info(f"Running quality checks on {table_name}")
 
         results = {}
 
         # Completeness check
-        if 'completeness' in checks:
+        if "completeness" in checks:
             completeness = self._check_completeness(table_name)
-            results['completeness'] = completeness
+            results["completeness"] = completeness
 
         # Uniqueness check
-        if 'uniqueness' in checks:
+        if "uniqueness" in checks:
             uniqueness = self._check_uniqueness(table_name)
-            results['uniqueness'] = uniqueness
+            results["uniqueness"] = uniqueness
 
         # Calculate overall quality score
-        scores = [r['score'] for r in results.values()]
+        scores = [r["score"] for r in results.values()]
         overall_score = sum(scores) / len(scores) if scores else 0
 
-        results['overall_score'] = overall_score
-        results['passed'] = overall_score >= 0.90
+        results["overall_score"] = overall_score
+        results["passed"] = overall_score >= 0.90
 
         logger.info(f"Quality score: {overall_score:.2%}")
         return results
@@ -323,16 +321,11 @@ class DataQualityAgent(BaseAgent):
         result = self.db_tool.execute_query(query)
         row = result[0]
 
-        completeness_rate = (
-            (row['non_null_stay_id'] + row['non_null_subject_id']) /
-            (2 * row['total_rows'])
+        completeness_rate = (row["non_null_stay_id"] + row["non_null_subject_id"]) / (
+            2 * row["total_rows"]
         )
 
-        return {
-            'check': 'completeness',
-            'score': completeness_rate,
-            'details': row
-        }
+        return {"check": "completeness", "score": completeness_rate, "details": row}
 
     def _check_uniqueness(self, table_name: str) -> Dict[str, Any]:
         """Check uniqueness of primary key."""
@@ -346,10 +339,8 @@ class DataQualityAgent(BaseAgent):
         result = self.db_tool.execute_query(query)
         row = result[0]
 
-        uniqueness_rate = row['unique_stay_ids'] / row['total_rows'] if row['total_rows'] > 0 else 0
+        uniqueness_rate = (
+            row["unique_stay_ids"] / row["total_rows"] if row["total_rows"] > 0 else 0
+        )
 
-        return {
-            'check': 'uniqueness',
-            'score': uniqueness_rate,
-            'details': row
-        }
+        return {"check": "uniqueness", "score": uniqueness_rate, "details": row}

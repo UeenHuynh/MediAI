@@ -64,9 +64,7 @@ def test_pii_masking():
             print(original_text)
 
             # Mask
-            masked_text, metadata = masker.mask(
-                original_text, session_id=f"test_{i}"
-            )
+            masked_text, metadata = masker.mask(original_text, session_id=f"test_{i}")
 
             print(f"\n🔒 Masked:")
             print(masked_text)
@@ -76,9 +74,9 @@ def test_pii_masking():
             print(f"  PII types: {metadata['pii_types']}")
             print(f"  Matches: {metadata['num_matches']}")
 
-            if metadata['matches']:
+            if metadata["matches"]:
                 print(f"\n  Detected PII:")
-                for match in metadata['matches']:
+                for match in metadata["matches"]:
                     print(f"    - {match.pii_type}: '{match.text}' → {match.token}")
 
             # Unmask
@@ -117,6 +115,7 @@ def test_pii_masking():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

@@ -11,8 +11,8 @@ Learning Features:
 """
 
 import os
-from typing import Dict, Any
 from dataclasses import dataclass
+from typing import Any, Dict
 
 
 @dataclass
@@ -48,21 +48,33 @@ class FeatureFlags:
         """Load feature flags from environment variables."""
         return cls(
             # Learning features (default: disabled)
-            enable_kafka_streaming=os.getenv("FEATURE_KAFKA_STREAMING", "false").lower() == "true",
-            enable_timescaledb=os.getenv("FEATURE_TIMESCALEDB", "false").lower() == "true",
-            enable_duckdb_analytics=os.getenv("FEATURE_DUCKDB", "false").lower() == "true",
-            enable_advanced_caching=os.getenv("FEATURE_ADVANCED_CACHING", "false").lower() == "true",
-
+            enable_kafka_streaming=os.getenv("FEATURE_KAFKA_STREAMING", "false").lower()
+            == "true",
+            enable_timescaledb=os.getenv("FEATURE_TIMESCALEDB", "false").lower()
+            == "true",
+            enable_duckdb_analytics=os.getenv("FEATURE_DUCKDB", "false").lower()
+            == "true",
+            enable_advanced_caching=os.getenv(
+                "FEATURE_ADVANCED_CACHING", "false"
+            ).lower()
+            == "true",
             # Monitoring (default: disabled in dev)
-            enable_prometheus_metrics=os.getenv("FEATURE_PROMETHEUS", "false").lower() == "true",
-            enable_opentelemetry_tracing=os.getenv("FEATURE_TRACING", "false").lower() == "true",
-
+            enable_prometheus_metrics=os.getenv("FEATURE_PROMETHEUS", "false").lower()
+            == "true",
+            enable_opentelemetry_tracing=os.getenv("FEATURE_TRACING", "false").lower()
+            == "true",
             # Security (default: enabled)
-            enable_rate_limiting=os.getenv("FEATURE_RATE_LIMITING", "true").lower() == "true",
-            enable_request_validation=os.getenv("FEATURE_REQUEST_VALIDATION", "true").lower() == "true",
-
+            enable_rate_limiting=os.getenv("FEATURE_RATE_LIMITING", "true").lower()
+            == "true",
+            enable_request_validation=os.getenv(
+                "FEATURE_REQUEST_VALIDATION", "true"
+            ).lower()
+            == "true",
             # Experimental (default: disabled)
-            enable_experimental_models=os.getenv("FEATURE_EXPERIMENTAL_MODELS", "false").lower() == "true",
+            enable_experimental_models=os.getenv(
+                "FEATURE_EXPERIMENTAL_MODELS", "false"
+            ).lower()
+            == "true",
         )
 
     def to_dict(self) -> Dict[str, Any]:

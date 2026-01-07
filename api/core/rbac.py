@@ -6,26 +6,27 @@ Provides role management and permission checking for protected endpoints.
 
 from enum import Enum
 from functools import wraps
-from typing import List, Optional, Callable
+from typing import Callable, List, Optional
 
 from fastapi import Depends, HTTPException, status
 from pydantic import BaseModel
 
-from .security import get_current_user, User
+from .security import User, get_current_user
 
 
 class Role(str, Enum):
     """User roles with hierarchical permissions"""
-    ADMIN = "admin"           # Full access
-    DOCTOR = "doctor"         # Can view/create predictions, view patients
-    NURSE = "nurse"           # Can view predictions, limited write
-    RESEARCHER = "researcher" # Read-only access for analytics
-    VIEWER = "viewer"         # Basic read-only access
+
+    ADMIN = "admin"  # Full access
+    DOCTOR = "doctor"  # Can view/create predictions, view patients
+    NURSE = "nurse"  # Can view predictions, limited write
+    RESEARCHER = "researcher"  # Read-only access for analytics
+    VIEWER = "viewer"  # Basic read-only access
 
 
 class RolePermissions:
     """Maps roles to allowed permissions"""
-    
+
     PERMISSIONS = {
         Role.ADMIN: ["*"],  # Wildcard = all permissions
         Role.DOCTOR: [
@@ -53,7 +54,7 @@ class RolePermissions:
             "doctors:read",
         ],
     }
-    
+
     @classmethod
     def has_permission(cls, role: Role, permission: str) -> bool:
         """Check if a role has a specific permission"""
@@ -65,6 +66,7 @@ class RolePermissions:
 
 class UserWithRole(User):
     """Extended user model with role information"""
+
     role: Role = Role.VIEWER
     permissions: List[str] = []
 
@@ -109,7 +111,7 @@ async def get_user_with_role(user: User = Depends(get_current_user)) -> UserWith
     """
     if user.username in DEMO_USERS:
         return DEMO_USERS[user.username]
-    
+
     # Default to viewer role for unknown users
     return UserWithRole(
         username=user.username,
@@ -123,26 +125,30 @@ async def get_user_with_role(user: User = Depends(get_current_user)) -> UserWith
 def require_role(allowed_roles: List[Role]):
     """
     Dependency factory that checks if user has one of the allowed roles.
-    
+
     Usage:
         @router.get("/admin-only")
         async def admin_endpoint(user: UserWithRole = Depends(require_role([Role.ADMIN]))):
             return {"message": "Welcome admin!"}
     """
-    async def role_checker(user: UserWithRole = Depends(get_user_with_role)) -> UserWithRole:
+
+    async def role_checker(
+        user: UserWithRole = Depends(get_user_with_role),
+    ) -> UserWithRole:
         if user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Required roles: {[r.value for r in allowed_roles]}",
             )
         return user
+
     return role_checker
 
 
 def require_permission(permission: str):
     """
     Dependency factory that checks if user has a specific permission.
-    
+
     Usage:
         @router.post("/predictions")
         async def create_prediction(
@@ -150,13 +156,17 @@ def require_permission(permission: str):
         ):
             return {"message": "Prediction created"}
     """
-    async def permission_checker(user: UserWithRole = Depends(get_user_with_role)) -> UserWithRole:
+
+    async def permission_checker(
+        user: UserWithRole = Depends(get_user_with_role),
+    ) -> UserWithRole:
         if not RolePermissions.has_permission(user.role, permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Required permission: {permission}",
             )
         return user
+
     return permission_checker
 
 
@@ -164,4 +174,6 @@ def require_permission(permission: str):
 require_admin = require_role([Role.ADMIN])
 require_doctor = require_role([Role.ADMIN, Role.DOCTOR])
 require_medical_staff = require_role([Role.ADMIN, Role.DOCTOR, Role.NURSE])
-require_authenticated = require_role([Role.ADMIN, Role.DOCTOR, Role.NURSE, Role.RESEARCHER, Role.VIEWER])
+require_authenticated = require_role(
+    [Role.ADMIN, Role.DOCTOR, Role.NURSE, Role.RESEARCHER, Role.VIEWER]
+)

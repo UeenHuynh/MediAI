@@ -5,12 +5,13 @@ Handles all database operations for patient management.
 """
 
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session
+
+from core.encryption import decrypt_field, encrypt_field
+from schemas.patient import PatientCreate, PatientUpdate
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from models.patient import Patient
-from schemas.patient import PatientCreate, PatientUpdate
-from core.encryption import encrypt_field, decrypt_field
 
 
 class PatientService:
@@ -18,9 +19,7 @@ class PatientService:
 
     @staticmethod
     def create_patient(
-        db: Session,
-        patient_data: PatientCreate,
-        created_by: Optional[int] = None
+        db: Session, patient_data: PatientCreate, created_by: Optional[int] = None
     ) -> Patient:
         """
         Create a new patient with encrypted PII
@@ -49,8 +48,12 @@ class PatientService:
             chief_complaint=patient_data.chief_complaint,
             # Encrypt sensitive PII
             encrypted_ssn=encrypt_field(patient_data.ssn) if patient_data.ssn else None,
-            encrypted_address=encrypt_field(patient_data.address) if patient_data.address else None,
-            encrypted_phone=encrypt_field(patient_data.phone) if patient_data.phone else None,
+            encrypted_address=(
+                encrypt_field(patient_data.address) if patient_data.address else None
+            ),
+            encrypted_phone=(
+                encrypt_field(patient_data.phone) if patient_data.phone else None
+            ),
             # JSON fields
             medical_history=medical_history,
             current_medications=current_medications,
@@ -76,10 +79,11 @@ class PatientService:
         Returns:
             Patient object or None if not found
         """
-        return db.query(Patient).filter(
-            Patient.id == patient_id,
-            Patient.is_active == True
-        ).first()
+        return (
+            db.query(Patient)
+            .filter(Patient.id == patient_id, Patient.is_active == True)
+            .first()
+        )
 
     @staticmethod
     def get_patient_by_code(db: Session, patient_code: str) -> Optional[Patient]:
@@ -93,10 +97,11 @@ class PatientService:
         Returns:
             Patient object or None if not found
         """
-        return db.query(Patient).filter(
-            Patient.patient_code == patient_code,
-            Patient.is_active == True
-        ).first()
+        return (
+            db.query(Patient)
+            .filter(Patient.patient_code == patient_code, Patient.is_active == True)
+            .first()
+        )
 
     @staticmethod
     def list_patients(
@@ -104,7 +109,7 @@ class PatientService:
         skip: int = 0,
         limit: int = 50,
         department: Optional[str] = None,
-        search: Optional[str] = None
+        search: Optional[str] = None,
     ) -> Tuple[List[Patient], int]:
         """
         List patients with pagination and filters
@@ -128,25 +133,26 @@ class PatientService:
         if search:
             search_pattern = f"%{search}%"
             query = query.filter(
-                (Patient.patient_code.ilike(search_pattern)) |
-                (Patient.full_name.ilike(search_pattern))
+                (Patient.patient_code.ilike(search_pattern))
+                | (Patient.full_name.ilike(search_pattern))
             )
 
         # Get total count
         total = query.count()
 
         # Apply pagination and ordering
-        patients = query.order_by(
-            Patient.admission_date.desc()
-        ).offset(skip).limit(limit).all()
+        patients = (
+            query.order_by(Patient.admission_date.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
         return patients, total
 
     @staticmethod
     def update_patient(
-        db: Session,
-        patient_id: int,
-        patient_data: PatientUpdate
+        db: Session, patient_id: int, patient_data: PatientUpdate
     ) -> Optional[Patient]:
         """
         Update patient information
@@ -204,6 +210,6 @@ class PatientService:
         Returns:
             Count of active patients
         """
-        return db.query(func.count(Patient.id)).filter(
-            Patient.is_active == True
-        ).scalar()
+        return (
+            db.query(func.count(Patient.id)).filter(Patient.is_active == True).scalar()
+        )

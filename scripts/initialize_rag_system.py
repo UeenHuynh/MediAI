@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Load environment variables from .env
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from api.core.vector_store import VectorStore
@@ -79,15 +80,19 @@ def main():
         logger.warning(f"⚠ RAG pipeline initialization failed: {error_msg}")
         logger.info("Creating retrieval-only pipeline...")
         # Create a minimal pipeline without LLM for retrieval-only
-        rag = type('obj', (object,), {
-            'vector_store': vector_store,
-            'embedding_service': embedding_service,
-            'document_processor': None,
-            'llm_api_key': None,
-            'index_document': lambda text, source, metadata=None: 0,
-            'retrieve': lambda query, **kwargs: [],
-            'get_stats': lambda: {'error': error_msg}
-        })()
+        rag = type(
+            "obj",
+            (object,),
+            {
+                "vector_store": vector_store,
+                "embedding_service": embedding_service,
+                "document_processor": None,
+                "llm_api_key": None,
+                "index_document": lambda text, source, metadata=None: 0,
+                "retrieve": lambda query, **kwargs: [],
+                "get_stats": lambda: {"error": error_msg},
+            },
+        )()
         logger.info("You can still test vector store and embeddings separately")
 
     # Step 5: Index documents

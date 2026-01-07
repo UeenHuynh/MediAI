@@ -146,7 +146,10 @@ class EmbeddingService:
 
         if self.provider == "sentence-transformers":
             embeddings = self.model.encode(
-                valid_texts, batch_size=batch_size, convert_to_numpy=True, show_progress_bar=len(valid_texts) > 100
+                valid_texts,
+                batch_size=batch_size,
+                convert_to_numpy=True,
+                show_progress_bar=len(valid_texts) > 100,
             )
             return [emb for emb in embeddings]
 

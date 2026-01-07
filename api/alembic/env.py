@@ -1,11 +1,9 @@
 import sys
-from pathlib import Path
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from pathlib import Path
 
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 # Add parent directory to path to import our modules
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -14,12 +12,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core.config import settings
 from core.database import Base
 
+from models.chat import ChatMessage, ChatSession
+from models.patient import Patient
+from models.prediction import Prediction
+
 # Import all models to register them with Base.metadata
 from models.user import User
-from models.patient import Patient
 from models.vital import Vital
-from models.prediction import Prediction
-from models.chat import ChatSession, ChatMessage
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -81,9 +80,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

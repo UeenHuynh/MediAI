@@ -7,10 +7,18 @@ Stores all sepsis and mortality predictions with input features and SHAP explana
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, JSON, ForeignKey
-from sqlalchemy.orm import relationship
-
 from core.database import Base
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+)
+from sqlalchemy.orm import relationship
 
 
 class Prediction(Base):
@@ -20,11 +28,18 @@ class Prediction(Base):
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("public.patients.id", ondelete="SET NULL"), nullable=True, index=True)
+    patient_id = Column(
+        Integer,
+        ForeignKey("public.patients.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Prediction metadata
-    prediction_type = Column(String(20), nullable=False, index=True)  # 'sepsis' or 'mortality'
-    model_version = Column(String(20), default='v2', nullable=False)
+    prediction_type = Column(
+        String(20), nullable=False, index=True
+    )  # 'sepsis' or 'mortality'
+    model_version = Column(String(20), default="v2", nullable=False)
     model_file = Column(String(100), nullable=True)
 
     # Input features (stored as JSONB for flexibility)
@@ -36,7 +51,9 @@ class Prediction(Base):
     confidence = Column(Numeric(6, 4), nullable=True)
 
     # Risk category (calculated from risk_percentage)
-    risk_category = Column(String(20), nullable=True)  # 'low', 'medium', 'high', 'critical'
+    risk_category = Column(
+        String(20), nullable=True
+    )  # 'low', 'medium', 'high', 'critical'
 
     # SHAP explanations (for interpretability)
     shap_values = Column(JSON, nullable=True)

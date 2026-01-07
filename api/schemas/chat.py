@@ -3,19 +3,22 @@ Pydantic schemas for Chat API
 """
 
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, Field
+from typing import List, Optional
 from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 
 class ChatSessionCreate(BaseModel):
     """Schema for creating a new chat session"""
+
     user_id: int
     title: Optional[str] = Field(None, max_length=200)
 
 
 class ChatSessionResponse(BaseModel):
     """Schema for chat session response"""
+
     id: int
     session_id: UUID
     user_id: int
@@ -31,6 +34,7 @@ class ChatSessionResponse(BaseModel):
 
 class ChatMessageCreate(BaseModel):
     """Schema for creating a chat message"""
+
     session_id: UUID
     role: str = Field(..., pattern="^(user|assistant)$")
     content: str = Field(..., min_length=1)
@@ -42,6 +46,7 @@ class ChatMessageCreate(BaseModel):
 
 class ChatMessageResponse(BaseModel):
     """Schema for chat message response"""
+
     id: int
     session_id: UUID
     role: str
@@ -54,13 +59,11 @@ class ChatMessageResponse(BaseModel):
     processing_time_ms: Optional[int] = None
     created_at: datetime
 
-    model_config = {
-        "from_attributes": True,
-        "protected_namespaces": ()
-    }
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
 
 
 class ChatHistoryResponse(BaseModel):
     """Schema for chat history response"""
+
     session: ChatSessionResponse
     messages: List[ChatMessageResponse]

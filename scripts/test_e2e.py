@@ -11,11 +11,12 @@ Requirements:
     - Test user credentials: demo/demo123
 """
 
-import requests
 import json
-from typing import Dict, Any
-from datetime import datetime
 import sys
+from datetime import datetime
+from typing import Any, Dict
+
+import requests
 
 # Configuration
 API_BASE = "http://localhost:8000/api/v1"
@@ -189,7 +190,9 @@ class E2ETestRunner:
             self.log(f"  Found {doctors.get('total')} doctors", "SUCCESS")
             if doctors["doctors"]:
                 doc = doctors["doctors"][0]
-                self.log(f"  First: {doc.get('name')} - {doc.get('specialty')}", "SUCCESS")
+                self.log(
+                    f"  First: {doc.get('name')} - {doc.get('specialty')}", "SUCCESS"
+                )
 
         # Test 7: Get Doctor by ID
         doctor = self.test("Get Doctor by ID", "GET", "/doctors/1")
@@ -204,7 +207,9 @@ class E2ETestRunner:
             "/doctors?search=Chen&available=true",
         )
         if search_result and "doctors" in search_result:
-            self.log(f"  Found {len(search_result['doctors'])} matching doctors", "SUCCESS")
+            self.log(
+                f"  Found {len(search_result['doctors'])} matching doctors", "SUCCESS"
+            )
 
         # Test 9: Get Doctor Schedule
         schedule = self.test("Get Doctor Schedule", "GET", "/doctors/1/schedule")
@@ -226,9 +231,15 @@ class E2ETestRunner:
         )
         if chat_result:
             self.session_id = chat_result.get("session_id")
-            self.log(f"  Answer length: {len(chat_result.get('answer', ''))} chars", "SUCCESS")
+            self.log(
+                f"  Answer length: {len(chat_result.get('answer', ''))} chars",
+                "SUCCESS",
+            )
             self.log(f"  Citations: {len(chat_result.get('citations', []))}", "SUCCESS")
-            self.log(f"  Processing time: {chat_result.get('processing_time_ms')}ms", "SUCCESS")
+            self.log(
+                f"  Processing time: {chat_result.get('processing_time_ms')}ms",
+                "SUCCESS",
+            )
 
         # Test 11: Send Follow-up Message
         if self.session_id:
@@ -243,7 +254,10 @@ class E2ETestRunner:
                 },
             )
             if followup:
-                self.log(f"  Answer length: {len(followup.get('answer', ''))} chars", "SUCCESS")
+                self.log(
+                    f"  Answer length: {len(followup.get('answer', ''))} chars",
+                    "SUCCESS",
+                )
 
         # Test 12: Get Conversation History
         if self.session_id:
@@ -253,7 +267,9 @@ class E2ETestRunner:
                 f"/chat/history/{self.session_id}",
             )
             if history and "messages" in history:
-                self.log(f"  Messages in history: {len(history['messages'])}", "SUCCESS")
+                self.log(
+                    f"  Messages in history: {len(history['messages'])}", "SUCCESS"
+                )
 
         # Test 13: List Chat Sessions
         sessions = self.test("List All Chat Sessions", "GET", "/chat/sessions")
@@ -290,8 +306,12 @@ class E2ETestRunner:
         self.log("=" * 60, "INFO")
         self.log(f"Total Tests: {total}", "INFO")
         self.log(f"Passed: {self.tests_passed}", "SUCCESS")
-        self.log(f"Failed: {self.tests_failed}", "ERROR" if self.tests_failed > 0 else "INFO")
-        self.log(f"Pass Rate: {pass_rate:.1f}%", "SUCCESS" if pass_rate >= 90 else "WARNING")
+        self.log(
+            f"Failed: {self.tests_failed}", "ERROR" if self.tests_failed > 0 else "INFO"
+        )
+        self.log(
+            f"Pass Rate: {pass_rate:.1f}%", "SUCCESS" if pass_rate >= 90 else "WARNING"
+        )
         self.log(f"Duration: {duration:.2f}s", "INFO")
         self.log("=" * 60, "INFO")
 

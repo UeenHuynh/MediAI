@@ -4,14 +4,15 @@ Unit tests for Prediction History Service
 Tests saving and retrieving prediction history with mocked database.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime
-from decimal import Decimal
-
 # Import the service under test
 import sys
-sys.path.insert(0, '/home/neeyuhuynh/Desktop/MediAI')
+from datetime import datetime
+from decimal import Decimal
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
+sys.path.insert(0, "/home/neeyuhuynh/Desktop/MediAI")
 
 from api.services.prediction_history_service import PredictionHistoryService
 
@@ -56,11 +57,13 @@ class TestPredictionHistoryService:
             "shap_values": {"heart_rate": 0.15},
             "top_features": [{"feature": "heart_rate", "importance": 0.15}],
             "patient_id": 1,
-            "predicted_by": 1
+            "predicted_by": 1,
         }
 
-    @patch('api.services.prediction_history_service.Prediction')
-    def test_save_prediction_success(self, MockPrediction, mock_db, sample_prediction_data):
+    @patch("api.services.prediction_history_service.Prediction")
+    def test_save_prediction_success(
+        self, MockPrediction, mock_db, sample_prediction_data
+    ):
         """Test successful prediction save."""
         # Setup
         mock_prediction_instance = MagicMock()
@@ -78,7 +81,7 @@ class TestPredictionHistoryService:
             shap_values=sample_prediction_data["shap_values"],
             top_features=sample_prediction_data["top_features"],
             patient_id=sample_prediction_data["patient_id"],
-            predicted_by=sample_prediction_data["predicted_by"]
+            predicted_by=sample_prediction_data["predicted_by"],
         )
 
         # Verify
@@ -87,7 +90,7 @@ class TestPredictionHistoryService:
         mock_db.commit.assert_called_once()
         mock_db.refresh.assert_called_once()
 
-    @patch('api.services.prediction_history_service.Prediction')
+    @patch("api.services.prediction_history_service.Prediction")
     def test_save_sepsis_prediction(self, MockPrediction, mock_db):
         """Test saving a sepsis prediction."""
         mock_prediction_instance = MagicMock()
@@ -99,14 +102,14 @@ class TestPredictionHistoryService:
             prediction_type="sepsis",
             input_features={"temperature": 39.0},
             risk_score=0.85,
-            risk_percentage=85.0
+            risk_percentage=85.0,
         )
 
         # Verify sepsis type is passed
         call_kwargs = MockPrediction.call_args[1]
-        assert call_kwargs['prediction_type'] == "sepsis"
+        assert call_kwargs["prediction_type"] == "sepsis"
 
-    @patch('api.services.prediction_history_service.Prediction')
+    @patch("api.services.prediction_history_service.Prediction")
     def test_save_mortality_prediction(self, MockPrediction, mock_db):
         """Test saving a mortality prediction."""
         mock_prediction_instance = MagicMock()
@@ -118,12 +121,12 @@ class TestPredictionHistoryService:
             prediction_type="mortality",
             input_features={"gcs_total": 8},
             risk_score=0.65,
-            risk_percentage=65.0
+            risk_percentage=65.0,
         )
 
         # Verify mortality type is passed
         call_kwargs = MockPrediction.call_args[1]
-        assert call_kwargs['prediction_type'] == "mortality"
+        assert call_kwargs["prediction_type"] == "mortality"
 
     def test_get_prediction_found(self, mock_db, mock_prediction):
         """Test getting an existing prediction."""
@@ -164,7 +167,9 @@ class TestPredictionHistoryService:
         mock_filter.filter.return_value = mock_filter
         mock_filter.count.return_value = 3
         mock_order = MagicMock()
-        mock_order.offset.return_value.limit.return_value.all.return_value = [mock_prediction] * 3
+        mock_order.offset.return_value.limit.return_value.all.return_value = [
+            mock_prediction
+        ] * 3
         mock_filter.order_by.return_value = mock_order
         mock_query.filter.return_value = mock_filter
         mock_db.query.return_value = mock_query
@@ -178,14 +183,18 @@ class TestPredictionHistoryService:
         assert total == 3
         assert len(predictions) == 3
 
-    def test_list_predictions_for_patient_filtered_by_type(self, mock_db, mock_prediction):
+    def test_list_predictions_for_patient_filtered_by_type(
+        self, mock_db, mock_prediction
+    ):
         """Test filtering predictions by type."""
         # Setup
         mock_query = MagicMock()
         mock_filter1 = MagicMock()
         mock_filter2 = MagicMock()
         mock_filter2.count.return_value = 2
-        mock_filter2.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [mock_prediction] * 2
+        mock_filter2.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [
+            mock_prediction
+        ] * 2
         mock_filter1.filter.return_value = mock_filter2
         mock_query.filter.return_value = mock_filter1
         mock_db.query.return_value = mock_query
@@ -205,7 +214,9 @@ class TestPredictionHistoryService:
         mock_query = MagicMock()
         mock_query.filter.return_value = mock_query
         mock_query.count.return_value = 10
-        mock_query.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [mock_prediction] * 10
+        mock_query.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [
+            mock_prediction
+        ] * 10
         mock_db.query.return_value = mock_query
 
         # Execute
@@ -221,7 +232,9 @@ class TestPredictionHistoryService:
         mock_query = MagicMock()
         mock_query.filter.return_value = mock_query
         mock_query.count.return_value = 5
-        mock_query.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [mock_prediction] * 5
+        mock_query.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [
+            mock_prediction
+        ] * 5
         mock_db.query.return_value = mock_query
 
         # Execute
@@ -251,8 +264,10 @@ class TestPredictionHistoryService:
         # Verify
         assert result == mock_prediction
 
-    @patch.object(PredictionHistoryService, 'get_prediction')
-    def test_update_outcome_success(self, mock_get_prediction, mock_db, mock_prediction):
+    @patch.object(PredictionHistoryService, "get_prediction")
+    def test_update_outcome_success(
+        self, mock_get_prediction, mock_db, mock_prediction
+    ):
         """Test updating prediction outcome."""
         # Setup
         mock_get_prediction.return_value = mock_prediction
@@ -262,7 +277,7 @@ class TestPredictionHistoryService:
             mock_db,
             prediction_id=1,
             actual_outcome=True,
-            outcome_notes="Patient developed sepsis"
+            outcome_notes="Patient developed sepsis",
         )
 
         # Verify
@@ -271,7 +286,7 @@ class TestPredictionHistoryService:
         assert mock_prediction.outcome_notes == "Patient developed sepsis"
         mock_db.commit.assert_called_once()
 
-    @patch.object(PredictionHistoryService, 'get_prediction')
+    @patch.object(PredictionHistoryService, "get_prediction")
     def test_update_outcome_not_found(self, mock_get_prediction, mock_db):
         """Test updating outcome for non-existent prediction."""
         # Setup
@@ -279,9 +294,7 @@ class TestPredictionHistoryService:
 
         # Execute
         result = PredictionHistoryService.update_outcome(
-            mock_db,
-            prediction_id=999,
-            actual_outcome=True
+            mock_db, prediction_id=999, actual_outcome=True
         )
 
         # Verify
@@ -337,7 +350,7 @@ class TestRiskCategoryClassification:
         db = MagicMock()
         return db
 
-    @patch('api.services.prediction_history_service.Prediction')
+    @patch("api.services.prediction_history_service.Prediction")
     def test_high_risk_classification(self, MockPrediction, mock_db):
         """Test that high risk score gets high category."""
         mock_prediction = MagicMock()
@@ -349,13 +362,13 @@ class TestRiskCategoryClassification:
             prediction_type="sepsis",
             input_features={},
             risk_score=0.50,
-            risk_percentage=50.0  # 30-70 = high
+            risk_percentage=50.0,  # 30-70 = high
         )
 
         call_kwargs = MockPrediction.call_args[1]
-        assert call_kwargs['risk_category'] == "high"
+        assert call_kwargs["risk_category"] == "high"
 
-    @patch('api.services.prediction_history_service.Prediction')
+    @patch("api.services.prediction_history_service.Prediction")
     def test_low_risk_classification(self, MockPrediction, mock_db):
         """Test that low risk score gets low category."""
         mock_prediction = MagicMock()
@@ -367,11 +380,11 @@ class TestRiskCategoryClassification:
             prediction_type="sepsis",
             input_features={},
             risk_score=0.05,
-            risk_percentage=5.0  # < 10 = low
+            risk_percentage=5.0,  # < 10 = low
         )
 
         call_kwargs = MockPrediction.call_args[1]
-        assert call_kwargs['risk_category'] == "low"
+        assert call_kwargs["risk_category"] == "low"
 
 
 if __name__ == "__main__":

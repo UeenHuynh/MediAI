@@ -30,8 +30,7 @@ from api.core.qdrant_store import QdrantVectorStore
 from api.services.embedding_service import EmbeddingService
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -79,9 +78,7 @@ def main():
 
     try:
         qdrant_store = QdrantVectorStore(
-            url=qdrant_url,
-            api_key=qdrant_api_key,
-            collection_name="medical_knowledge"
+            url=qdrant_url, api_key=qdrant_api_key, collection_name="medical_knowledge"
         )
         print(f"  ✓ Qdrant client connected")
     except Exception as e:
@@ -93,16 +90,18 @@ def main():
 
     documents = []
     for key, data in cag_cache.MEDICAL_KNOWLEDGE.items():
-        documents.append({
-            "content": data["content"],
-            "source": "CAG Cache",
-            "category": data.get("category", "general"),
-            "metadata": {
-                "key": key,
-                "keywords": data.get("keywords", []),
-                "priority": data.get("priority", 5),
+        documents.append(
+            {
+                "content": data["content"],
+                "source": "CAG Cache",
+                "category": data.get("category", "general"),
+                "metadata": {
+                    "key": key,
+                    "keywords": data.get("keywords", []),
+                    "priority": data.get("priority", 5),
+                },
             }
-        })
+        )
 
     print(f"  ✓ Prepared {len(documents)} documents")
 
@@ -130,6 +129,7 @@ def main():
     except Exception as e:
         print(f"  ❌ Failed to generate embeddings: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -142,6 +142,7 @@ def main():
     except Exception as e:
         print(f"  ❌ Failed to upload documents: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -171,9 +172,7 @@ def main():
             test_embedding = test_embedding.tolist()
 
         results = qdrant_store.search(
-            query_embedding=test_embedding,
-            top_k=3,
-            score_threshold=0.3
+            query_embedding=test_embedding, top_k=3, score_threshold=0.3
         )
 
         print(f"  ✓ Query: '{test_query}'")
@@ -187,6 +186,7 @@ def main():
     except Exception as e:
         print(f"  ❌ Search test failed: {e}")
         import traceback
+
         traceback.print_exc()
 
     print("\n" + "=" * 60)

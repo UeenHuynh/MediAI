@@ -6,11 +6,12 @@ Target coverage: 90%+
 """
 
 import pytest
+
 from api.services.pii_redaction_service import (
-    PIIRedactionService,
-    PIIEntityType,
     AnonymizationStrategy,
     PIIDetectionResult,
+    PIIEntityType,
+    PIIRedactionService,
     get_pii_service,
 )
 
@@ -115,10 +116,7 @@ class TestPIIRedactionService:
     def test_anonymization_strategy_replace(self, pii_service):
         """Test REPLACE anonymization strategy."""
         text = "Patient John Doe"
-        result = pii_service.redact_pii(
-            text,
-            strategy=AnonymizationStrategy.REPLACE
-        )
+        result = pii_service.redact_pii(text, strategy=AnonymizationStrategy.REPLACE)
 
         assert "John Doe" not in result.redacted_text
         assert result.anonymization_strategy == "replace"
@@ -126,10 +124,7 @@ class TestPIIRedactionService:
     def test_anonymization_strategy_hash(self, pii_service):
         """Test HASH anonymization strategy."""
         text = "Patient SSN: 123-45-6789"
-        result = pii_service.redact_pii(
-            text,
-            strategy=AnonymizationStrategy.HASH
-        )
+        result = pii_service.redact_pii(text, strategy=AnonymizationStrategy.HASH)
 
         assert "123-45-6789" not in result.redacted_text
         assert result.anonymization_strategy == "hash"
@@ -195,10 +190,10 @@ class TestPIIRedactionService:
         results = pii_service.analyze_pii(text)
 
         assert len(results) >= 2
-        assert all(hasattr(r, 'entity_type') for r in results)
-        assert all(hasattr(r, 'score') for r in results)
-        assert all(hasattr(r, 'start') for r in results)
-        assert all(hasattr(r, 'end') for r in results)
+        assert all(hasattr(r, "entity_type") for r in results)
+        assert all(hasattr(r, "score") for r in results)
+        assert all(hasattr(r, "start") for r in results)
+        assert all(hasattr(r, "end") for r in results)
 
     def test_processing_time_recorded(self, pii_service):
         """Test that processing time is recorded."""

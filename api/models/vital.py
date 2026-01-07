@@ -7,10 +7,18 @@ Stores vital signs, lab results, and clinical measurements.
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text, ForeignKey
-from sqlalchemy.orm import relationship
-
 from core.database import Base
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
+from sqlalchemy.orm import relationship
 
 
 class Vital(Base):
@@ -20,7 +28,12 @@ class Vital(Base):
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("public.patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    patient_id = Column(
+        Integer,
+        ForeignKey("public.patients.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Timestamp
     recorded_at = Column(DateTime, default=datetime.utcnow, nullable=False)

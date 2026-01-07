@@ -6,8 +6,8 @@ This is the main entry point for agent-based automation.
 
 import logging
 import sys
-from typing import Dict, Any, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -16,8 +16,7 @@ from agents.crews.data_pipeline_crew import DataPipelineCrew
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -47,7 +46,7 @@ class WorkflowOrchestrator:
         source_file: Optional[str] = None,
         target_table: Optional[str] = None,
         run_transformation: bool = True,
-        run_quality_check: bool = True
+        run_quality_check: bool = True,
     ) -> Dict[str, Any]:
         """
         Run complete data pipeline workflow.
@@ -69,23 +68,20 @@ class WorkflowOrchestrator:
 
         # Ingestion task
         if source_file and target_table:
-            context['ingestion'] = {
-                'source_file': source_file,
-                'target_table': target_table
+            context["ingestion"] = {
+                "source_file": source_file,
+                "target_table": target_table,
             }
 
         # Transformation task
         if run_transformation:
-            context['transformation'] = {
-                'command': 'run',
-                'models': ['staging.*']
-            }
+            context["transformation"] = {"command": "run", "models": ["staging.*"]}
 
         # Quality check task
         if run_quality_check and target_table:
-            context['quality'] = {
-                'table_name': target_table,
-                'checks': ['completeness', 'uniqueness']
+            context["quality"] = {
+                "table_name": target_table,
+                "checks": ["completeness", "uniqueness"],
             }
 
         # Execute crew
@@ -110,18 +106,18 @@ class WorkflowOrchestrator:
         logger.info("WORKFLOW: Ingest Sample Data")
         logger.info("=" * 80)
 
-        data_dir = Path(__file__).parent.parent / 'data' / 'sample'
+        data_dir = Path(__file__).parent.parent / "data" / "sample"
 
         # Check if sample data exists
         if not data_dir.exists():
             logger.error(f"Sample data directory not found: {data_dir}")
             logger.info("Run: python scripts/generate_sample_data.py")
-            return {'status': 'failed', 'error': 'Sample data not found'}
+            return {"status": "failed", "error": "Sample data not found"}
 
         tables = [
-            ('patients.csv', 'raw.patients'),
-            ('icustays.csv', 'raw.icustays'),
-            ('chartevents.csv', 'raw.chartevents')
+            ("patients.csv", "raw.patients"),
+            ("icustays.csv", "raw.icustays"),
+            ("chartevents.csv", "raw.chartevents"),
         ]
 
         results = {}
@@ -136,16 +132,15 @@ class WorkflowOrchestrator:
             logger.info(f"\nIngesting {csv_file}...")
 
             result = self.data_pipeline_crew.run_ingestion_only(
-                source_file=str(source_file),
-                target_table=table_name
+                source_file=str(source_file), target_table=table_name
             )
 
             results[table_name] = result
 
         return {
-            'status': 'success',
-            'tables_ingested': len(results),
-            'results': results
+            "status": "success",
+            "tables_ingested": len(results),
+            "results": results,
         }
 
 
@@ -156,20 +151,14 @@ def main():
     parser = argparse.ArgumentParser(description="MediAI Agent Orchestrator")
 
     parser.add_argument(
-        'workflow',
-        choices=['ingest', 'transform', 'quality', 'full-pipeline'],
-        help='Workflow to execute'
+        "workflow",
+        choices=["ingest", "transform", "quality", "full-pipeline"],
+        help="Workflow to execute",
     )
 
-    parser.add_argument(
-        '--source-file',
-        help='Source CSV file for ingestion'
-    )
+    parser.add_argument("--source-file", help="Source CSV file for ingestion")
 
-    parser.add_argument(
-        '--target-table',
-        help='Target table (schema.table)'
-    )
+    parser.add_argument("--target-table", help="Target table (schema.table)")
 
     args = parser.parse_args()
 
@@ -177,7 +166,7 @@ def main():
     orchestrator = WorkflowOrchestrator()
 
     # Execute workflow
-    if args.workflow == 'ingest':
+    if args.workflow == "ingest":
         if not args.source_file or not args.target_table:
             logger.error("--source-file and --target-table required for ingestion")
             sys.exit(1)
@@ -186,15 +175,15 @@ def main():
             source_file=args.source_file,
             target_table=args.target_table,
             run_transformation=False,
-            run_quality_check=False
+            run_quality_check=False,
         )
 
-    elif args.workflow == 'transform':
+    elif args.workflow == "transform":
         result = orchestrator.data_pipeline_crew.run_transformation_only(
-            models=['staging.*']
+            models=["staging.*"]
         )
 
-    elif args.workflow == 'quality':
+    elif args.workflow == "quality":
         if not args.target_table:
             logger.error("--target-table required for quality check")
             sys.exit(1)
@@ -203,7 +192,7 @@ def main():
             table_name=args.target_table
         )
 
-    elif args.workflow == 'full-pipeline':
+    elif args.workflow == "full-pipeline":
         result = orchestrator.ingest_sample_data()
 
     # Print result
@@ -211,10 +200,11 @@ def main():
     print("FINAL RESULT")
     print("=" * 80)
     import json
+
     print(json.dumps(result, indent=2, default=str))
 
     # Exit code
-    sys.exit(0 if result['status'] == 'success' else 1)
+    sys.exit(0 if result["status"] == "success" else 1)
 
 
 if __name__ == "__main__":

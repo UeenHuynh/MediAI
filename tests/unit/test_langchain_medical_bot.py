@@ -6,15 +6,15 @@ Target coverage: 85%+
 """
 
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pydantic import ValidationError
 
 from api.services.langchain_medical_bot import (
-    ProductionMedicalChatbot,
     Citation,
     MedicalResponse,
+    ProductionMedicalChatbot,
     create_medical_chatbot,
 )
 
@@ -25,10 +25,7 @@ class TestCitationModel:
     def test_citation_creation_valid(self):
         """Test creating valid citation."""
         citation = Citation(
-            number="1",
-            source="PubMed",
-            url="https://pubmed.com/123",
-            pmid="123"
+            number="1", source="PubMed", url="https://pubmed.com/123", pmid="123"
         )
 
         assert citation.number == "1"
@@ -63,7 +60,7 @@ class TestMedicalResponseModel:
             citations=citations,
             confidence=0.85,
             disclaimer="Test disclaimer",
-            redacted_query="Test query"
+            redacted_query="Test query",
         )
 
         assert response.answer == "Test answer"
@@ -110,9 +107,9 @@ class TestProductionMedicalChatbot:
         monkeypatch.setenv("OPENAI_API_KEY", "test_openai_key")
 
     @pytest.fixture
-    @patch('api.services.langchain_medical_bot.ChatGroq')
-    @patch('api.services.langchain_medical_bot.AnalyzerEngine')
-    @patch('api.services.langchain_medical_bot.AnonymizerEngine')
+    @patch("api.services.langchain_medical_bot.ChatGroq")
+    @patch("api.services.langchain_medical_bot.AnalyzerEngine")
+    @patch("api.services.langchain_medical_bot.AnonymizerEngine")
     def chatbot(self, mock_anonymizer, mock_analyzer, mock_groq, mock_env_groq):
         """Create chatbot instance with mocked dependencies."""
         # Mock LLM
@@ -126,10 +123,7 @@ class TestProductionMedicalChatbot:
         mock_anonymizer.return_value = mock_anonymizer_instance
 
         # Create chatbot
-        bot = ProductionMedicalChatbot(
-            provider="groq",
-            enable_pii_redaction=True
-        )
+        bot = ProductionMedicalChatbot(provider="groq", enable_pii_redaction=True)
 
         return bot
 
@@ -140,10 +134,12 @@ class TestProductionMedicalChatbot:
         assert chatbot.memory is not None
         assert chatbot.chain is not None
 
-    @patch('api.services.langchain_medical_bot.ChatOpenAI')
-    @patch('api.services.langchain_medical_bot.AnalyzerEngine')
-    @patch('api.services.langchain_medical_bot.AnonymizerEngine')
-    def test_initialization_openai(self, mock_anonymizer, mock_analyzer, mock_openai, mock_env_openai):
+    @patch("api.services.langchain_medical_bot.ChatOpenAI")
+    @patch("api.services.langchain_medical_bot.AnalyzerEngine")
+    @patch("api.services.langchain_medical_bot.AnonymizerEngine")
+    def test_initialization_openai(
+        self, mock_anonymizer, mock_analyzer, mock_openai, mock_env_openai
+    ):
         """Test chatbot initializes with OpenAI provider."""
         mock_openai.return_value = MagicMock()
         mock_analyzer.return_value = MagicMock()
@@ -170,16 +166,13 @@ class TestProductionMedicalChatbot:
         assert chatbot.analyzer is not None
         assert chatbot.anonymizer is not None
 
-    @patch('api.services.langchain_medical_bot.ChatGroq')
-    @patch('api.services.langchain_medical_bot.AnalyzerEngine')
+    @patch("api.services.langchain_medical_bot.ChatGroq")
+    @patch("api.services.langchain_medical_bot.AnalyzerEngine")
     def test_pii_redaction_disabled(self, mock_analyzer, mock_groq, mock_env_groq):
         """Test PII redaction can be disabled."""
         mock_groq.return_value = MagicMock()
 
-        bot = ProductionMedicalChatbot(
-            provider="groq",
-            enable_pii_redaction=False
-        )
+        bot = ProductionMedicalChatbot(provider="groq", enable_pii_redaction=False)
 
         assert bot.enable_pii_redaction is False
 
@@ -236,11 +229,7 @@ class TestProductionMedicalChatbot:
         response = "Study [1] shows effectiveness."
 
         source_docs = [
-            {
-                "source": "PubMed",
-                "url": "https://pubmed.com/123",
-                "pmid": "123"
-            }
+            {"source": "PubMed", "url": "https://pubmed.com/123", "pmid": "123"}
         ]
 
         citations = chatbot._extract_citations(response, source_docs)
@@ -272,7 +261,7 @@ class TestProductionMedicalChatbot:
         numbers = [c.number for c in citations]
         assert numbers == ["1", "2", "3"]
 
-    @patch.object(ProductionMedicalChatbot, '_generate_with_retry')
+    @patch.object(ProductionMedicalChatbot, "_generate_with_retry")
     def test_query_success(self, mock_generate, chatbot):
         """Test successful query execution."""
         # Mock LLM response
@@ -284,7 +273,7 @@ class TestProductionMedicalChatbot:
         result = chatbot.query(
             question="What is the treatment?",
             retrieved_context="[1] Antibiotics are recommended.",
-            source_docs=[{"source": "Guideline", "url": "http://test.com"}]
+            source_docs=[{"source": "Guideline", "url": "http://test.com"}],
         )
 
         assert result["error"] is None
@@ -292,7 +281,7 @@ class TestProductionMedicalChatbot:
         assert len(result["citations"]) >= 1
         assert result["redacted_query"] == "test query"
 
-    @patch.object(ProductionMedicalChatbot, '_generate_with_retry')
+    @patch.object(ProductionMedicalChatbot, "_generate_with_retry")
     def test_query_with_pii_detection(self, mock_generate, chatbot):
         """Test query with PII detected and redacted."""
         # Mock LLM response
@@ -303,8 +292,7 @@ class TestProductionMedicalChatbot:
         chatbot._redact_pii = Mock(return_value=("<PERSON> has symptoms", pii_entities))
 
         result = chatbot.query(
-            question="John Doe has symptoms",
-            retrieved_context="Context here"
+            question="John Doe has symptoms", retrieved_context="Context here"
         )
 
         assert result["error"] is None
@@ -312,15 +300,14 @@ class TestProductionMedicalChatbot:
         assert result["pii_detected"][0]["type"] == "PERSON"
         assert result["redacted_query"] == "<PERSON> has symptoms"
 
-    @patch.object(ProductionMedicalChatbot, '_generate_with_retry')
+    @patch.object(ProductionMedicalChatbot, "_generate_with_retry")
     def test_query_error_handling(self, mock_generate, chatbot):
         """Test query handles errors gracefully."""
         # Mock LLM error
         mock_generate.side_effect = Exception("LLM error")
 
         result = chatbot.query(
-            question="What is the treatment?",
-            retrieved_context="Context"
+            question="What is the treatment?", retrieved_context="Context"
         )
 
         assert result["error"] is not None
@@ -339,7 +326,7 @@ class TestProductionMedicalChatbot:
         # Should return string (empty or with content)
         assert isinstance(summary, str)
 
-    @patch.object(ProductionMedicalChatbot, '_generate_with_retry')
+    @patch.object(ProductionMedicalChatbot, "_generate_with_retry")
     def test_token_budget_check_in_query(self, mock_generate, chatbot):
         """Test token budget is checked during query."""
         mock_generate.return_value = "Response"
@@ -348,10 +335,7 @@ class TestProductionMedicalChatbot:
         # Very long context
         long_context = "A" * 60000
 
-        result = chatbot.query(
-            question="Question",
-            retrieved_context=long_context
-        )
+        result = chatbot.query(question="Question", retrieved_context=long_context)
 
         # Should complete without error (context truncated internally)
         assert result["error"] is None
@@ -360,7 +344,7 @@ class TestProductionMedicalChatbot:
 class TestCreateMedicalChatbot:
     """Test factory function for creating chatbot."""
 
-    @patch('api.services.langchain_medical_bot.ProductionMedicalChatbot')
+    @patch("api.services.langchain_medical_bot.ProductionMedicalChatbot")
     def test_create_with_groq_key(self, mock_chatbot, monkeypatch):
         """Test auto-detection of Groq API key."""
         monkeypatch.setenv("GROQ_API_KEY", "test_key")
@@ -370,9 +354,9 @@ class TestCreateMedicalChatbot:
 
         mock_chatbot.assert_called_once()
         args, kwargs = mock_chatbot.call_args
-        assert kwargs.get('provider') == "groq" or args[0] == "groq"
+        assert kwargs.get("provider") == "groq" or args[0] == "groq"
 
-    @patch('api.services.langchain_medical_bot.ProductionMedicalChatbot')
+    @patch("api.services.langchain_medical_bot.ProductionMedicalChatbot")
     def test_create_with_openai_key(self, mock_chatbot, monkeypatch):
         """Test auto-detection of OpenAI API key."""
         monkeypatch.delenv("GROQ_API_KEY", raising=False)
@@ -392,7 +376,7 @@ class TestCreateMedicalChatbot:
         with pytest.raises(ValueError, match="No LLM API key"):
             create_medical_chatbot()
 
-    @patch('api.services.langchain_medical_bot.ProductionMedicalChatbot')
+    @patch("api.services.langchain_medical_bot.ProductionMedicalChatbot")
     def test_create_with_explicit_provider(self, mock_chatbot, monkeypatch):
         """Test creating with explicit provider override."""
         monkeypatch.setenv("GROQ_API_KEY", "test_key")
@@ -402,16 +386,16 @@ class TestCreateMedicalChatbot:
 
         mock_chatbot.assert_called_once()
         args, kwargs = mock_chatbot.call_args
-        assert kwargs.get('provider') == "groq"
-        assert kwargs.get('temperature') == 0.5
+        assert kwargs.get("provider") == "groq"
+        assert kwargs.get("temperature") == 0.5
 
 
 class TestPIIEntities:
     """Test PII entity configuration."""
 
-    @patch('api.services.langchain_medical_bot.ChatGroq')
-    @patch('api.services.langchain_medical_bot.AnalyzerEngine')
-    @patch('api.services.langchain_medical_bot.AnonymizerEngine')
+    @patch("api.services.langchain_medical_bot.ChatGroq")
+    @patch("api.services.langchain_medical_bot.AnalyzerEngine")
+    @patch("api.services.langchain_medical_bot.AnonymizerEngine")
     def test_pii_entities_list(self, mock_anon, mock_analyzer, mock_groq, monkeypatch):
         """Test PII entities list is comprehensive."""
         monkeypatch.setenv("GROQ_API_KEY", "test_key")

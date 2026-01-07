@@ -3,7 +3,8 @@ Test mortality model
 """
 
 import sys
-sys.path.append('/home/neeyuhuynh/Desktop/MediAI/apps')
+
+sys.path.append("/home/neeyuhuynh/Desktop/MediAI/apps")
 
 from services.model_service import get_model_service
 
@@ -27,7 +28,7 @@ low_risk = {
     "worst_creatinine": 1.0,
     "sofa_day1": 2,
     "apache_ii_score": 8,
-    "vasopressor_use": False
+    "vasopressor_use": False,
 }
 
 print("\n1. LOW RISK PATIENT:")
@@ -50,7 +51,7 @@ high_risk = {
     "worst_creatinine": 3.8,
     "sofa_day1": 14,
     "apache_ii_score": 28,
-    "vasopressor_use": True
+    "vasopressor_use": True,
 }
 
 print("\n2. HIGH RISK PATIENT:")
@@ -73,7 +74,7 @@ medium_risk = {
     "worst_creatinine": 2.2,
     "sofa_day1": 8,
     "apache_ii_score": 18,
-    "vasopressor_use": False
+    "vasopressor_use": False,
 }
 
 print("\n3. MEDIUM RISK PATIENT:")

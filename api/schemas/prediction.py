@@ -3,13 +3,15 @@ Pydantic schemas for Prediction History API
 """
 
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, Field
 from decimal import Decimal
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class PredictionResponse(BaseModel):
     """Schema for prediction history response"""
+
     id: int
     patient_id: Optional[int] = None
     prediction_type: str  # 'sepsis' or 'mortality'
@@ -37,14 +39,12 @@ class PredictionResponse(BaseModel):
 
     created_at: datetime
 
-    model_config = {
-        "from_attributes": True,
-        "protected_namespaces": ()
-    }
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
 
 
 class PredictionListResponse(BaseModel):
     """Schema for paginated predictions list"""
+
     total: int
     predictions: List[PredictionResponse]
     page: int

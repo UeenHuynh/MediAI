@@ -196,15 +196,22 @@ class HybridRAGPipeline:
         Returns:
             List of PubMed articles
         """
-        logger.info(f"=== PubMed search called with query: '{query}', max_results: {max_results}")
+        logger.info(
+            f"=== PubMed search called with query: '{query}', max_results: {max_results}"
+        )
         try:
             from Bio import Entrez
+
             logger.info("✓ Biopython imported successfully")
 
             # Set email and API key for PubMed API
             Entrez.email = os.getenv("NCBI_EMAIL", "noreply@mediai.com")
-            Entrez.api_key = os.getenv("NCBI_API_KEY")  # Use API key for higher rate limits
-            logger.info(f"✓ Entrez configured - Email: {Entrez.email}, API key: {'SET' if Entrez.api_key else 'NOT SET'}")
+            Entrez.api_key = os.getenv(
+                "NCBI_API_KEY"
+            )  # Use API key for higher rate limits
+            logger.info(
+                f"✓ Entrez configured - Email: {Entrez.email}, API key: {'SET' if Entrez.api_key else 'NOT SET'}"
+            )
 
             # Search PubMed
             handle = Entrez.esearch(
@@ -215,7 +222,9 @@ class HybridRAGPipeline:
 
             # Get article IDs
             id_list = search_results["IdList"]
-            logger.info(f"✓ PubMed search returned {len(id_list)} article IDs: {id_list[:3]}...")
+            logger.info(
+                f"✓ PubMed search returned {len(id_list)} article IDs: {id_list[:3]}..."
+            )
 
             if not id_list:
                 logger.warning("No PubMed articles found for query")
@@ -236,8 +245,14 @@ class HybridRAGPipeline:
                     article_data = medline["Article"]
 
                     title = article_data.get("ArticleTitle", "")
-                    abstract = article_data.get("Abstract", {}).get("AbstractText", [""])
-                    abstract_text = " ".join(abstract) if isinstance(abstract, list) else str(abstract)
+                    abstract = article_data.get("Abstract", {}).get(
+                        "AbstractText", [""]
+                    )
+                    abstract_text = (
+                        " ".join(abstract)
+                        if isinstance(abstract, list)
+                        else str(abstract)
+                    )
 
                     pmid = medline["PMID"]
 
@@ -259,7 +274,9 @@ class HybridRAGPipeline:
                     logger.error(f"Error parsing PubMed article: {e}")
                     continue
 
-            logger.info(f"✓ Successfully formatted {len(pubmed_results)} PubMed articles")
+            logger.info(
+                f"✓ Successfully formatted {len(pubmed_results)} PubMed articles"
+            )
             return pubmed_results
 
         except ImportError:
@@ -330,9 +347,21 @@ class HybridRAGPipeline:
 
             # Define medical keywords for additional filtering
             medical_keywords = {
-                'medical', 'clinical', 'patient', 'treatment', 'therapy',
-                'diagnosis', 'disease', 'syndrome', 'hospital', 'care',
-                'sepsis', 'shock', 'infection', 'antibiotic', 'intensive care'
+                "medical",
+                "clinical",
+                "patient",
+                "treatment",
+                "therapy",
+                "diagnosis",
+                "disease",
+                "syndrome",
+                "hospital",
+                "care",
+                "sepsis",
+                "shock",
+                "infection",
+                "antibiotic",
+                "intensive care",
             }
 
             scholar_results = []
@@ -353,8 +382,7 @@ class HybridRAGPipeline:
                     # Additional relevance check
                     text_to_check = f"{title} {abstract} {summary}".lower()
                     has_medical_keyword = any(
-                        keyword in text_to_check
-                        for keyword in medical_keywords
+                        keyword in text_to_check for keyword in medical_keywords
                     )
 
                     if not has_medical_keyword:
@@ -365,10 +393,13 @@ class HybridRAGPipeline:
                     authors = paper.get("authors", [])
                     if authors:
                         author_names = [a.get("name", "") for a in authors[:3]]
-                        author_str = ", ".join([
-                            name.split()[-1] if ' ' in name else name
-                            for name in author_names if name
-                        ])
+                        author_str = ", ".join(
+                            [
+                                name.split()[-1] if " " in name else name
+                                for name in author_names
+                                if name
+                            ]
+                        )
                         if len(authors) > 3:
                             author_str += " et al."
                     else:
@@ -409,22 +440,24 @@ class HybridRAGPipeline:
                         f"({year}, {citation_count} citations)"
                     )
 
-                    scholar_results.append({
-                        "content": content,
-                        "source": f"Semantic Scholar ({author_str}, {year})",
-                        "category": "research",
-                        "score": score,
-                        "tier": "scholar",
-                        "metadata": {
-                            "title": title,
-                            "authors": author_str,
-                            "year": year,
-                            "url": url,
-                            "citation_count": citation_count,
-                            "publication_types": pub_types,
-                            "has_tldr": bool(summary),
+                    scholar_results.append(
+                        {
+                            "content": content,
+                            "source": f"Semantic Scholar ({author_str}, {year})",
+                            "category": "research",
+                            "score": score,
+                            "tier": "scholar",
+                            "metadata": {
+                                "title": title,
+                                "authors": author_str,
+                                "year": year,
+                                "url": url,
+                                "citation_count": citation_count,
+                                "publication_types": pub_types,
+                                "has_tldr": bool(summary),
+                            },
                         }
-                    })
+                    )
 
                 except Exception as e:
                     logger.error(f"Error parsing Semantic Scholar paper: {e}")
@@ -445,7 +478,9 @@ class HybridRAGPipeline:
             logger.error(f"❌ Semantic Scholar search failed: {e}", exc_info=True)
             return []
 
-    def _deduplicate_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _deduplicate_results(
+        self, results: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         Remove duplicate results based on content similarity.
 
@@ -469,9 +504,7 @@ class HybridRAGPipeline:
                 seen_content.add(content_key)
                 unique_results.append(result)
 
-        logger.info(
-            f"Deduplicated {len(results)} → {len(unique_results)} results"
-        )
+        logger.info(f"Deduplicated {len(results)} → {len(unique_results)} results")
 
         return unique_results
 
@@ -514,10 +547,14 @@ class HybridRAGPipeline:
         return {
             "cag_cache": {
                 "status": "healthy" if self.cag_cache else "unavailable",
-                "documents_count": len(self.cag_cache.MEDICAL_KNOWLEDGE) if self.cag_cache else 0,
+                "documents_count": (
+                    len(self.cag_cache.MEDICAL_KNOWLEDGE) if self.cag_cache else 0
+                ),
             },
             "qdrant": {
-                "status": "healthy" if self.qdrant_store.health_check() else "unavailable",
+                "status": (
+                    "healthy" if self.qdrant_store.health_check() else "unavailable"
+                ),
                 "collection_info": self.qdrant_store.get_collection_info(),
             },
             "embedding_service": {

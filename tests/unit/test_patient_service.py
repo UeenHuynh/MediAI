@@ -4,13 +4,14 @@ Unit tests for Patient Service
 Tests CRUD operations for patient management with mocked database.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from datetime import date, datetime
-
 # Import the service under test
 import sys
-sys.path.insert(0, '/home/neeyuhuynh/Desktop/MediAI')
+from datetime import date, datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
+sys.path.insert(0, "/home/neeyuhuynh/Desktop/MediAI")
 
 from api.services.patient_service import PatientService
 
@@ -58,9 +59,11 @@ class TestPatientService:
         patient.department = "ICU"
         return patient
 
-    @patch('api.services.patient_service.encrypt_field')
-    @patch('api.services.patient_service.Patient')
-    def test_create_patient_success(self, MockPatient, mock_encrypt, mock_db, sample_patient_data):
+    @patch("api.services.patient_service.encrypt_field")
+    @patch("api.services.patient_service.Patient")
+    def test_create_patient_success(
+        self, MockPatient, mock_encrypt, mock_db, sample_patient_data
+    ):
         """Test successful patient creation."""
         # Setup
         mock_encrypt.return_value = "encrypted_value"
@@ -68,7 +71,9 @@ class TestPatientService:
         MockPatient.return_value = mock_patient_instance
 
         # Execute
-        result = PatientService.create_patient(mock_db, sample_patient_data, created_by=1)
+        result = PatientService.create_patient(
+            mock_db, sample_patient_data, created_by=1
+        )
 
         # Verify
         mock_db.add.assert_called_once()
@@ -152,7 +157,9 @@ class TestPatientService:
         mock_filter1 = MagicMock()
         mock_filter2 = MagicMock()
         mock_filter2.count.return_value = 1
-        mock_filter2.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [mock_patient]
+        mock_filter2.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [
+            mock_patient
+        ]
         mock_filter1.filter.return_value = mock_filter2
         mock_query.filter.return_value = mock_filter1
         mock_db.query.return_value = mock_query
@@ -164,7 +171,7 @@ class TestPatientService:
         assert total == 1
         mock_filter1.filter.assert_called()
 
-    @patch.object(PatientService, 'get_patient')
+    @patch.object(PatientService, "get_patient")
     def test_update_patient_success(self, mock_get_patient, mock_db, mock_patient):
         """Test updating patient information."""
         # Setup
@@ -173,14 +180,16 @@ class TestPatientService:
         update_data.model_dump.return_value = {"full_name": "Jane Doe"}
 
         # Execute
-        result = PatientService.update_patient(mock_db, patient_id=1, patient_data=update_data)
+        result = PatientService.update_patient(
+            mock_db, patient_id=1, patient_data=update_data
+        )
 
         # Verify
         mock_db.commit.assert_called_once()
         mock_db.refresh.assert_called_once()
         assert result == mock_patient
 
-    @patch.object(PatientService, 'get_patient')
+    @patch.object(PatientService, "get_patient")
     def test_update_patient_not_found(self, mock_get_patient, mock_db):
         """Test updating non-existent patient."""
         # Setup
@@ -188,13 +197,15 @@ class TestPatientService:
         update_data = MagicMock()
 
         # Execute
-        result = PatientService.update_patient(mock_db, patient_id=999, patient_data=update_data)
+        result = PatientService.update_patient(
+            mock_db, patient_id=999, patient_data=update_data
+        )
 
         # Verify
         assert result is None
         mock_db.commit.assert_not_called()
 
-    @patch.object(PatientService, 'get_patient')
+    @patch.object(PatientService, "get_patient")
     def test_delete_patient_soft_delete(self, mock_get_patient, mock_db, mock_patient):
         """Test soft deleting a patient (sets is_active=False)."""
         # Setup
@@ -208,7 +219,7 @@ class TestPatientService:
         assert mock_patient.is_active is False
         mock_db.commit.assert_called_once()
 
-    @patch.object(PatientService, 'get_patient')
+    @patch.object(PatientService, "get_patient")
     def test_delete_patient_not_found(self, mock_get_patient, mock_db):
         """Test deleting non-existent patient."""
         # Setup
@@ -245,8 +256,8 @@ class TestPatientServiceEncryption:
         db = MagicMock()
         return db
 
-    @patch('api.services.patient_service.encrypt_field')
-    @patch('api.services.patient_service.Patient')
+    @patch("api.services.patient_service.encrypt_field")
+    @patch("api.services.patient_service.Patient")
     def test_ssn_encrypted_on_create(self, MockPatient, mock_encrypt, mock_db):
         """Test that SSN is encrypted when creating patient."""
         # Setup
@@ -265,8 +276,8 @@ class TestPatientServiceEncryption:
         # Verify SSN was encrypted
         mock_encrypt.assert_called_with("123-45-6789")
 
-    @patch('api.services.patient_service.encrypt_field')
-    @patch('api.services.patient_service.Patient')
+    @patch("api.services.patient_service.encrypt_field")
+    @patch("api.services.patient_service.Patient")
     def test_pii_fields_encrypted(self, MockPatient, mock_encrypt, mock_db):
         """Test all PII fields are encrypted."""
         # Setup
@@ -285,9 +296,11 @@ class TestPatientServiceEncryption:
         # Verify all 3 PII fields were encrypted
         assert mock_encrypt.call_count == 3
 
-    @patch('api.services.patient_service.encrypt_field')
-    @patch('api.services.patient_service.Patient')
-    def test_optional_pii_not_encrypted_if_none(self, MockPatient, mock_encrypt, mock_db):
+    @patch("api.services.patient_service.encrypt_field")
+    @patch("api.services.patient_service.Patient")
+    def test_optional_pii_not_encrypted_if_none(
+        self, MockPatient, mock_encrypt, mock_db
+    ):
         """Test that None PII fields are not encrypted."""
         # Setup
         mock_data = MagicMock()

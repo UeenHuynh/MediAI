@@ -23,8 +23,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from presidio_analyzer import (
     AnalyzerEngine,
-    PatternRecognizer,
     Pattern,
+    PatternRecognizer,
     RecognizerResult,
 )
 from presidio_anonymizer import AnonymizerEngine
@@ -32,14 +32,14 @@ from presidio_anonymizer.entities import OperatorConfig
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 class PIIEntityType(str, Enum):
     """Supported PII entity types."""
+
     PERSON = "PERSON"
     EMAIL = "EMAIL_ADDRESS"
     PHONE = "PHONE_NUMBER"
@@ -60,6 +60,7 @@ class PIIEntityType(str, Enum):
 
 class AnonymizationStrategy(str, Enum):
     """Anonymization strategies for different use cases."""
+
     REPLACE = "replace"  # Replace with placeholder (e.g., <PERSON>)
     MASK = "mask"  # Mask with asterisks (e.g., ***-**-1234)
     HASH = "hash"  # One-way hash (consistent for same value)
@@ -70,6 +71,7 @@ class AnonymizationStrategy(str, Enum):
 @dataclass
 class PIIDetectionResult:
     """Result of PII detection and redaction."""
+
     original_text: str
     redacted_text: str
     entities_found: List[Dict[str, Any]] = field(default_factory=list)
@@ -212,11 +214,12 @@ class PIIRedactionService:
         )
         self.analyzer.registry.add_recognizer(phone_recognizer)
 
-        logger.info(f"Added {len(self.MEDICAL_PATTERNS)} medical recognizers + SSN/phone patterns")
+        logger.info(
+            f"Added {len(self.MEDICAL_PATTERNS)} medical recognizers + SSN/phone patterns"
+        )
 
     def _build_operators_config(
-        self,
-        strategy: AnonymizationStrategy
+        self, strategy: AnonymizationStrategy
     ) -> Dict[str, OperatorConfig]:
         """
         Build operator configuration for anonymization strategy.
@@ -243,7 +246,7 @@ class PIIRedactionService:
                         "masking_char": "*",
                         "chars_to_mask": -1,  # Mask all
                         "from_end": False,
-                    }
+                    },
                 )
 
         elif strategy == AnonymizationStrategy.HASH:
@@ -260,8 +263,7 @@ class PIIRedactionService:
             # Encryption (requires encryption key)
             for entity in self.entities:
                 operators[entity] = OperatorConfig(
-                    "encrypt",
-                    {"key": "WmZq4t7w!z%C*F-J"}  # In production: use KMS
+                    "encrypt", {"key": "WmZq4t7w!z%C*F-J"}  # In production: use KMS
                 )
 
         return operators
@@ -301,8 +303,7 @@ class PIIRedactionService:
             if self.enable_audit_log and results:
                 entity_types = {r.entity_type for r in results}
                 logger.info(
-                    f"PII detected: {len(results)} instances, "
-                    f"types={entity_types}"
+                    f"PII detected: {len(results)} instances, " f"types={entity_types}"
                 )
 
             return results
@@ -339,6 +340,7 @@ class PIIRedactionService:
             Phone: <PHONE_NUMBER>
         """
         import time
+
         start_time = time.time()
 
         # Use provided strategy or default
@@ -437,13 +439,15 @@ class PIIRedactionService:
             except Exception as e:
                 logger.error(f"Batch redaction failed for text {i}: {e}")
                 # Add error result
-                results.append(PIIDetectionResult(
-                    original_text=text,
-                    redacted_text=text,
-                    entities_found=[],
-                    pii_count=0,
-                    entity_types_detected=[],
-                ))
+                results.append(
+                    PIIDetectionResult(
+                        original_text=text,
+                        redacted_text=text,
+                        entities_found=[],
+                        pii_count=0,
+                        entity_types_detected=[],
+                    )
+                )
 
         total_pii = sum(r.pii_count for r in results)
         logger.info(
@@ -478,9 +482,7 @@ class PIIRedactionService:
         results = self.analyze_pii(text)
 
         # Filter by score threshold
-        high_confidence_pii = [
-            r for r in results if r.score >= min_score
-        ]
+        high_confidence_pii = [r for r in results if r.score >= min_score]
 
         return len(high_confidence_pii) == 0
 

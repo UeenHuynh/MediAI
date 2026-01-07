@@ -2,6 +2,7 @@
 Smart feature imputation for web predictions
 Uses medical correlations and realistic defaults
 """
+
 import logging
 from typing import Dict
 
@@ -15,10 +16,10 @@ class FeatureImputer:
     def impute_sepsis_features(vital_signs: Dict) -> Dict:
         """
         Impute 42 sepsis features from basic vitals
-        
+
         Args:
             vital_signs: Dict with age, HR, temp, RR, BP, SpO2, optional labs
-        
+
         Returns:
             Complete 42-feature dict
         """
@@ -30,12 +31,12 @@ class FeatureImputer:
         sbp = vital_signs.get("systolic_bp", 120)
         dbp = vital_signs.get("diastolic_bp", 80)
         spo2 = vital_signs.get("spo2", 96)
-        
+
         # Optional labs
         wbc = vital_signs.get("wbc")
         lactate = vital_signs.get("lactate")
         creatinine = vital_signs.get("creatinine")
-        
+
         # Calculate continuous risk indicators (0-1 scale for smooth transitions)
         tachycardia_score = min(max(hr - 80, 0) / 50, 1.0)  # 80-130 range
         hypotension_score = min(max(120 - sbp, 0) / 40, 1.0)  # 120-80 range
@@ -44,8 +45,13 @@ class FeatureImputer:
         hypoxia_score = min(max(98 - spo2, 0) / 12, 1.0)  # 98-86 range
 
         # Continuous risk score (0.0 to 5.0)
-        risk_score = (tachycardia_score + hypotension_score + fever_score +
-                     tachypnea_score + hypoxia_score)
+        risk_score = (
+            tachycardia_score
+            + hypotension_score
+            + fever_score
+            + tachypnea_score
+            + hypoxia_score
+        )
 
         # Normalize to 0-1 for easier scaling
         risk_pct = risk_score / 5.0
@@ -79,7 +85,7 @@ class FeatureImputer:
         # Use cubic curve to delay crossing threshold until very high risk
         # Formula: 3.5 - (risk_pct^3 * 1.5) gives smooth late decline
         # 0.0→3.5, 0.5→3.31, 0.7→3.0, 1.0→2.0
-        albumin = 3.5 - ((risk_pct ** 3) * 1.5)
+        albumin = 3.5 - ((risk_pct**3) * 1.5)
 
         # Platelets - smooth decrease with risk (thrombocytopenia)
         platelets = 230.0 - (risk_pct * 100.0)
@@ -116,7 +122,7 @@ class FeatureImputer:
         # Liver enzymes
         ast = 25.0 + (risk_pct * 80.0)
         alt = 25.0 + (risk_pct * 60.0)
-        
+
         # Calculate SOFA scores based on continuous risk
         resp_sofa = min(int(hypoxia_score * 3), 2)
         cardio_sofa = min(int(hypotension_score * 3), 2)
@@ -129,7 +135,7 @@ class FeatureImputer:
         rr_trend = (rr - 16) * 0.5 if rr > 16 else 0.0
         lactate_trend = max(lactate - 1.2, 0.0)
         wbc_trend = max(wbc - 10.0, 0.0)
-        
+
         return {
             "age": age,
             "gender": 1,  # Male default
@@ -309,7 +315,6 @@ class FeatureImputer:
             "age": age,
             "gender": 1 if gender == "M" else 0,
             "bmi": 25.0,
-
             # SOFA components
             "respiratory_sofa": respiratory_sofa,
             "cardiovascular_sofa": cardiovascular_sofa,
@@ -317,11 +322,9 @@ class FeatureImputer:
             "coagulation_sofa": coagulation_sofa,
             "renal_sofa": renal_sofa,
             "neurological_sofa": neurological_sofa,
-
             # APACHE-II
             "age_points": age_points,
             "gcs_score": gcs_score,
-
             # Worst values in 24h - Vitals
             "worst_hr_24h": worst_hr_24h,
             "worst_sbp_24h": worst_sbp_24h,
@@ -329,13 +332,11 @@ class FeatureImputer:
             "worst_rr_24h": worst_rr_24h,
             "worst_map_24h": worst_map_24h,
             "worst_spo2_24h": worst_spo2_24h,
-
             # Worst values - Respiratory
             "worst_pao2_24h": worst_pao2_24h,
             "worst_paco2_24h": worst_paco2_24h,
             "worst_ph_24h": worst_ph_24h,
             "worst_fio2_24h": worst_fio2_24h,
-
             # Worst values - Labs
             "worst_sodium_24h": worst_sodium_24h,
             "worst_potassium_24h": worst_potassium_24h,
@@ -358,7 +359,6 @@ class FeatureImputer:
             "worst_ptt_24h": worst_ptt_24h,
             "worst_troponin_24h": worst_troponin_24h,
             "worst_bnp_24h": worst_bnp_24h,
-
             # Min/Max vitals
             "min_hr_24h": min_hr_24h,
             "max_hr_24h": max_hr_24h,
@@ -368,13 +368,11 @@ class FeatureImputer:
             "max_temp_24h": max_temp_24h,
             "min_rr_24h": min_rr_24h,
             "max_rr_24h": max_rr_24h,
-
             # ICU details
             "icu_type": 1,  # Medical ICU
             "icu_los_24h": min(los_hours, 24),
             "admission_source": 1,  # Emergency
             "comorbidity_count": charlson,
-
             # Flags
             "ventilation_flag": ventilation_flag,
             "vasopressor_flag": vasopressor_flag,

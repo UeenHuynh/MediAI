@@ -45,7 +45,15 @@ Questions:
 6. Recommend initial treatment protocol
 
 Please provide evidence-based recommendations with references to Surviving Sepsis Campaign guidelines.""",
-                "placeholders": ["temperature", "heart_rate", "respiratory_rate", "blood_pressure", "mental_status", "wbc", "lactate"],
+                "placeholders": [
+                    "temperature",
+                    "heart_rate",
+                    "respiratory_rate",
+                    "blood_pressure",
+                    "mental_status",
+                    "wbc",
+                    "lactate",
+                ],
             },
             "sepsis_source": {
                 "name": "Sepsis Source Investigation",
@@ -90,7 +98,14 @@ Questions:
 6. When should therapy be de-escalated?
 
 Include hospital antibiogram considerations and local resistance patterns.""",
-                "placeholders": ["infection_site", "allergies", "renal_function", "resistance_history", "recent_antibiotics", "immunosuppression"],
+                "placeholders": [
+                    "infection_site",
+                    "allergies",
+                    "renal_function",
+                    "resistance_history",
+                    "recent_antibiotics",
+                    "immunosuppression",
+                ],
             },
         },
         # 💔 MORTALITY RISK ASSESSMENT
@@ -122,7 +137,15 @@ Analysis Required:
 6. Provide prognostic information for care planning
 
 Use validated mortality prediction models (APACHE, SOFA, SAPS).""",
-                "placeholders": ["age", "admission_source", "diagnosis", "sofa_score", "apache_score", "gcs", "comorbidities"],
+                "placeholders": [
+                    "age",
+                    "admission_source",
+                    "diagnosis",
+                    "sofa_score",
+                    "apache_score",
+                    "gcs",
+                    "comorbidities",
+                ],
             },
             "code_status": {
                 "name": "Code Status & Goals of Care",
@@ -144,7 +167,12 @@ Discussion Points Needed:
 6. How to support family decision-making?
 
 Provide compassionate, clear communication strategies.""",
-                "placeholders": ["condition", "prognosis", "family_understanding", "prior_wishes"],
+                "placeholders": [
+                    "condition",
+                    "prognosis",
+                    "family_understanding",
+                    "prior_wishes",
+                ],
             },
         },
         # 🔬 LAB RESULTS INTERPRETATION
@@ -177,7 +205,17 @@ Analysis Needed:
 7. When should labs be rechecked?
 
 Prioritize by urgency and clinical impact.""",
-                "placeholders": ["potassium", "sodium", "ph", "lactate", "creatinine", "hemoglobin", "platelets", "inr", "other_labs"],
+                "placeholders": [
+                    "potassium",
+                    "sodium",
+                    "ph",
+                    "lactate",
+                    "creatinine",
+                    "hemoglobin",
+                    "platelets",
+                    "inr",
+                    "other_labs",
+                ],
             },
             "blood_gas": {
                 "name": "Blood Gas Analysis",
@@ -208,7 +246,18 @@ Questions:
 7. What treatment is required?
 
 Use systematic ABG interpretation approach.""",
-                "placeholders": ["ph", "paco2", "pao2", "hco3", "base_excess", "lactate", "sao2", "fio2", "peep", "tidal_volume"],
+                "placeholders": [
+                    "ph",
+                    "paco2",
+                    "pao2",
+                    "hco3",
+                    "base_excess",
+                    "lactate",
+                    "sao2",
+                    "fio2",
+                    "peep",
+                    "tidal_volume",
+                ],
             },
         },
         # 💊 MEDICATION & TREATMENT
@@ -241,7 +290,17 @@ Questions:
 7. When can the medication be weaned?
 
 Include evidence-based protocols and hemodynamic targets.""",
-                "placeholders": ["blood_pressure", "map", "heart_rate", "cardiac_index", "svr", "cvp", "diagnosis", "fluid_status", "cardiac_function"],
+                "placeholders": [
+                    "blood_pressure",
+                    "map",
+                    "heart_rate",
+                    "cardiac_index",
+                    "svr",
+                    "cvp",
+                    "diagnosis",
+                    "fluid_status",
+                    "cardiac_function",
+                ],
             },
             "sedation": {
                 "name": "Sedation & Analgesia Protocol",
@@ -269,7 +328,16 @@ Questions:
 6. What is the weaning plan?
 
 Follow ICU Liberation Bundle (ABCDEF Bundle) principles.""",
-                "placeholders": ["vent_mode", "rass_target", "pain_score", "cam_icu", "agitation", "renal_function", "liver_function", "contraindications"],
+                "placeholders": [
+                    "vent_mode",
+                    "rass_target",
+                    "pain_score",
+                    "cam_icu",
+                    "agitation",
+                    "renal_function",
+                    "liver_function",
+                    "contraindications",
+                ],
             },
         },
         # 🩺 DIFFERENTIAL DIAGNOSIS
@@ -300,7 +368,16 @@ Diagnostic Approach Needed:
 6. What infection control measures are needed?
 
 Use systematic "5 Lines and 5 Devices" approach.""",
-                "placeholders": ["temperature", "onset", "pattern", "icu_days", "devices", "procedures", "medications", "imaging"],
+                "placeholders": [
+                    "temperature",
+                    "onset",
+                    "pattern",
+                    "icu_days",
+                    "devices",
+                    "procedures",
+                    "medications",
+                    "imaging",
+                ],
             },
             "shock_differentiation": {
                 "name": "Shock State Differentiation",
@@ -331,7 +408,19 @@ Analysis Required:
 6. What is the prognosis?
 
 Use systematic shock classification and treatment algorithms.""",
-                "placeholders": ["blood_pressure", "map", "heart_rate", "cvp", "cardiac_output", "svr", "scvo2", "skin_findings", "urine_output", "lactate", "mental_status"],
+                "placeholders": [
+                    "blood_pressure",
+                    "map",
+                    "heart_rate",
+                    "cvp",
+                    "cardiac_output",
+                    "svr",
+                    "scvo2",
+                    "skin_findings",
+                    "urine_output",
+                    "lactate",
+                    "mental_status",
+                ],
             },
         },
         # ⚕️ CLINICAL PROCEDURES
@@ -358,7 +447,13 @@ Pre-Procedure Questions:
 7. How to maintain line and prevent CLABSI?
 
 Include evidence-based practices and infection prevention.""",
-                "placeholders": ["indication", "site", "coagulation", "anatomy", "history"],
+                "placeholders": [
+                    "indication",
+                    "site",
+                    "coagulation",
+                    "anatomy",
+                    "history",
+                ],
             },
             "intubation_prep": {
                 "name": "Intubation Preparation Checklist",
@@ -385,7 +480,14 @@ Pre-Intubation Planning:
 7. What ventilator settings initially?
 
 Use rapid sequence intubation (RSI) protocol.""",
-                "placeholders": ["airway_exam", "spo2", "blood_pressure", "mental_status", "aspiration_risk", "indication"],
+                "placeholders": [
+                    "airway_exam",
+                    "spo2",
+                    "blood_pressure",
+                    "mental_status",
+                    "aspiration_risk",
+                    "indication",
+                ],
             },
         },
         # 🚨 EMERGENCY SITUATIONS
@@ -417,7 +519,16 @@ Management Questions:
 7. When to consider termination of efforts?
 
 Follow current AHA ACLS guidelines.""",
-                "placeholders": ["rhythm", "location", "witnessed", "time_to_cpr", "suspected_cause", "duration", "cpr_quality", "medications_given"],
+                "placeholders": [
+                    "rhythm",
+                    "location",
+                    "witnessed",
+                    "time_to_cpr",
+                    "suspected_cause",
+                    "duration",
+                    "cpr_quality",
+                    "medications_given",
+                ],
             },
             "massive_transfusion": {
                 "name": "Massive Transfusion Protocol",
@@ -447,7 +558,17 @@ Protocol Questions:
 7. When to consider damage control strategy?
 
 Use balanced resuscitation and damage control principles.""",
-                "placeholders": ["bleeding_source", "blood_loss", "vital_signs", "hemoglobin", "inr", "platelets", "fibrinogen", "products_given", "ongoing_bleeding"],
+                "placeholders": [
+                    "bleeding_source",
+                    "blood_loss",
+                    "vital_signs",
+                    "hemoglobin",
+                    "inr",
+                    "platelets",
+                    "fibrinogen",
+                    "products_given",
+                    "ongoing_bleeding",
+                ],
             },
         },
     }

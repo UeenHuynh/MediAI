@@ -1,9 +1,10 @@
 """Tools for agents to interact with database."""
 
-import psycopg2
-import pandas as pd
-from typing import Dict, Any, List
 import logging
+from typing import Any, Dict, List
+
+import pandas as pd
+import psycopg2
 from sqlalchemy import create_engine
 
 logger = logging.getLogger(__name__)
@@ -75,10 +76,7 @@ class DatabaseTool:
         return pd.read_sql(query, self.conn)
 
     def insert_dataframe(
-        self,
-        df: pd.DataFrame,
-        table_name: str,
-        if_exists: str = 'append'
+        self, df: pd.DataFrame, table_name: str, if_exists: str = "append"
     ):
         """
         Insert DataFrame into table.
@@ -93,12 +91,12 @@ class DatabaseTool:
             self.engine = create_engine(self.connection_string)
 
         df.to_sql(
-            name=table_name.split('.')[1],  # table name without schema
-            schema=table_name.split('.')[0],  # schema name
+            name=table_name.split(".")[1],  # table name without schema
+            schema=table_name.split(".")[0],  # schema name
             con=self.engine,
             if_exists=if_exists,
             index=False,
-            method='multi'
+            method="multi",
         )
         logger.info(f"Inserted {len(df)} rows into {table_name}")
 

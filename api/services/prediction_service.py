@@ -14,6 +14,7 @@ import pandas as pd
 import redis
 from core.config import settings
 from services.prediction_history_service import PredictionHistoryService
+
 from models.schemas import (
     FeatureContribution,
     MortalityPredictionRequest,
@@ -47,10 +48,12 @@ class PredictionService:
                 redis_url,
                 decode_responses=True,
                 socket_timeout=5,
-                socket_connect_timeout=5
+                socket_connect_timeout=5,
             )
             self.redis_client.ping()
-            logger.info("✅ Redis connected for caching (TTL: %ss)", settings.CACHE_TTL_SECONDS)
+            logger.info(
+                "✅ Redis connected for caching (TTL: %ss)", settings.CACHE_TTL_SECONDS
+            )
         except Exception as e:
             logger.warning("Redis connection failed: %s. Caching disabled.", str(e))
             self.redis_client = None
@@ -63,7 +66,7 @@ class PredictionService:
         # Load sepsis model v2
         sepsis_model_file = os.path.join(model_path, "sepsis_lightgbm_v2.pkl")
         sepsis_features_file = os.path.join(model_path, "sepsis_feature_names_v2.pkl")
-        
+
         if os.path.exists(sepsis_model_file):
             with open(sepsis_model_file, "rb") as f:
                 self.models["sepsis"] = pickle.load(f)  # nosec B301
@@ -76,8 +79,10 @@ class PredictionService:
 
         # Load mortality model v2
         mortality_model_file = os.path.join(model_path, "mortality_lightgbm_v2.pkl")
-        mortality_features_file = os.path.join(model_path, "mortality_feature_names_v2.pkl")
-        
+        mortality_features_file = os.path.join(
+            model_path, "mortality_feature_names_v2.pkl"
+        )
+
         if os.path.exists(mortality_model_file):
             with open(mortality_model_file, "rb") as f:
                 self.models["mortality"] = pickle.load(f)  # nosec B301
@@ -87,7 +92,6 @@ class PredictionService:
             logger.info("Mortality model v2 loaded (61 features)")
         else:
             logger.warning("Mortality model v2 not found at %s", mortality_model_file)
-
 
     def _get_cache_key(self, patient_id: str, features: Dict) -> str:
         """Generate cache key from patient_id and features"""
@@ -186,7 +190,9 @@ class PredictionService:
 
         # Make prediction
         model = self.models["sepsis"]
-        probability = model.predict(features_df)[0]  # LightGBM returns probability directly
+        probability = model.predict(features_df)[
+            0
+        ]  # LightGBM returns probability directly
 
         # Calculate feature importance (simplified - would use SHAP in production)
         top_features = self._get_top_features(features_df, model, "sepsis")
@@ -221,11 +227,15 @@ class PredictionService:
                     model_version="v2",
                     model_file="sepsis_lightgbm_v2.pkl",
                     shap_values=None,  # TODO: Add SHAP values
-                    top_features={ft["feature"]: ft["importance"] for ft in top_features},
+                    top_features={
+                        ft["feature"]: ft["importance"] for ft in top_features
+                    },
                     patient_id=None,  # TODO: Extract from request if available
-                    predicted_by=None  # TODO: Get from auth
+                    predicted_by=None,  # TODO: Get from auth
                 )
-                logger.info(f"Saved sepsis prediction to database for patient {request.patient_id}")
+                logger.info(
+                    f"Saved sepsis prediction to database for patient {request.patient_id}"
+                )
             except Exception as e:
                 logger.error(f"Failed to save prediction to database: {str(e)}")
                 # Don't fail the request if DB save fails
@@ -257,7 +267,9 @@ class PredictionService:
         # Make prediction (similar to sepsis)
         features_df = pd.DataFrame([features_dict])
         model = self.models["mortality"]
-        probability = model.predict(features_df)[0]  # LightGBM returns probability directly
+        probability = model.predict(features_df)[
+            0
+        ]  # LightGBM returns probability directly
 
         top_features = self._get_top_features(features_df, model, "mortality")
         risk_level = self._categorize_risk(probability)
@@ -289,11 +301,15 @@ class PredictionService:
                     model_version="v2",
                     model_file="mortality_lightgbm_v2.pkl",
                     shap_values=None,  # TODO: Add SHAP values
-                    top_features={ft["feature"]: ft["importance"] for ft in top_features},
+                    top_features={
+                        ft["feature"]: ft["importance"] for ft in top_features
+                    },
                     patient_id=None,  # TODO: Extract from request if available
-                    predicted_by=None  # TODO: Get from auth
+                    predicted_by=None,  # TODO: Get from auth
                 )
-                logger.info(f"Saved mortality prediction to database for patient {request.patient_id}")
+                logger.info(
+                    f"Saved mortality prediction to database for patient {request.patient_id}"
+                )
             except Exception as e:
                 logger.error(f"Failed to save prediction to database: {str(e)}")
                 # Don't fail the request if DB save fails

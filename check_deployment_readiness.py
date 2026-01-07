@@ -6,17 +6,17 @@ This script validates that the multi-agent system is properly configured
 and ready for local deployment.
 """
 
-import sys
-import os
-from pathlib import Path
 import importlib.util
+import os
+import sys
+from pathlib import Path
 
 
 def print_header(title):
     """Print section header."""
     print(f"\n{'=' * 80}")
     print(f"  {title}")
-    print('=' * 80)
+    print("=" * 80)
 
 
 def check_mark(status):
@@ -34,16 +34,16 @@ def check_directory_structure():
     print_header("1. Directory Structure")
 
     required_files = {
-        'agents/core/base_agent.py': 'BaseAgent implementation',
-        'agents/roles/data_engineer.py': 'Data engineering agents',
-        'agents/crews/data_pipeline_crew.py': 'DataPipelineCrew',
-        'agents/tools/database_tool.py': 'DatabaseTool',
-        'agents/tools/file_tool.py': 'FileTool',
-        'agents/orchestrator.py': 'WorkflowOrchestrator',
-        'agents/requirements.txt': 'Agent dependencies',
-        'run_agent_demo.py': 'Demo script',
-        'AGENT_DEPLOYMENT_GUIDE.md': 'Deployment guide',
-        'AGENT_IMPLEMENTATION_SUMMARY.md': 'Implementation summary',
+        "agents/core/base_agent.py": "BaseAgent implementation",
+        "agents/roles/data_engineer.py": "Data engineering agents",
+        "agents/crews/data_pipeline_crew.py": "DataPipelineCrew",
+        "agents/tools/database_tool.py": "DatabaseTool",
+        "agents/tools/file_tool.py": "FileTool",
+        "agents/orchestrator.py": "WorkflowOrchestrator",
+        "agents/requirements.txt": "Agent dependencies",
+        "run_agent_demo.py": "Demo script",
+        "AGENT_DEPLOYMENT_GUIDE.md": "Deployment guide",
+        "AGENT_IMPLEMENTATION_SUMMARY.md": "Implementation summary",
     }
 
     all_exist = True
@@ -60,8 +60,8 @@ def check_sample_data():
     """Check if sample data exists."""
     print_header("2. Sample Data")
 
-    data_dir = Path('data/sample')
-    required_files = ['patients.csv', 'icustays.csv', 'chartevents.csv']
+    data_dir = Path("data/sample")
+    required_files = ["patients.csv", "icustays.csv", "chartevents.csv"]
 
     if not data_dir.exists():
         print("✗ Sample data directory not found")
@@ -89,12 +89,12 @@ def check_python_imports():
     print_header("3. Python Imports")
 
     modules_to_check = [
-        ('agents.core.base_agent', 'BaseAgent'),
-        ('agents.roles.data_engineer', 'DataIngestionAgent'),
-        ('agents.crews.data_pipeline_crew', 'DataPipelineCrew'),
-        ('agents.orchestrator', 'WorkflowOrchestrator'),
-        ('agents.tools.database_tool', 'DatabaseTool'),
-        ('agents.tools.file_tool', 'FileTool'),
+        ("agents.core.base_agent", "BaseAgent"),
+        ("agents.roles.data_engineer", "DataIngestionAgent"),
+        ("agents.crews.data_pipeline_crew", "DataPipelineCrew"),
+        ("agents.orchestrator", "WorkflowOrchestrator"),
+        ("agents.tools.database_tool", "DatabaseTool"),
+        ("agents.tools.file_tool", "FileTool"),
     ]
 
     all_imported = True
@@ -115,20 +115,20 @@ def check_dependencies():
     print_header("4. Python Dependencies")
 
     required_packages = [
-        'pandas',
-        'psycopg2',
-        'sqlalchemy',
-        'tqdm',
-        'dotenv',
+        "pandas",
+        "psycopg2",
+        "sqlalchemy",
+        "tqdm",
+        "dotenv",
     ]
 
     all_installed = True
     for package_name in required_packages:
         # Handle special cases
-        if package_name == 'psycopg2':
-            spec = importlib.util.find_spec('psycopg2')
-        elif package_name == 'dotenv':
-            spec = importlib.util.find_spec('dotenv')
+        if package_name == "psycopg2":
+            spec = importlib.util.find_spec("psycopg2")
+        elif package_name == "dotenv":
+            spec = importlib.util.find_spec("dotenv")
         else:
             spec = importlib.util.find_spec(package_name)
 
@@ -146,9 +146,9 @@ def check_configuration():
     print_header("5. Configuration Files")
 
     config_files = {
-        '.env': 'Environment variables',
-        'docker-compose.yml': 'Docker services',
-        'Makefile': 'Build commands',
+        ".env": "Environment variables",
+        "docker-compose.yml": "Docker services",
+        "Makefile": "Build commands",
     }
 
     all_exist = True
@@ -165,19 +165,19 @@ def check_makefile_commands():
     """Check if Makefile has agent commands."""
     print_header("6. Makefile Agent Commands")
 
-    if not check_file_exists('Makefile'):
+    if not check_file_exists("Makefile"):
         print("✗ Makefile not found")
         return False
 
-    with open('Makefile', 'r') as f:
+    with open("Makefile", "r") as f:
         makefile_content = f.read()
 
     required_commands = [
-        'agents-demo',
-        'agents-ingest',
-        'agents-transform',
-        'agents-quality-check',
-        'demo',
+        "agents-demo",
+        "agents-ingest",
+        "agents-transform",
+        "agents-quality-check",
+        "demo",
     ]
 
     all_exist = True

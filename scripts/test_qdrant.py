@@ -124,6 +124,7 @@ def test_create_collection():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -135,9 +136,9 @@ def test_vector_operations():
     print("=" * 60)
 
     try:
-        from qdrant_client import QdrantClient
-        from qdrant_client.models import Distance, VectorParams, PointStruct
         import numpy as np
+        from qdrant_client import QdrantClient
+        from qdrant_client.models import Distance, PointStruct, VectorParams
 
         url = os.getenv("QDRANT_URL")
         api_key = os.getenv("QDRANT_API_KEY")
@@ -187,9 +188,7 @@ def test_vector_operations():
         ]
 
         points = [
-            PointStruct(
-                id=doc["id"], vector=doc["vector"], payload=doc["payload"]
-            )
+            PointStruct(id=doc["id"], vector=doc["vector"], payload=doc["payload"])
             for doc in test_docs
         ]
 
@@ -221,6 +220,7 @@ def test_vector_operations():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

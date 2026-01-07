@@ -17,11 +17,11 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+from langchain_aws import ChatBedrock
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_aws import ChatBedrock
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 from presidio_analyzer import AnalyzerEngine
@@ -44,14 +44,14 @@ from api.services.langchain_callbacks import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 class Citation(BaseModel):
     """Citation model for structured output."""
+
     number: str = Field(..., description="Citation number (e.g., '1', '2')")
     source: str = Field(..., description="Source name/identifier")
     url: Optional[str] = Field(None, description="URL to the source")
@@ -60,25 +60,19 @@ class Citation(BaseModel):
 
 class MedicalResponse(BaseModel):
     """Structured medical response model."""
+
     answer: str = Field(..., description="The medical response text")
     citations: List[Citation] = Field(
-        default_factory=list,
-        description="List of citations used in the response"
+        default_factory=list, description="List of citations used in the response"
     )
     confidence: float = Field(
-        default=0.0,
-        ge=0.0,
-        le=1.0,
-        description="Confidence score (0-1)"
+        default=0.0, ge=0.0, le=1.0, description="Confidence score (0-1)"
     )
     disclaimer: str = Field(
         default="⚠️ This is informational only. Consult healthcare provider.",
-        description="Medical disclaimer"
+        description="Medical disclaimer",
     )
-    redacted_query: Optional[str] = Field(
-        None,
-        description="Query with PII redacted"
-    )
+    redacted_query: Optional[str] = Field(None, description="Query with PII redacted")
 
 
 class ProductionMedicalChatbot:
@@ -115,7 +109,7 @@ class ProductionMedicalChatbot:
         "US_PASSPORT",
         "US_DRIVER_LICENSE",
         "DATE_TIME",  # Dates can be identifying
-        "LOCATION",   # Specific locations can be PII
+        "LOCATION",  # Specific locations can be PII
     ]
 
     def __init__(
@@ -180,10 +174,12 @@ class ProductionMedicalChatbot:
         self.message_history = ChatMessageHistory()
 
         # Create structured prompt template
-        self.prompt = ChatPromptTemplate.from_messages([
-            ("system", self._get_system_prompt()),
-            ("human", self._get_user_template()),
-        ])
+        self.prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", self._get_system_prompt()),
+                ("human", self._get_user_template()),
+            ]
+        )
 
         # Create LCEL chain with callbacks
         callbacks = [self.callback_handler] if self.callback_handler else []
@@ -191,9 +187,7 @@ class ProductionMedicalChatbot:
 
         # Modern LangChain 1.x LCEL chain
         self.chain = (
-            self.prompt
-            | self.llm.with_config({"callbacks": callbacks})
-            | output_parser
+            self.prompt | self.llm.with_config({"callbacks": callbacks}) | output_parser
         )
 
         logger.info("ProductionMedicalChatbot initialized successfully")
@@ -265,7 +259,7 @@ class ProductionMedicalChatbot:
             # Analyze text for PII
             results = self.analyzer.analyze(
                 text=text,
-                language='en',
+                language="en",
                 entities=self.PII_ENTITIES,
             )
 
@@ -367,9 +361,7 @@ Provide a structured response following the system guidelines with proper citati
         return context
 
     def _extract_citations(
-        self,
-        response: str,
-        source_docs: Optional[List[Dict[str, Any]]] = None
+        self, response: str, source_docs: Optional[List[Dict[str, Any]]] = None
     ) -> List[Citation]:
         """
         Extract citations from LLM response and enrich with metadata.
@@ -382,7 +374,7 @@ Provide a structured response following the system guidelines with proper citati
             List of Citation objects
         """
         # Find all citation numbers in the response
-        citation_numbers = re.findall(r'\[(\d+)\]', response)
+        citation_numbers = re.findall(r"\[(\d+)\]", response)
         unique_citations = sorted(set(citation_numbers), key=int)
 
         citations = []
@@ -392,18 +384,22 @@ Provide a structured response following the system guidelines with proper citati
 
             if source_docs and idx < len(source_docs):
                 doc = source_docs[idx]
-                citations.append(Citation(
-                    number=num,
-                    source=doc.get("source", f"Source {num}"),
-                    url=doc.get("url"),
-                    pmid=doc.get("pmid"),
-                ))
+                citations.append(
+                    Citation(
+                        number=num,
+                        source=doc.get("source", f"Source {num}"),
+                        url=doc.get("url"),
+                        pmid=doc.get("pmid"),
+                    )
+                )
             else:
                 # Fallback if source metadata not available
-                citations.append(Citation(
-                    number=num,
-                    source=f"Source {num}",
-                ))
+                citations.append(
+                    Citation(
+                        number=num,
+                        source=f"Source {num}",
+                    )
+                )
 
         return citations
 
@@ -413,11 +409,7 @@ Provide a structured response following the system guidelines with proper citati
         wait=wait_exponential(multiplier=1, min=2, max=10),
         reraise=True,
     )
-    def _generate_with_retry(
-        self,
-        question: str,
-        context: str
-    ) -> str:
+    def _generate_with_retry(self, question: str, context: str) -> str:
         """
         Generate response with retry logic.
 
@@ -432,10 +424,12 @@ Provide a structured response following the system guidelines with proper citati
             Exception: If all retries fail
         """
         # Modern LangChain 1.x API using invoke()
-        return self.chain.invoke({
-            "question": question,
-            "context": context,
-        })
+        return self.chain.invoke(
+            {
+                "question": question,
+                "context": context,
+            }
+        )
 
     def query(
         self,
@@ -473,14 +467,16 @@ Provide a structured response following the system guidelines with proper citati
             redacted_question, pii_entities = self._redact_pii(question)
 
             if pii_entities:
-                logger.info(f"Query contained PII: {len(pii_entities)} entities redacted")
+                logger.info(
+                    f"Query contained PII: {len(pii_entities)} entities redacted"
+                )
 
                 # Log PII detection event for compliance
                 if self.pii_callback:
                     self.pii_callback.log_pii_detection(
                         query=question,
                         entities_detected=pii_entities,
-                        redacted_query=redacted_question
+                        redacted_query=redacted_question,
                     )
 
             # Step 2: Check token budget
@@ -577,9 +573,9 @@ Provide a structured response following the system guidelines with proper citati
 
 # Module-level utility functions
 
+
 def create_medical_chatbot(
-    provider: Optional[str] = None,
-    **kwargs
+    provider: Optional[str] = None, **kwargs
 ) -> ProductionMedicalChatbot:
     """
     Factory function to create medical chatbot with auto provider detection.

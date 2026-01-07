@@ -11,6 +11,7 @@ class TestQdrantStore:
     def test_import_qdrant_store(self):
         """Test that Qdrant store can be imported"""
         from api.core.qdrant_store import QdrantVectorStore
+
         assert QdrantVectorStore is not None
 
     def test_qdrant_store_init_without_credentials(self):
@@ -51,6 +52,7 @@ class TestHybridRAG:
     def test_import_hybrid_rag(self):
         """Test that hybrid RAG can be imported"""
         from api.services.hybrid_rag import HybridRAGPipeline
+
         assert HybridRAGPipeline is not None
 
     def test_hybrid_rag_init(self):
@@ -91,7 +93,7 @@ class TestHybridRAG:
                 use_cag=True,
                 use_qdrant=False,
                 use_pubmed=False,
-                top_k=3
+                top_k=3,
             )
             assert isinstance(results, list)
             # Should return results from CAG if it contains sepsis info
@@ -105,6 +107,7 @@ class TestQdrantInitialization:
     def test_script_exists(self):
         """Test that initialization script exists"""
         from pathlib import Path
+
         script_path = Path("scripts/initialize_qdrant.py")
         assert script_path.exists()
 
@@ -126,6 +129,7 @@ class TestEmbeddingService:
     def test_embedding_service_import(self):
         """Test embedding service can be imported"""
         from api.services.embedding_service import EmbeddingService
+
         assert EmbeddingService is not None
 
     def test_embedding_service_sentence_transformers(self):
@@ -168,8 +172,9 @@ class TestEmbeddingService:
 
     def test_embedding_service_similarity(self):
         """Test similarity computation"""
-        from api.services.embedding_service import EmbeddingService
         import numpy as np
+
+        from api.services.embedding_service import EmbeddingService
 
         try:
             service = EmbeddingService(provider="sentence-transformers")

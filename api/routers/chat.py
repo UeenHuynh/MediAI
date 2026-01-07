@@ -7,19 +7,18 @@ Chat sessions and messages are persisted to database.
 
 import logging
 import os
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
-
-from core.rbac import require_authenticated, UserWithRole, require_permission
 from core.config import settings
 from core.database import get_db
+from core.rbac import UserWithRole, require_authenticated, require_permission
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from schemas.chat import ChatMessageResponse, ChatSessionResponse
 from services.chat_service import ChatService
-from schemas.chat import ChatSessionResponse, ChatMessageResponse
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +26,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 # Initialize chatbot if enabled
 _chatbot_instance = None
+
 
 def get_chatbot():
     """Get or create chatbot instance"""
@@ -47,7 +47,9 @@ def get_chatbot():
                 enable_pii_redaction=True,
                 enable_callbacks=True,
             )
-            logger.info(f"✅ ProductionMedicalChatbot initialized with provider={provider}")
+            logger.info(
+                f"✅ ProductionMedicalChatbot initialized with provider={provider}"
+            )
         except Exception as e:
             logger.error(f"❌ Failed to initialize chatbot: {e}")
             _chatbot_instance = None
@@ -57,8 +59,10 @@ def get_chatbot():
 
 # --- Pydantic Models ---
 
+
 class Citation(BaseModel):
     """Source citation for an answer"""
+
     number: int
     source: str
     url: Optional[str] = None
@@ -67,6 +71,7 @@ class Citation(BaseModel):
 
 class ChatMessage(BaseModel):
     """Single chat message"""
+
     role: str = Field(..., description="'user' or 'assistant'")
     content: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -75,16 +80,26 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     """Chat request payload"""
-    message: str = Field(..., min_length=1, max_length=2000, description="User's question")
-    session_id: Optional[str] = Field(None, description="Session ID for conversation continuity")
-    include_sources: bool = Field(True, description="Whether to include source citations")
+
+    message: str = Field(
+        ..., min_length=1, max_length=2000, description="User's question"
+    )
+    session_id: Optional[str] = Field(
+        None, description="Session ID for conversation continuity"
+    )
+    include_sources: bool = Field(
+        True, description="Whether to include source citations"
+    )
 
 
 class ChatResponse(BaseModel):
     """Chat response payload"""
+
     answer: str
     citations: List[Citation] = []
-    disclaimer: str = "⚠️ This information is for educational purposes only. Always consult a healthcare professional."
+    disclaimer: str = (
+        "⚠️ This information is for educational purposes only. Always consult a healthcare professional."
+    )
     session_id: str
     redacted_query: Optional[str] = None
     processing_time_ms: int = 0
@@ -92,6 +107,7 @@ class ChatResponse(BaseModel):
 
 class ConversationHistory(BaseModel):
     """Full conversation history"""
+
     session_id: str
     messages: List[ChatMessage]
     created_at: datetime
@@ -100,13 +116,14 @@ class ConversationHistory(BaseModel):
 
 # --- Mock implementation (fallback when chatbot is disabled) ---
 
+
 def get_mock_response(question: str) -> tuple[str, List[Citation]]:
     """
     Generate a mock medical response.
     In production, this would call ProductionMedicalChatbot.query()
     """
     question_lower = question.lower()
-    
+
     if "sepsis" in question_lower:
         return (
             "Sepsis is a life-threatening condition caused by the body's response to infection. "
@@ -115,11 +132,15 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
             "sepsis severity. Treatment typically involves antibiotics, IV fluids, and "
             "vasopressors if needed. Early recognition and treatment significantly improve outcomes.",
             [
-                Citation(number=1, source="CDC Sepsis Guidelines 2024", url="https://www.cdc.gov/sepsis"),
+                Citation(
+                    number=1,
+                    source="CDC Sepsis Guidelines 2024",
+                    url="https://www.cdc.gov/sepsis",
+                ),
                 Citation(number=2, source="Surviving Sepsis Campaign", pmid="34599691"),
-            ]
+            ],
         )
-    
+
     elif "mortality" in question_lower or "death" in question_lower:
         return (
             "ICU mortality prediction uses various scoring systems including APACHE II, "
@@ -128,11 +149,17 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
             "Machine learning models can provide more accurate predictions by considering "
             "multiple variables simultaneously.",
             [
-                Citation(number=1, source="APACHE II Score Reference", url="https://www.mdcalc.com/apache-ii-score"),
-                Citation(number=2, source="Critical Care Medicine Journal", pmid="28098591"),
-            ]
+                Citation(
+                    number=1,
+                    source="APACHE II Score Reference",
+                    url="https://www.mdcalc.com/apache-ii-score",
+                ),
+                Citation(
+                    number=2, source="Critical Care Medicine Journal", pmid="28098591"
+                ),
+            ],
         )
-    
+
     elif "blood pressure" in question_lower or "hypertension" in question_lower:
         return (
             "Normal blood pressure is typically considered less than 120/80 mmHg. "
@@ -140,10 +167,14 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
             "In ICU settings, mean arterial pressure (MAP) is often monitored, with a target "
             "typically ≥65 mmHg for adequate organ perfusion.",
             [
-                Citation(number=1, source="AHA Hypertension Guidelines", url="https://www.heart.org"),
-            ]
+                Citation(
+                    number=1,
+                    source="AHA Hypertension Guidelines",
+                    url="https://www.heart.org",
+                ),
+            ],
         )
-    
+
     else:
         return (
             "Thank you for your question. As a medical AI assistant, I can provide "
@@ -151,11 +182,12 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
             "Please note that this information is for educational purposes only and should not "
             "replace professional medical advice. For specific health concerns, please consult "
             "a qualified healthcare provider.",
-            []
+            [],
         )
 
 
 # --- Endpoints ---
+
 
 @router.post("", response_model=ChatResponse)
 async def send_message(
@@ -165,10 +197,10 @@ async def send_message(
 ):
     """
     Send a message to the medical AI assistant.
-    
+
     The assistant uses RAG (Retrieval-Augmented Generation) to provide
     evidence-based responses with source citations.
-    
+
     Messages are persisted to the database for conversation history.
     """
     import time
@@ -177,9 +209,7 @@ async def send_message(
 
     # Get or create session
     session, is_new = ChatService.get_or_create_session(
-        db=db,
-        session_id_str=request.session_id,
-        user_id=user.id
+        db=db, session_id_str=request.session_id, user_id=user.id
     )
 
     session_id_str = str(session.session_id)
@@ -194,7 +224,9 @@ async def send_message(
 
     try:
         # Get recent messages for context
-        recent_messages = ChatService.get_recent_messages(db, session.session_id, count=5)
+        recent_messages = ChatService.get_recent_messages(
+            db, session.session_id, count=5
+        )
         conversation_history = [(msg.role, msg.content) for msg in recent_messages]
 
         # Get chatbot instance
@@ -209,17 +241,22 @@ async def send_message(
                     conversation_history=conversation_history,
                 )
 
-                answer = result.get("answer", "I apologize, but I'm unable to generate a response at this time.")
+                answer = result.get(
+                    "answer",
+                    "I apologize, but I'm unable to generate a response at this time.",
+                )
 
                 # Convert citations format
                 citations = []
                 for i, citation in enumerate(result.get("citations", []), 1):
-                    citations.append(Citation(
-                        number=i,
-                        source=citation.get("source", "Unknown"),
-                        url=citation.get("url"),
-                        pmid=citation.get("pmid"),
-                    ))
+                    citations.append(
+                        Citation(
+                            number=i,
+                            source=citation.get("source", "Unknown"),
+                            url=citation.get("url"),
+                            pmid=citation.get("pmid"),
+                        )
+                    )
 
                 redacted_query = result.get("redacted_query")
                 model_name = result.get("model_name", "unknown")
@@ -242,7 +279,9 @@ async def send_message(
         processing_time = int((time.time() - start_time) * 1000)
 
         # Save assistant message to database
-        sources_dict = {"citations": [c.model_dump() for c in citations]} if citations else None
+        sources_dict = (
+            {"citations": [c.model_dump() for c in citations]} if citations else None
+        )
 
         ChatService.add_message(
             db=db,
@@ -297,12 +336,14 @@ async def get_conversation_history(
             for c in msg.sources["citations"]:
                 citations.append(Citation(**c))
 
-        messages.append(ChatMessage(
-            role=msg.role,
-            content=msg.content,
-            timestamp=msg.created_at,
-            citations=citations,
-        ))
+        messages.append(
+            ChatMessage(
+                role=msg.role,
+                content=msg.content,
+                timestamp=msg.created_at,
+                citations=citations,
+            )
+        )
 
     return ConversationHistory(
         session_id=session_id,

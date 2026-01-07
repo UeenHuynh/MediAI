@@ -2,19 +2,21 @@
 Simplified prediction endpoints for web UI
 Requires only basic vitals, uses smart feature imputation
 """
+
 import logging
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
 from typing import Optional
 
-from core.rbac import require_permission, UserWithRole
+from core.rbac import UserWithRole, require_permission
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 from services.feature_imputation import FeatureImputer
 from services.prediction_service import PredictionService
+
 from models.schemas import (
-    SepsisPredictionRequest,
-    SepsisFeatures,
-    MortalityPredictionRequest,
     MortalityFeatures,
+    MortalityPredictionRequest,
+    SepsisFeatures,
+    SepsisPredictionRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -27,6 +29,7 @@ prediction_service = PredictionService()
 
 class SimplifiedSepsisRequest(BaseModel):
     """Simplified sepsis prediction - only basic vitals needed"""
+
     patient_id: Optional[str] = None
     age: int = Field(..., ge=18, le=120)
     heart_rate: float = Field(..., ge=0, le=300)
@@ -42,6 +45,7 @@ class SimplifiedSepsisRequest(BaseModel):
 
 class SimplifiedMortalityRequest(BaseModel):
     """Simplified mortality prediction"""
+
     patient_id: Optional[str] = None
     age: int = Field(..., ge=18, le=120)
     gender: str = Field(..., description="M or F")
@@ -59,14 +63,14 @@ async def predict_sepsis_simplified(
 ):
     """
     Simplified sepsis prediction endpoint
-    
+
     Requires only basic vitals - backend will impute missing features
     """
     import time
     from datetime import datetime
-    
+
     patient_id = request.patient_id or f"WEB_{int(time.time())}"
-    
+
     # Convert to dict for imputation
     vital_signs = {
         "age": request.age,
@@ -80,19 +84,18 @@ async def predict_sepsis_simplified(
         "lactate": request.lactate,
         "creatinine": request.creatinine,
     }
-    
+
     # Impute full 42 features
     full_features = imputer.impute_sepsis_features(vital_signs)
-    
+
     # Create full prediction request
     sepsis_request = SepsisPredictionRequest(
-        patient_id=patient_id,
-        features=SepsisFeatures(**full_features)
+        patient_id=patient_id, features=SepsisFeatures(**full_features)
     )
-    
+
     # Call prediction service
     result = await prediction_service.predict_sepsis(sepsis_request, None)
-    
+
     return result
 
 
@@ -126,8 +129,7 @@ async def predict_mortality_simplified(
 
     # Create full prediction request
     mortality_request = MortalityPredictionRequest(
-        patient_id=patient_id,
-        features=MortalityFeatures(**full_features)
+        patient_id=patient_id, features=MortalityFeatures(**full_features)
     )
 
     # Call prediction service

@@ -2,18 +2,21 @@
 Load sample data into PostgreSQL database
 """
 
+import os
+from pathlib import Path
+
 import pandas as pd
 import psycopg2
-from psycopg2.extras import execute_values
-from pathlib import Path
-import os
 from dotenv import load_dotenv
+from psycopg2.extras import execute_values
 
 # Load environment variables
 load_dotenv()
 
 # Configuration
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres123@localhost:5432/mimic_iv')
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://postgres:postgres123@localhost:5432/mimic_iv"
+)
 DATA_DIR = Path(__file__).parent.parent / "data" / "sample"
 
 
@@ -22,7 +25,7 @@ def get_connection():
     return psycopg2.connect(DATABASE_URL)
 
 
-def load_table(conn, table_name, csv_file, schema='raw'):
+def load_table(conn, table_name, csv_file, schema="raw"):
     """Load CSV file into PostgreSQL table"""
     print(f"Loading {table_name}...")
 
@@ -30,7 +33,7 @@ def load_table(conn, table_name, csv_file, schema='raw'):
     df = pd.read_csv(csv_file)
 
     # Prepare data
-    columns = ', '.join(df.columns)
+    columns = ", ".join(df.columns)
     values = [tuple(x) for x in df.values]
 
     # Insert data
@@ -40,9 +43,7 @@ def load_table(conn, table_name, csv_file, schema='raw'):
 
         # Insert new data
         execute_values(
-            cur,
-            f"INSERT INTO {schema}.{table_name} ({columns}) VALUES %s",
-            values
+            cur, f"INSERT INTO {schema}.{table_name} ({columns}) VALUES %s", values
         )
 
     conn.commit()
@@ -67,9 +68,9 @@ def main():
         print(f"✓ Connected to database")
 
         # Load tables
-        load_table(conn, 'patients', DATA_DIR / 'patients.csv')
-        load_table(conn, 'icustays', DATA_DIR / 'icustays.csv')
-        load_table(conn, 'chartevents', DATA_DIR / 'chartevents.csv')
+        load_table(conn, "patients", DATA_DIR / "patients.csv")
+        load_table(conn, "icustays", DATA_DIR / "icustays.csv")
+        load_table(conn, "chartevents", DATA_DIR / "chartevents.csv")
 
         conn.close()
 

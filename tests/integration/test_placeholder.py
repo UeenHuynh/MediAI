@@ -19,7 +19,8 @@ def test_api_imports():
     """Test that API modules can be imported"""
     try:
         from api import main_simple
-        assert hasattr(main_simple, 'app')
+
+        assert hasattr(main_simple, "app")
     except ImportError:
         pytest.skip("API not available")
 
@@ -29,7 +30,8 @@ def test_services_imports():
     """Test that service modules can be imported"""
     try:
         from api.services import prediction_service
-        assert hasattr(prediction_service, 'PredictionService')
+
+        assert hasattr(prediction_service, "PredictionService")
     except ImportError:
         pytest.skip("Services not available")
 
@@ -39,8 +41,9 @@ def test_chatbot_imports():
     """Test that chatbot modules can be imported"""
     try:
         from api.services import llm_provider, pii_masker, rate_limiter
-        assert hasattr(llm_provider, 'LLMOrchestrator')
-        assert hasattr(pii_masker, 'PIIMasker')
-        assert hasattr(rate_limiter, 'RateLimiter')
+
+        assert hasattr(llm_provider, "LLMOrchestrator")
+        assert hasattr(pii_masker, "PIIMasker")
+        assert hasattr(rate_limiter, "RateLimiter")
     except ImportError:
         pytest.skip("Chatbot services not available")

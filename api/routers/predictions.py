@@ -7,16 +7,17 @@ import logging
 from core.database import get_db
 from core.security import User, get_current_active_user
 from fastapi import APIRouter, Depends, HTTPException, Request
+from services.prediction_service import PredictionService
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from sqlalchemy.orm import Session
+
 from models.schemas import (
     MortalityPredictionRequest,
     MortalityPredictionResponse,
     SepsisPredictionRequest,
     SepsisPredictionResponse,
 )
-from services.prediction_service import PredictionService
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -44,7 +45,9 @@ async def predict_sepsis(
         - recommendation: Clinical recommendation based on risk level
     """
     try:
-        logger.info("Sepsis prediction request for patient: %s", sepsis_request.patient_id)
+        logger.info(
+            "Sepsis prediction request for patient: %s", sepsis_request.patient_id
+        )
 
         # Get prediction
         result = await prediction_service.predict_sepsis(sepsis_request, db)
@@ -78,7 +81,9 @@ async def predict_mortality(
         - recommendation: Clinical recommendation based on risk level
     """
     try:
-        logger.info("Mortality prediction request for patient: %s", mortality_request.patient_id)
+        logger.info(
+            "Mortality prediction request for patient: %s", mortality_request.patient_id
+        )
 
         # Get prediction
         result = await prediction_service.predict_mortality(mortality_request, db)

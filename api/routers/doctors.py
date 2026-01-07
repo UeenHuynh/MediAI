@@ -5,19 +5,20 @@ Provides endpoints for listing and retrieving doctor information.
 """
 
 from typing import List, Optional
+
+from core.rbac import UserWithRole, require_authenticated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-
-from core.rbac import require_authenticated, UserWithRole
-
 
 router = APIRouter(prefix="/doctors", tags=["doctors"])
 
 
 # --- Pydantic Models ---
 
+
 class DoctorBase(BaseModel):
     """Base doctor schema"""
+
     name: str
     specialty: str
     email: str
@@ -29,17 +30,19 @@ class DoctorBase(BaseModel):
 
 class DoctorResponse(DoctorBase):
     """Doctor response with ID"""
+
     id: int
     years_experience: int = 0
     rating: float = 4.5
     patients_count: int = 0
-    
+
     class Config:
         from_attributes = True
 
 
 class DoctorListResponse(BaseModel):
     """Paginated list of doctors"""
+
     doctors: List[DoctorResponse]
     total: int
     page: int
@@ -119,6 +122,7 @@ MOCK_DOCTORS = [
 
 # --- Endpoints ---
 
+
 @router.get("", response_model=DoctorListResponse)
 async def list_doctors(
     page: int = Query(1, ge=1, description="Page number"),
@@ -130,7 +134,7 @@ async def list_doctors(
 ):
     """
     List all doctors with pagination and filtering.
-    
+
     - **page**: Page number (starting from 1)
     - **page_size**: Number of items per page (max 50)
     - **specialty**: Filter by specialty
@@ -139,22 +143,22 @@ async def list_doctors(
     """
     # Filter doctors
     filtered = MOCK_DOCTORS.copy()
-    
+
     if specialty:
         filtered = [d for d in filtered if specialty.lower() in d.specialty.lower()]
-    
+
     if available is not None:
         filtered = [d for d in filtered if d.available == available]
-    
+
     if search:
         filtered = [d for d in filtered if search.lower() in d.name.lower()]
-    
+
     # Pagination
     total = len(filtered)
     start = (page - 1) * page_size
     end = start + page_size
     paginated = filtered[start:end]
-    
+
     return DoctorListResponse(
         doctors=paginated,
         total=total,
@@ -170,13 +174,13 @@ async def get_doctor(
 ):
     """
     Get a specific doctor by ID.
-    
+
     - **doctor_id**: The unique identifier of the doctor
     """
     for doctor in MOCK_DOCTORS:
         if doctor.id == doctor_id:
             return doctor
-    
+
     raise HTTPException(status_code=404, detail="Doctor not found")
 
 
@@ -187,7 +191,7 @@ async def get_doctor_schedule(
 ):
     """
     Get a doctor's availability schedule.
-    
+
     Returns mock schedule data.
     """
     # Find doctor
@@ -196,10 +200,10 @@ async def get_doctor_schedule(
         if d.id == doctor_id:
             doctor = d
             break
-    
+
     if not doctor:
         raise HTTPException(status_code=404, detail="Doctor not found")
-    
+
     # Mock schedule
     return {
         "doctor_id": doctor_id,

@@ -3,10 +3,11 @@ Magic Prompt Generator Component
 Interactive UI for selecting and customizing medical prompt templates
 """
 
-import streamlit as st
-from typing import Optional, Dict
 import sys
 from pathlib import Path
+from typing import Dict, Optional
+
+import streamlit as st
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -32,7 +33,7 @@ def show_magic_prompt_generator() -> Optional[str]:
         "🏥 Select Category",
         options=list(categories.keys()),
         format_func=lambda x: categories[x],
-        help="Choose the clinical area for your question"
+        help="Choose the clinical area for your question",
     )
 
     # Get templates for selected category
@@ -48,7 +49,7 @@ def show_magic_prompt_generator() -> Optional[str]:
         "📋 Select Template",
         options=list(template_names.keys()),
         format_func=lambda x: template_names[x],
-        help="Choose a specific clinical scenario"
+        help="Choose a specific clinical scenario",
     )
 
     template_data = templates[template_key]
@@ -58,7 +59,9 @@ def show_magic_prompt_generator() -> Optional[str]:
 
     # Expandable section for data input
     with st.expander("📝 Fill in Patient Data (Optional)", expanded=True):
-        st.markdown("*You can fill in the available data. Leave fields blank to keep as placeholders.*")
+        st.markdown(
+            "*You can fill in the available data. Leave fields blank to keep as placeholders.*"
+        )
 
         placeholders = template_data.get("placeholders", [])
         user_values = {}
@@ -74,7 +77,7 @@ def show_magic_prompt_generator() -> Optional[str]:
                     value = st.text_input(
                         label,
                         key=f"prompt_field_{template_key}_{placeholder}",
-                        placeholder=f"Enter {label.lower()}..."
+                        placeholder=f"Enter {label.lower()}...",
                     )
                     if value:
                         user_values[placeholder] = value
@@ -82,30 +85,28 @@ def show_magic_prompt_generator() -> Optional[str]:
     # Preview section
     with st.expander("👀 Preview Generated Prompt", expanded=False):
         preview_prompt = MagicPromptTemplates.format_template(
-            selected_category,
-            template_key,
-            **user_values
+            selected_category, template_key, **user_values
         )
         st.text_area(
             "Generated Prompt:",
             value=preview_prompt,
             height=300,
             disabled=True,
-            key=f"preview_{template_key}"
+            key=f"preview_{template_key}",
         )
 
     # Action buttons
     col1, col2, col3 = st.columns([1, 1, 1])
 
     with col2:
-        if st.button("✨ Generate & Use This Prompt",
-                     use_container_width=True,
-                     type="primary",
-                     key=f"generate_{template_key}"):
+        if st.button(
+            "✨ Generate & Use This Prompt",
+            use_container_width=True,
+            type="primary",
+            key=f"generate_{template_key}",
+        ):
             generated_prompt = MagicPromptTemplates.format_template(
-                selected_category,
-                template_key,
-                **user_values
+                selected_category, template_key, **user_values
             )
             return generated_prompt
 
@@ -138,7 +139,9 @@ def show_magic_prompt_sidebar():
 
         # Link to full generator
         st.markdown("---")
-        if st.button("✨ Open Full Generator", use_container_width=True, key="open_full_gen"):
+        if st.button(
+            "✨ Open Full Generator", use_container_width=True, key="open_full_gen"
+        ):
             st.session_state.show_magic_generator = True
 
 

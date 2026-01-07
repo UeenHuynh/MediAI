@@ -5,11 +5,12 @@ Tests end-to-end PII protection for HIPAA compliance.
 Validates that no PII leaks through the system.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from api.services.pii_redaction_service import PIIRedactionService
+import pytest
+
 from api.services.langchain_medical_bot import ProductionMedicalChatbot
+from api.services.pii_redaction_service import PIIRedactionService
 
 
 class TestPrivacyCompliance:
@@ -21,17 +22,14 @@ class TestPrivacyCompliance:
         return PIIRedactionService(enable_audit_log=False)
 
     @pytest.fixture
-    @patch('api.services.langchain_medical_bot.ChatGroq')
+    @patch("api.services.langchain_medical_bot.ChatGroq")
     def chatbot(self, mock_groq, monkeypatch):
         """Create chatbot with PII protection enabled."""
         monkeypatch.setenv("GROQ_API_KEY", "test_key")
         mock_groq.return_value = MagicMock()
 
         # Don't mock AnalyzerEngine/AnonymizerEngine - use real for integration test
-        bot = ProductionMedicalChatbot(
-            provider="groq",
-            enable_pii_redaction=True
-        )
+        bot = ProductionMedicalChatbot(provider="groq", enable_pii_redaction=True)
         return bot
 
     def test_no_ssn_in_output(self, pii_service):
@@ -39,14 +37,17 @@ class TestPrivacyCompliance:
         test_cases = [
             "Patient SSN: 123-45-6789",
             "SSN 987-65-4321",
-            "Social Security Number: 111-22-3333"
+            "Social Security Number: 111-22-3333",
         ]
 
         for text in test_cases:
             result = pii_service.redact_pii(text)
 
             # Check no SSN patterns in output
-            assert not any(c.isdigit() and "-" in result.redacted_text for c in result.redacted_text)
+            assert not any(
+                c.isdigit() and "-" in result.redacted_text
+                for c in result.redacted_text
+            )
             assert "123-45-6789" not in result.redacted_text
             assert "987-65-4321" not in result.redacted_text
             assert "111-22-3333" not in result.redacted_text
@@ -56,7 +57,7 @@ class TestPrivacyCompliance:
         test_cases = [
             "Patient John Doe arrived",
             "Dr. Jane Smith consulted",
-            "Contact Mary Johnson"
+            "Contact Mary Johnson",
         ]
 
         for text in test_cases:
@@ -71,7 +72,7 @@ class TestPrivacyCompliance:
         test_cases = [
             "Email: john.doe@hospital.com",
             "Contact patient@email.com",
-            "Send to doctor@medical.org"
+            "Send to doctor@medical.org",
         ]
 
         for text in test_cases:
@@ -86,7 +87,7 @@ class TestPrivacyCompliance:
         test_cases = [
             "Call 555-123-4567",
             "Phone: (555) 987-6543",
-            "Contact at 555.111.2222"
+            "Contact at 555.111.2222",
         ]
 
         for text in test_cases:
@@ -98,11 +99,7 @@ class TestPrivacyCompliance:
 
     def test_medical_mrn_redacted(self, pii_service):
         """Test Medical Record Numbers are redacted."""
-        test_cases = [
-            "MRN: MR-123456789",
-            "Patient MRN:987654321",
-            "Check MR-555555"
-        ]
+        test_cases = ["MRN: MR-123456789", "Patient MRN:987654321", "Check MR-555555"]
 
         for text in test_cases:
             result = pii_service.redact_pii(text)
@@ -113,11 +110,7 @@ class TestPrivacyCompliance:
 
     def test_patient_id_redacted(self, pii_service):
         """Test Patient IDs are redacted."""
-        test_cases = [
-            "PATIENT-123456",
-            "PT-987654",
-            "PAT_555555"
-        ]
+        test_cases = ["PATIENT-123456", "PT-987654", "PAT_555555"]
 
         for text in test_cases:
             result = pii_service.redact_pii(text)
@@ -186,7 +179,7 @@ class TestPrivacyCompliance:
         records = [
             "Patient A: John Doe, MRN:111, SSN:123-45-6789",
             "Patient B: Jane Smith, MRN:222, SSN:987-65-4321",
-            "Patient C: Bob Johnson, MRN:333, SSN:555-55-5555"
+            "Patient C: Bob Johnson, MRN:333, SSN:555-55-5555",
         ]
 
         results = pii_service.batch_redact(records)
@@ -227,27 +220,36 @@ class TestPrivacyCompliance:
 
         # Key identifiers should be redacted
         assert "John Doe" not in result.redacted_text
-        assert "123 Main St" not in result.redacted_text or "Main St" in result.redacted_text
+        assert (
+            "123 Main St" not in result.redacted_text
+            or "Main St" in result.redacted_text
+        )
         assert "555-1234" not in result.redacted_text
         assert "test@email.com" not in result.redacted_text
         assert "123-45-6789" not in result.redacted_text
 
-    @patch.object(ProductionMedicalChatbot, '_generate_with_retry')
+    @patch.object(ProductionMedicalChatbot, "_generate_with_retry")
     def test_chatbot_pii_in_query_redacted(self, mock_generate, chatbot):
         """Test chatbot redacts PII from user query."""
         mock_generate.return_value = "Response without PII"
 
         result = chatbot.query(
             question="Patient John Doe (SSN: 123-45-6789) has fever",
-            retrieved_context="Treatment context"
+            retrieved_context="Treatment context",
         )
 
         # Verify PII was detected
         assert len(result["pii_detected"]) > 0
 
         # Original query should not be in redacted version
-        assert "John Doe" not in result["redacted_query"] or "PERSON" in result["redacted_query"]
-        assert "123-45-6789" not in result["redacted_query"] or "SSN" in result["redacted_query"]
+        assert (
+            "John Doe" not in result["redacted_query"]
+            or "PERSON" in result["redacted_query"]
+        )
+        assert (
+            "123-45-6789" not in result["redacted_query"]
+            or "SSN" in result["redacted_query"]
+        )
 
     def test_pii_free_text_unchanged(self, pii_service):
         """Test PII-free text passes through unchanged."""
@@ -337,7 +339,7 @@ class TestPrivacyEdgeCases:
         test_cases = [
             "SSN: 123-45-6789",
             "ssn: 123-45-6789",
-            "Social Security Number: 123-45-6789"
+            "Social Security Number: 123-45-6789",
         ]
 
         for text in test_cases:

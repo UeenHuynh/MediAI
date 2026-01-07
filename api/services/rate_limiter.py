@@ -199,10 +199,7 @@ class MultiRateLimiter:
                 return {name: self.limiters[name].get_status()}
             return {}
 
-        return {
-            name: limiter.get_status()
-            for name, limiter in self.limiters.items()
-        }
+        return {name: limiter.get_status() for name, limiter in self.limiters.items()}
 
 
 # Global rate limiter instance
@@ -222,23 +219,17 @@ def initialize_rate_limiters():
 
     # Groq API (30 requests/minute free tier)
     limiter.add_limiter(
-        "groq",
-        max_calls=int(os.getenv("GROQ_RATE_LIMIT", 30)),
-        period=60
+        "groq", max_calls=int(os.getenv("GROQ_RATE_LIMIT", 30)), period=60
     )
 
     # PubMed API (3 requests/second recommended)
     limiter.add_limiter(
-        "pubmed",
-        max_calls=int(os.getenv("PUBMED_RATE_LIMIT", 3)),
-        period=1
+        "pubmed", max_calls=int(os.getenv("PUBMED_RATE_LIMIT", 3)), period=1
     )
 
     # Qdrant (no strict limit, but be reasonable)
     limiter.add_limiter(
-        "qdrant",
-        max_calls=int(os.getenv("QDRANT_RATE_LIMIT", 100)),
-        period=60
+        "qdrant", max_calls=int(os.getenv("QDRANT_RATE_LIMIT", 100)), period=60
     )
 
     logger.info("✅ All rate limiters initialized")

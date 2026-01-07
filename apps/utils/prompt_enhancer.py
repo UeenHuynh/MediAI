@@ -3,8 +3,8 @@ Prompt Enhancement Engine
 Automatically enhances short medical queries into detailed, structured prompts
 """
 
-from typing import Dict, List, Optional, Tuple
 import re
+from typing import Dict, List, Optional, Tuple
 
 
 class PromptEnhancer:

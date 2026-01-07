@@ -95,9 +95,7 @@ def test_groq_vision():
             return False
 
         client = Groq(api_key=api_key)
-        vision_model = os.getenv(
-            "GROQ_VISION_MODEL", "llama-3.2-11b-vision-preview"
-        )
+        vision_model = os.getenv("GROQ_VISION_MODEL", "llama-3.2-11b-vision-preview")
         print(f"✓ Using vision model: {vision_model}")
 
         # Test with a sample medical image URL (chest X-ray)
@@ -168,7 +166,10 @@ def test_llm_provider():
         print("\nTesting generation...")
         result = llm.generate(
             messages=[
-                {"role": "user", "content": "What is acute kidney injury? Answer in one sentence."}
+                {
+                    "role": "user",
+                    "content": "What is acute kidney injury? Answer in one sentence.",
+                }
             ],
             max_tokens=100,
         )
@@ -183,6 +184,7 @@ def test_llm_provider():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

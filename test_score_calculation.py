@@ -3,7 +3,8 @@ Test clinical score calculations
 """
 
 import sys
-sys.path.append('/home/neeyuhuynh/Desktop/MediAI/apps')
+
+sys.path.append("/home/neeyuhuynh/Desktop/MediAI/apps")
 
 from services.model_service import ModelService
 
@@ -34,7 +35,7 @@ critical_patient = {
     "pao2": 50.0,
     "paco2": 55.0,
     "bicarbonate": 15.0,
-    "albumin": 2.0
+    "albumin": 2.0,
 }
 
 print("=" * 80)

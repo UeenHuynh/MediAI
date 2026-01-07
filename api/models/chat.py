@@ -4,15 +4,23 @@ Chat models for MediAI medical chatbot.
 Stores chat sessions and messages for conversation persistence.
 """
 
+import uuid
 from datetime import datetime
 from typing import Optional
-import uuid
-
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, JSON, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
 
 from core.database import Base
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 
 class ChatSession(Base):
@@ -22,13 +30,26 @@ class ChatSession(Base):
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
-    user_id = Column(Integer, ForeignKey("public.users.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("public.users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Session metadata
     title = Column(String(200), nullable=True)  # Auto-generated from first message
     started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    last_activity_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, index=True)
+    last_activity_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+        index=True,
+    )
     is_active = Column(Boolean, default=True)
 
     # Message count (for quick lookup)
@@ -38,7 +59,9 @@ class ChatSession(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
+    messages = relationship(
+        "ChatMessage", back_populates="session", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<ChatSession(id={self.id}, session_id={self.session_id}, user_id={self.user_id})>"
@@ -51,7 +74,12 @@ class ChatMessage(Base):
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("public.chat_sessions.session_id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("public.chat_sessions.session_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Message content
     role = Column(String(20), nullable=False)  # 'user' or 'assistant'

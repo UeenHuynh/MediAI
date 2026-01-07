@@ -5,12 +5,11 @@ Health check and metrics endpoints
 from datetime import datetime
 
 import redis
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
 from core.config import settings
 from core.database import get_db, test_connection
 from core.metrics import get_metrics
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -28,15 +27,12 @@ async def health_check(_db: Session = Depends(get_db)):
     redis_status = "healthy"
     try:
         import os
+
         # Try Upstash first (production)
         upstash_url = os.getenv("UPSTASH_REDIS_URL")
         redis_url = upstash_url or settings.REDIS_URL
 
-        r = redis.from_url(
-            redis_url,
-            socket_timeout=3,
-            socket_connect_timeout=3
-        )
+        r = redis.from_url(redis_url, socket_timeout=3, socket_connect_timeout=3)
         r.ping()
     except Exception:
         redis_status = "unhealthy"
@@ -71,7 +67,7 @@ async def liveness_check():
 async def json_metrics():
     """
     JSON metrics endpoint for dashboards.
-    
+
     Returns all metrics in structured JSON format:
     - Latency: API response times (p50, p95, p99)
     - Throughput: Requests per minute
@@ -80,4 +76,3 @@ async def json_metrics():
     - Resources: Memory and CPU usage
     """
     return get_metrics()
-

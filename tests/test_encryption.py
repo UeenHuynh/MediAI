@@ -3,9 +3,10 @@ Unit tests for encryption utilities
 Run with: pytest tests/test_encryption.py -v
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add apps to path
 apps_path = Path(__file__).parent.parent / "apps"

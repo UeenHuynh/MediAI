@@ -5,14 +5,15 @@ Supports Groq API (primary) and HuggingFace (fallback)
 
 import logging
 import os
-from typing import Dict, List, Optional, Union
 from enum import Enum
+from typing import Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 
 class LLMProvider(Enum):
     """Available LLM providers"""
+
     GROQ = "groq"
     HUGGINGFACE = "huggingface"
 
@@ -69,9 +70,9 @@ class LLMOrchestrator:
 
         # Rate limiter
         from .rate_limiter import RateLimiter
+
         self.rate_limiter = RateLimiter(
-            max_calls=int(os.getenv("GROQ_RATE_LIMIT", 30)),
-            period=60  # per minute
+            max_calls=int(os.getenv("GROQ_RATE_LIMIT", 30)), period=60  # per minute
         )
 
     def generate(
@@ -222,9 +223,7 @@ class GroqLLM:
         try:
             from groq import Groq
         except ImportError:
-            raise ImportError(
-                "groq package not installed. Run: pip install groq"
-            )
+            raise ImportError("groq package not installed. Run: pip install groq")
 
         self.client = Groq(api_key=api_key)
         self.chat_model = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
@@ -288,7 +287,10 @@ class GroqLLM:
         # Prepare image content
         if isinstance(image_data, bytes):
             import base64
-            image_url = f"data:image/jpeg;base64,{base64.b64encode(image_data).decode()}"
+
+            image_url = (
+                f"data:image/jpeg;base64,{base64.b64encode(image_data).decode()}"
+            )
         else:
             image_url = image_data
 
@@ -326,8 +328,8 @@ class HuggingFaceLLM:
             token: HuggingFace API token (optional, for private models)
         """
         try:
-            from transformers import pipeline
             import torch
+            from transformers import pipeline
         except ImportError:
             raise ImportError(
                 "transformers/torch not installed. Run: pip install transformers torch"
@@ -336,7 +338,9 @@ class HuggingFaceLLM:
         self.token = token
         model_name = os.getenv("HF_LOCAL_MODEL", "microsoft/phi-2")
 
-        logger.info(f"Loading HuggingFace model: {model_name} (this may take a while...)")
+        logger.info(
+            f"Loading HuggingFace model: {model_name} (this may take a while...)"
+        )
 
         # Determine device
         device = 0 if torch.cuda.is_available() else -1
@@ -390,7 +394,7 @@ class HuggingFaceLLM:
             # Extract generated text (remove prompt)
             generated = result[0]["generated_text"]
             if generated.startswith(prompt):
-                generated = generated[len(prompt):].strip()
+                generated = generated[len(prompt) :].strip()
 
             return {
                 "content": generated,
@@ -426,5 +430,5 @@ def get_llm_orchestrator(**kwargs) -> LLMOrchestrator:
     return LLMOrchestrator(
         primary_provider=os.getenv("LLM_PRIMARY_PROVIDER", "groq"),
         fallback_provider=os.getenv("LLM_FALLBACK_PROVIDER", "huggingface"),
-        **kwargs
+        **kwargs,
     )

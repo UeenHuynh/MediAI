@@ -551,7 +551,9 @@ Most medications require adjustment for:
                 return []
 
             # Fetch abstracts
-            handle = Entrez.efetch(db="pubmed", id=id_list, rettype="abstract", retmode="xml")
+            handle = Entrez.efetch(
+                db="pubmed", id=id_list, rettype="abstract", retmode="xml"
+            )
             records = Entrez.read(handle)
             handle.close()
 
@@ -562,7 +564,9 @@ Most medications require adjustment for:
                     article_data = medline["Article"]
 
                     title = article_data.get("ArticleTitle", "")
-                    abstract = article_data.get("Abstract", {}).get("AbstractText", [""])[0]
+                    abstract = article_data.get("Abstract", {}).get(
+                        "AbstractText", [""]
+                    )[0]
 
                     if abstract:
                         content = f"# {title}\n\n{abstract}"

@@ -78,7 +78,7 @@ def download_mimic_iv(output_dir: Optional[str] = None) -> Path:
         "admissions.csv",
         "chartevents.csv",
         "labevents.csv",
-        "diagnoses_icd.csv"
+        "diagnoses_icd.csv",
     ]
 
     found_files = []
@@ -106,6 +106,7 @@ def download_mimic_iv(output_dir: Optional[str] = None) -> Path:
         output_path.mkdir(parents=True, exist_ok=True)
 
         import shutil
+
         for file, _ in found_files:
             src = dataset_path / file
             dst = output_path / file
@@ -150,19 +151,19 @@ Examples:
 
   # Check download without re-downloading
   python scripts/download_data.py --check-only
-        """
+        """,
     )
 
     parser.add_argument(
         "--output-dir",
         type=str,
-        help="Custom output directory (optional, uses kagglehub cache if not specified)"
+        help="Custom output directory (optional, uses kagglehub cache if not specified)",
     )
 
     parser.add_argument(
         "--check-only",
         action="store_true",
-        help="Only check if dataset exists, don't download"
+        help="Only check if dataset exists, don't download",
     )
 
     args = parser.parse_args()
@@ -191,6 +192,7 @@ Examples:
     except Exception as e:
         print(f"\n✗ Error: {str(e)}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

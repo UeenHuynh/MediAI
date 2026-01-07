@@ -46,9 +46,7 @@ class RAGPipeline:
         self.embedding_service = embedding_service or MedicalEmbeddingService(
             provider="sentence-transformers"
         )
-        self.document_processor = (
-            document_processor or MedicalDocumentProcessor()
-        )
+        self.document_processor = document_processor or MedicalDocumentProcessor()
         self.hybrid_rag = hybrid_rag or HybridRAGPipeline()
 
         self.llm_provider = llm_provider
@@ -64,7 +62,9 @@ class RAGPipeline:
             "gemini": "GOOGLE_API_KEY",  # Gemini uses GOOGLE_API_KEY
         }
 
-        env_key_name = provider_key_map.get(llm_provider.lower(), f"{llm_provider.upper()}_API_KEY")
+        env_key_name = provider_key_map.get(
+            llm_provider.lower(), f"{llm_provider.upper()}_API_KEY"
+        )
         self.llm_api_key = llm_api_key or os.getenv(env_key_name)
 
         # Initialize LLM client
@@ -81,7 +81,9 @@ class RAGPipeline:
                 self.llm_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
                 logger.info(f"Initialized Groq LLM client with model {self.llm_model}")
             except ImportError:
-                raise ImportError("groq package required. Install with: pip install groq")
+                raise ImportError(
+                    "groq package required. Install with: pip install groq"
+                )
 
         elif self.llm_provider in ["grok", "xai"]:
             # xAI Grok API (OpenAI-compatible, 2M context)
@@ -93,7 +95,9 @@ class RAGPipeline:
                     base_url="https://api.x.ai/v1",
                 )
                 self.llm_model = os.getenv("GROK_MODEL", "grok-4-1-fast-reasoning")
-                logger.info(f"Initialized xAI Grok LLM client with model {self.llm_model}")
+                logger.info(
+                    f"Initialized xAI Grok LLM client with model {self.llm_model}"
+                )
             except ImportError:
                 raise ImportError("openai package required for xAI Grok")
 
@@ -225,7 +229,9 @@ class RAGPipeline:
                 use_scholar=True,  # Enable Google Scholar search
                 score_threshold=0.5,
             )
-            logger.info(f"Retrieved {len(documents)} documents via HybridRAG for query: {query[:50]}...")
+            logger.info(
+                f"Retrieved {len(documents)} documents via HybridRAG for query: {query[:50]}..."
+            )
             return documents
 
         # Fallback to legacy retrieval
@@ -283,7 +289,7 @@ class RAGPipeline:
 
         for idx, doc in enumerate(context_docs, 1):
             # Truncate content to max 1000 chars to avoid token limits
-            content = doc['content']
+            content = doc["content"]
             if len(content) > 1000:
                 content = content[:1000] + "..."
             context_parts.append(f"[{idx}] {content}")
@@ -301,7 +307,9 @@ class RAGPipeline:
                 metadata = doc["metadata"]
                 if "pmid" in metadata:
                     citation["pmid"] = metadata["pmid"]
-                    citation["url"] = f"https://pubmed.ncbi.nlm.nih.gov/{metadata['pmid']}/"
+                    citation["url"] = (
+                        f"https://pubmed.ncbi.nlm.nih.gov/{metadata['pmid']}/"
+                    )
                 if "title" in metadata:
                     citation["title"] = metadata["title"]
 
@@ -346,7 +354,7 @@ class RAGPipeline:
                     generation_config={
                         "temperature": 0.3,
                         "max_output_tokens": max_tokens,
-                    }
+                    },
                 )
                 response = model.generate_content(full_prompt)
                 answer = response.text
@@ -440,8 +448,7 @@ ANSWER:"""
 
         # Average similarity/score
         scores = [
-            doc.get("hybrid_score", doc.get("similarity", 0))
-            for doc in context_docs
+            doc.get("hybrid_score", doc.get("similarity", 0)) for doc in context_docs
         ]
         avg_score = sum(scores) / len(scores)
 

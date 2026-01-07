@@ -5,11 +5,11 @@ Provides caching functionality using Upstash Redis or local Redis.
 Gracefully degrades if Redis is unavailable.
 """
 
+import hashlib
 import json
 import logging
 import os
 from typing import Any, Optional
-import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ _redis_available = False
 def get_redis_client():
     """
     Get or create Redis client.
-    
+
     Tries to connect to:
     1. UPSTASH_REDIS_URL (production)
     2. REDIS_URL (local/docker)
@@ -85,7 +85,7 @@ def get_redis_client():
 class RedisCache:
     """
     Redis caching wrapper with graceful fallback.
-    
+
     If Redis is unavailable, all operations are no-ops.
     """
 
@@ -103,20 +103,17 @@ class RedisCache:
 
     @staticmethod
     def cache_prediction(
-        prediction_type: str,
-        input_features: dict,
-        result: dict,
-        ttl: int = None
+        prediction_type: str, input_features: dict, result: dict, ttl: int = None
     ) -> bool:
         """
         Cache a prediction result.
-        
+
         Args:
             prediction_type: 'sepsis' or 'mortality'
             input_features: Input features used for prediction
             result: Prediction result to cache
             ttl: Time-to-live in seconds
-            
+
         Returns:
             True if cached successfully, False otherwise
         """
@@ -125,10 +122,7 @@ class RedisCache:
             return False
 
         try:
-            key = RedisCache._get_cache_key(
-                f"pred:{prediction_type}",
-                input_features
-            )
+            key = RedisCache._get_cache_key(f"pred:{prediction_type}", input_features)
             ttl = ttl or RedisCache.PREDICTION_TTL
             client.setex(key, ttl, json.dumps(result))
             logger.debug(f"Cached prediction: {key}")
@@ -139,16 +133,15 @@ class RedisCache:
 
     @staticmethod
     def get_cached_prediction(
-        prediction_type: str,
-        input_features: dict
+        prediction_type: str, input_features: dict
     ) -> Optional[dict]:
         """
         Get cached prediction result.
-        
+
         Args:
             prediction_type: 'sepsis' or 'mortality'
             input_features: Input features to look up
-            
+
         Returns:
             Cached result or None if not found
         """
@@ -157,10 +150,7 @@ class RedisCache:
             return None
 
         try:
-            key = RedisCache._get_cache_key(
-                f"pred:{prediction_type}",
-                input_features
-            )
+            key = RedisCache._get_cache_key(f"pred:{prediction_type}", input_features)
             cached = client.get(key)
             if cached:
                 logger.debug(f"Cache hit: {key}")
@@ -171,19 +161,15 @@ class RedisCache:
             return None
 
     @staticmethod
-    def cache_chat_response(
-        query: str,
-        response: dict,
-        ttl: int = None
-    ) -> bool:
+    def cache_chat_response(query: str, response: dict, ttl: int = None) -> bool:
         """
         Cache a chat/RAG response.
-        
+
         Args:
             query: User query
             response: Chat response to cache
             ttl: Time-to-live in seconds
-            
+
         Returns:
             True if cached successfully
         """
@@ -205,10 +191,10 @@ class RedisCache:
     def get_cached_chat_response(query: str) -> Optional[dict]:
         """
         Get cached chat response.
-        
+
         Args:
             query: User query
-            
+
         Returns:
             Cached response or None
         """
@@ -231,10 +217,10 @@ class RedisCache:
     def invalidate_prediction_cache(prediction_type: str = None) -> int:
         """
         Invalidate prediction cache.
-        
+
         Args:
             prediction_type: Optional type to invalidate, or all if None
-            
+
         Returns:
             Number of keys deleted
         """
@@ -267,8 +253,8 @@ class RedisCache:
                 "hits": info.get("keyspace_hits", 0),
                 "misses": info.get("keyspace_misses", 0),
                 "total_keys": sum(
-                    db_info.get("keys", 0) 
-                    for db_info in keys.values() 
+                    db_info.get("keys", 0)
+                    for db_info in keys.values()
                     if isinstance(db_info, dict)
                 ),
             }

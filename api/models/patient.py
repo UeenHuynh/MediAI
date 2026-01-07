@@ -7,10 +7,19 @@ Stores patient demographics, admission data, and medical history.
 from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, Date, DateTime, Integer, String, Text, JSON, ForeignKey
-from sqlalchemy.orm import relationship
-
 from core.database import Base
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.orm import relationship
 
 
 class Patient(Base):
@@ -52,8 +61,12 @@ class Patient(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    vitals = relationship("Vital", back_populates="patient", cascade="all, delete-orphan")
-    predictions = relationship("Prediction", back_populates="patient", cascade="all, delete-orphan")
+    vitals = relationship(
+        "Vital", back_populates="patient", cascade="all, delete-orphan"
+    )
+    predictions = relationship(
+        "Prediction", back_populates="patient", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Patient(id={self.id}, code='{self.patient_code}', name='{self.full_name}')>"

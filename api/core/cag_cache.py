@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 class CAGCache:
     """
     Cache-Augmented Generation (CAG) System
-    
+
     Stores curated medical knowledge as Python dict for instant lookup.
     No external DB needed - version controlled in code.
-    
+
     Benefits:
     - Ultra-fast retrieval (~50ms vs 500ms for vector search)
     - No API calls needed
@@ -45,12 +45,18 @@ Sepsis is defined as life-threatening organ dysfunction caused by a dysregulated
 - SIRS criteria no longer required for sepsis diagnosis
 - qSOFA can be used for rapid screening (≥2: RR≥22, GCS≤13, SBP≤100)
 - Early recognition and treatment critical for survival""",
-            "keywords": ["sepsis", "septic shock", "sepsis-3", "sofa", "infection", "organ dysfunction"],
+            "keywords": [
+                "sepsis",
+                "septic shock",
+                "sepsis-3",
+                "sofa",
+                "infection",
+                "organ dysfunction",
+            ],
             "category": "disease",
             "source": "Sepsis-3 Consensus (JAMA 2016)",
             "priority": 10,
         },
-
         "sepsis_management": {
             "content": """**Sepsis Management Bundle (Surviving Sepsis Campaign)**
 
@@ -84,12 +90,18 @@ Sepsis is defined as life-threatening organ dysfunction caused by a dysregulated
 **Steroids:**
 - Consider hydrocortisone 200mg/day if refractory shock
 - Do NOT use for non-shock sepsis""",
-            "keywords": ["sepsis management", "sepsis bundle", "surviving sepsis", "resuscitation", "antibiotics", "vasopressors"],
+            "keywords": [
+                "sepsis management",
+                "sepsis bundle",
+                "surviving sepsis",
+                "resuscitation",
+                "antibiotics",
+                "vasopressors",
+            ],
             "category": "protocol",
             "source": "Surviving Sepsis Campaign Guidelines 2021",
             "priority": 10,
         },
-
         # ==================== SOFA SCORE ====================
         "sofa_score": {
             "content": """**SOFA Score (Sequential Organ Failure Assessment)**
@@ -142,12 +154,17 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
 - Total score: 0-24
 - Score ≥2: Organ dysfunction (sepsis criterion)
 - Higher scores associated with increased mortality""",
-            "keywords": ["sofa score", "sofa", "organ dysfunction", "organ failure", "icu scoring"],
+            "keywords": [
+                "sofa score",
+                "sofa",
+                "organ dysfunction",
+                "organ failure",
+                "icu scoring",
+            ],
             "category": "scoring",
             "source": "JAMA 1996;276:707-713",
             "priority": 10,
         },
-
         # ==================== ACUTE KIDNEY INJURY ====================
         "aki_kdigo": {
             "content": """**Acute Kidney Injury (KDIGO Criteria)**
@@ -183,12 +200,18 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
 - Pre-renal: Hypoperfusion, hypovolemia
 - Intra-renal: ATN, sepsis, contrast, drugs
 - Post-renal: Obstruction (rare in ICU)""",
-            "keywords": ["aki", "acute kidney injury", "kdigo", "creatinine", "renal failure", "dialysis"],
+            "keywords": [
+                "aki",
+                "acute kidney injury",
+                "kdigo",
+                "creatinine",
+                "renal failure",
+                "dialysis",
+            ],
             "category": "guideline",
             "source": "KDIGO Clinical Practice Guideline 2012",
             "priority": 9,
         },
-
         # ==================== MECHANICAL VENTILATION ====================
         "ards_management": {
             "content": """**ARDS Management (Berlin Definition)**
@@ -229,12 +252,17 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
 - Consider if severe ARDS refractory to above
 - PaO2/FiO2 <80 mmHg or pH <7.25 despite optimization
 - Requires specialized center""",
-            "keywords": ["ards", "mechanical ventilation", "lung protective", "prone positioning", "peep"],
+            "keywords": [
+                "ards",
+                "mechanical ventilation",
+                "lung protective",
+                "prone positioning",
+                "peep",
+            ],
             "category": "protocol",
             "source": "ARDS Network Protocol, PROSEVA Trial",
             "priority": 9,
         },
-
         # ==================== MEDICATIONS ====================
         "norepinephrine": {
             "content": """**Norepinephrine (Levophed)**
@@ -281,12 +309,18 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
 - If requiring >0.5 mcg/kg/min and MAP still <65:
   - Add vasopressin 0.03-0.04 units/min, OR
   - Add epinephrine if cardiac output low""",
-            "keywords": ["norepinephrine", "levophed", "vasopressor", "shock", "septic shock", "hypotension"],
+            "keywords": [
+                "norepinephrine",
+                "levophed",
+                "vasopressor",
+                "shock",
+                "septic shock",
+                "hypotension",
+            ],
             "category": "drug",
             "source": "Surviving Sepsis Campaign, Clinical Pharmacology",
             "priority": 8,
         },
-
         "vasopressin": {
             "content": """**Vasopressin (ADH)**
 
@@ -334,12 +368,17 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
 **When to Use:**
 - If norepinephrine >0.25-0.5 mcg/kg/min and MAP still <65
 - Alternative to epinephrine as second agent""",
-            "keywords": ["vasopressin", "adh", "vasopressor", "septic shock", "catecholamine sparing"],
+            "keywords": [
+                "vasopressin",
+                "adh",
+                "vasopressor",
+                "septic shock",
+                "catecholamine sparing",
+            ],
             "category": "drug",
             "source": "VASST Trial, Surviving Sepsis Campaign",
             "priority": 7,
         },
-
         # ==================== MORTALITY RISK ====================
         "mortality_risk_factors": {
             "content": """**ICU Mortality Risk Factors**
@@ -402,12 +441,18 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
 - Avoid "futility" language
 - Focus on goals of care
 - Involve palliative care when appropriate""",
-            "keywords": ["mortality", "prognosis", "risk factors", "icu mortality", "apache", "sofa score"],
+            "keywords": [
+                "mortality",
+                "prognosis",
+                "risk factors",
+                "icu mortality",
+                "apache",
+                "sofa score",
+            ],
             "category": "guideline",
             "source": "Multiple ICU Outcome Studies",
             "priority": 9,
         },
-
         # ==================== NORMAL VALUES ====================
         "normal_lab_values": {
             "content": """**Normal Laboratory Values (ICU Reference)**
@@ -462,12 +507,17 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
 - Magnesium: 1.7-2.2 mg/dL
 - Phosphate: 2.5-4.5 mg/dL
 - Calcium: 8.5-10.5 mg/dL""",
-            "keywords": ["normal values", "lab values", "reference ranges", "laboratory", "labs"],
+            "keywords": [
+                "normal values",
+                "lab values",
+                "reference ranges",
+                "laboratory",
+                "labs",
+            ],
             "category": "reference",
             "source": "Clinical Laboratory Standards",
             "priority": 6,
         },
-
         # ==================== EMERGENCY RECOGNITION ====================
         "emergency_signs": {
             "content": """**Critical Emergency Signs Requiring IMMEDIATE Intervention**
@@ -503,7 +553,14 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
 4. Establish IV access
 5. Call rapid response/code team if indicated
 6. Notify attending physician stat""",
-            "keywords": ["emergency", "critical", "urgent", "code", "rapid response", "life threatening"],
+            "keywords": [
+                "emergency",
+                "critical",
+                "urgent",
+                "code",
+                "rapid response",
+                "life threatening",
+            ],
             "category": "protocol",
             "source": "Emergency Medicine Guidelines",
             "priority": 10,
@@ -518,11 +575,11 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
     def search(self, query: str, top_k: int = 3) -> List[Dict]:
         """
         Search cache for relevant medical knowledge
-        
+
         Args:
             query: Search query
             top_k: Number of results to return
-            
+
         Returns:
             List of matching cache entries with scores
         """
@@ -532,24 +589,25 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
         for key, data in self.cache.items():
             # Check if any keyword matches query
             keyword_matches = sum(
-                1 for keyword in data["keywords"] 
-                if keyword in query_lower
+                1 for keyword in data["keywords"] if keyword in query_lower
             )
 
             if keyword_matches > 0:
                 # Calculate relevance score
                 score = keyword_matches / len(data["keywords"])
-                score *= (data["priority"] / 10)  # Weight by priority
+                score *= data["priority"] / 10  # Weight by priority
 
-                matches.append({
-                    "key": key,
-                    "content": data["content"],
-                    "category": data["category"],
-                    "source": data["source"],
-                    "keywords": data["keywords"],
-                    "score": score,
-                    "tier": "cag",
-                })
+                matches.append(
+                    {
+                        "key": key,
+                        "content": data["content"],
+                        "category": data["category"],
+                        "source": data["source"],
+                        "keywords": data["keywords"],
+                        "score": score,
+                        "tier": "cag",
+                    }
+                )
 
         # Sort by score descending
         matches.sort(key=lambda x: x["score"], reverse=True)
@@ -575,14 +633,15 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
         return {
             "total_entries": len(self.cache),
             "categories": categories,
-            "avg_content_length": sum(len(d["content"]) for d in self.cache.values()) // len(self.cache),
+            "avg_content_length": sum(len(d["content"]) for d in self.cache.values())
+            // len(self.cache),
         }
 
 
 # Example usage
 if __name__ == "__main__":
     cache = CAGCache()
-    
+
     # Test searches
     test_queries = [
         "What is sepsis?",
@@ -594,9 +653,9 @@ if __name__ == "__main__":
     for query in test_queries:
         print(f"\n{'='*60}")
         print(f"Query: {query}")
-        print('='*60)
+        print("=" * 60)
         results = cache.search(query, top_k=2)
-        
+
         for i, result in enumerate(results, 1):
             print(f"\n[{i}] Key: {result['key']}")
             print(f"    Category: {result['category']}")
@@ -605,7 +664,7 @@ if __name__ == "__main__":
 
     print(f"\n{'='*60}")
     print("Cache Statistics:")
-    print('='*60)
+    print("=" * 60)
     stats = cache.get_stats()
     for key, value in stats.items():
         print(f"{key}: {value}")

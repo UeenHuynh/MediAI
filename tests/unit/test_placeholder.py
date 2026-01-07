@@ -15,12 +15,11 @@ def test_placeholder():
 def test_import_core_modules():
     """Test that core modules can be imported"""
     try:
-        from api.services import llm_provider
-        from api.services import pii_masker
-        from api.services import rate_limiter
-        assert hasattr(llm_provider, 'LLMOrchestrator')
-        assert hasattr(pii_masker, 'PIIMasker')
-        assert hasattr(rate_limiter, 'RateLimiter')
+        from api.services import llm_provider, pii_masker, rate_limiter
+
+        assert hasattr(llm_provider, "LLMOrchestrator")
+        assert hasattr(pii_masker, "PIIMasker")
+        assert hasattr(rate_limiter, "RateLimiter")
     except ImportError as e:
         pytest.fail(f"Module import failed: {e}")
 
@@ -28,6 +27,7 @@ def test_import_core_modules():
 def test_environment_setup():
     """Test that Python environment is set up correctly"""
     import sys
+
     assert sys.version_info >= (3, 9), "Python 3.9+ required"
 
 

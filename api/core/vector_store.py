@@ -40,7 +40,8 @@ class VectorStore:
         Args:
             dimension: Vector embedding dimension (384 for MiniLM, 1536 for OpenAI)
         """
-        create_table_sql = text(f"""
+        create_table_sql = text(
+            f"""
             CREATE TABLE IF NOT EXISTS medical_documents (
                 id SERIAL PRIMARY KEY,
                 content TEXT NOT NULL,
@@ -61,7 +62,8 @@ class VectorStore:
 
             CREATE INDEX IF NOT EXISTS medical_documents_metadata_idx
             ON medical_documents USING gin(metadata);
-        """)
+        """
+        )
 
         try:
             with self.engine.connect() as conn:
@@ -93,15 +95,18 @@ class VectorStore:
         Returns:
             Document ID
         """
-        insert_sql = text("""
+        insert_sql = text(
+            """
             INSERT INTO medical_documents
             (content, embedding, metadata, source, category)
             VALUES (:content, CAST(:embedding AS vector), CAST(:metadata AS jsonb), :source, :category)
             RETURNING id
-        """)
+        """
+        )
 
         try:
             import json
+
             with self.engine.connect() as conn:
                 result = conn.execute(
                     insert_sql,
@@ -134,16 +139,19 @@ class VectorStore:
         Returns:
             List of document IDs
         """
-        insert_sql = text("""
+        insert_sql = text(
+            """
             INSERT INTO medical_documents
             (content, embedding, metadata, source, category)
             VALUES (:content, CAST(:embedding AS vector), CAST(:metadata AS jsonb), :source, :category)
             RETURNING id
-        """)
+        """
+        )
 
         doc_ids = []
         try:
             import json
+
             with self.engine.connect() as conn:
                 for content, embedding, metadata, source, category in documents:
                     result = conn.execute(
@@ -186,7 +194,8 @@ class VectorStore:
         # Build query with optional category filter
         embedding_str = str(query_embedding.tolist())
         if category:
-            search_sql = text("""
+            search_sql = text(
+                """
                 SELECT
                     id,
                     content,
@@ -199,7 +208,8 @@ class VectorStore:
                     AND 1 - (embedding <=> CAST(:embedding AS vector)) >= :min_similarity
                 ORDER BY embedding <=> CAST(:embedding AS vector)
                 LIMIT :top_k
-            """)
+            """
+            )
             params = {
                 "embedding": embedding_str,
                 "category": category,
@@ -207,7 +217,8 @@ class VectorStore:
                 "min_similarity": min_similarity,
             }
         else:
-            search_sql = text("""
+            search_sql = text(
+                """
                 SELECT
                     id,
                     content,
@@ -219,7 +230,8 @@ class VectorStore:
                 WHERE 1 - (embedding <=> CAST(:embedding AS vector)) >= :min_similarity
                 ORDER BY embedding <=> CAST(:embedding AS vector)
                 LIMIT :top_k
-            """)
+            """
+            )
             params = {
                 "embedding": embedding_str,
                 "top_k": top_k,
@@ -272,7 +284,8 @@ class VectorStore:
         embedding_str = str(query_embedding.tolist())
 
         if category:
-            hybrid_sql = text("""
+            hybrid_sql = text(
+                """
                 WITH semantic_results AS (
                     SELECT
                         id,
@@ -309,7 +322,8 @@ class VectorStore:
                 WHERE COALESCE(s.semantic_score, 0) + COALESCE(k.keyword_score, 0) > 0
                 ORDER BY hybrid_score DESC
                 LIMIT :top_k
-            """)
+            """
+            )
             params = {
                 "embedding": embedding_str,
                 "query_text": query_text,
@@ -319,7 +333,8 @@ class VectorStore:
                 "top_k": top_k,
             }
         else:
-            hybrid_sql = text("""
+            hybrid_sql = text(
+                """
                 WITH semantic_results AS (
                     SELECT
                         id,
@@ -354,7 +369,8 @@ class VectorStore:
                 WHERE COALESCE(s.semantic_score, 0) + COALESCE(k.keyword_score, 0) > 0
                 ORDER BY hybrid_score DESC
                 LIMIT :top_k
-            """)
+            """
+            )
             params = {
                 "embedding": embedding_str,
                 "query_text": query_text,

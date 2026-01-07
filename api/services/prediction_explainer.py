@@ -26,9 +26,7 @@ class PredictionExplainer:
         """
         self.rag = rag_pipeline
 
-    def explain_sepsis_prediction(
-        self, prediction: Dict, patient_data: Dict
-    ) -> Dict:
+    def explain_sepsis_prediction(self, prediction: Dict, patient_data: Dict) -> Dict:
         """
         Explain sepsis prediction with clinical context
 
@@ -70,7 +68,9 @@ class PredictionExplainer:
                 ),
             }
 
-            logger.info(f"Generated sepsis explanation (confidence: {result['confidence']:.2f})")
+            logger.info(
+                f"Generated sepsis explanation (confidence: {result['confidence']:.2f})"
+            )
             return explanation
 
         except Exception as e:
@@ -102,12 +102,12 @@ class PredictionExplainer:
         features = prediction.get("important_features", [])
 
         # Build query
-        query = self._build_mortality_query(risk_score, risk_level, features, patient_data)
+        query = self._build_mortality_query(
+            risk_score, risk_level, features, patient_data
+        )
 
         try:
-            result = self.rag.query(
-                question=query, top_k=5, include_citations=True
-            )
+            result = self.rag.query(question=query, top_k=5, include_citations=True)
 
             explanation = {
                 "risk_score": risk_score,
@@ -121,7 +121,9 @@ class PredictionExplainer:
                 ),
             }
 
-            logger.info(f"Generated mortality explanation (confidence: {result['confidence']:.2f})")
+            logger.info(
+                f"Generated mortality explanation (confidence: {result['confidence']:.2f})"
+            )
             return explanation
 
         except Exception as e:
@@ -147,9 +149,7 @@ class PredictionExplainer:
         # Add key features
         if features:
             feature_names = [f.get("name", str(f)) for f in features[:3]]
-            query_parts.append(
-                f"Key risk factors include: {', '.join(feature_names)}."
-            )
+            query_parts.append(f"Key risk factors include: {', '.join(feature_names)}.")
 
         # Add clinical context
         if patient_data:
@@ -177,9 +177,7 @@ class PredictionExplainer:
         # Add key prognostic factors
         if features:
             feature_names = [f.get("name", str(f)) for f in features[:3]]
-            query_parts.append(
-                f"Key prognostic factors: {', '.join(feature_names)}."
-            )
+            query_parts.append(f"Key prognostic factors: {', '.join(feature_names)}.")
 
         # Add severity scores
         if patient_data:
@@ -211,7 +209,9 @@ class PredictionExplainer:
                     }
                 )
             else:
-                risk_factors.append({"name": str(feature), "importance": 0, "value": None})
+                risk_factors.append(
+                    {"name": str(feature), "importance": 0, "value": None}
+                )
 
         return risk_factors
 

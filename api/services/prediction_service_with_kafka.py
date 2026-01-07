@@ -4,14 +4,15 @@ Prediction Service with Kafka Integration (Learning Example)
 Shows how to integrate Kafka producer with existing prediction service using feature flags.
 """
 
-from typing import Dict, Any, Optional
 import logging
+from typing import Any, Dict, Optional
 
 from api.config.feature_flags import get_feature_flags
 
 # Conditional import
 try:
     from streaming.kafka_producer import EventProducer
+
     KAFKA_AVAILABLE = True
 except ImportError:
     KAFKA_AVAILABLE = False
@@ -45,17 +46,14 @@ class PredictionServiceWithKafka:
         if self.feature_flags.enable_kafka_streaming and KAFKA_AVAILABLE:
             try:
                 self.kafka_producer = EventProducer(
-                    bootstrap_servers="kafka:9092",  # Docker service name
-                    enabled=True
+                    bootstrap_servers="kafka:9092", enabled=True  # Docker service name
                 )
                 logger.info("✅ Kafka producer initialized (learning mode)")
             except Exception as e:
                 logger.warning(f"⚠️ Kafka unavailable, running without streaming: {e}")
 
     def predict_sepsis(
-        self,
-        patient_data: Dict[str, Any],
-        patient_id: str
+        self, patient_data: Dict[str, Any], patient_id: str
     ) -> Dict[str, Any]:
         """
         Predict sepsis risk with optional Kafka event publishing.
@@ -79,8 +77,8 @@ class PredictionServiceWithKafka:
                     prediction_result=result,
                     metadata={
                         "model_version": self.base_service.model_version,
-                        "feature_count": len(patient_data)
-                    }
+                        "feature_count": len(patient_data),
+                    },
                 )
                 logger.debug(f"📤 Sent sepsis prediction to Kafka: {patient_id}")
             except Exception as e:
@@ -90,9 +88,7 @@ class PredictionServiceWithKafka:
         return result
 
     def predict_mortality(
-        self,
-        patient_data: Dict[str, Any],
-        patient_id: str
+        self, patient_data: Dict[str, Any], patient_id: str
     ) -> Dict[str, Any]:
         """
         Predict mortality risk with optional Kafka event publishing.
@@ -116,8 +112,8 @@ class PredictionServiceWithKafka:
                     prediction_result=result,
                     metadata={
                         "model_version": self.base_service.model_version,
-                        "feature_count": len(patient_data)
-                    }
+                        "feature_count": len(patient_data),
+                    },
                 )
                 logger.debug(f"📤 Sent mortality prediction to Kafka: {patient_id}")
             except Exception as e:

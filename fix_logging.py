@@ -23,7 +23,7 @@ def fix_logging_fstring(content: str) -> tuple[str, int]:
         message = match.group(3)
 
         # Find all {var} placeholders
-        placeholders = re.findall(r'\{([^}]+)\}', message)
+        placeholders = re.findall(r"\{([^}]+)\}", message)
 
         if not placeholders:
             # No placeholders, just remove f prefix
@@ -33,10 +33,10 @@ def fix_logging_fstring(content: str) -> tuple[str, int]:
         # Replace {var} with %s
         new_message = message
         for placeholder in placeholders:
-            new_message = new_message.replace(f'{{{placeholder}}}', '%s', 1)
+            new_message = new_message.replace(f"{{{placeholder}}}", "%s", 1)
 
         # Build the new logging call
-        args = ', '.join(placeholders)
+        args = ", ".join(placeholders)
         fixes += 1
         return f'{method}("{new_message}", {args})'
 
@@ -47,11 +47,11 @@ def fix_logging_fstring(content: str) -> tuple[str, int]:
 def process_file(filepath: Path):
     """Process a single Python file"""
     try:
-        content = filepath.read_text(encoding='utf-8')
+        content = filepath.read_text(encoding="utf-8")
         new_content, fixes = fix_logging_fstring(content)
 
         if fixes > 0:
-            filepath.write_text(new_content, encoding='utf-8')
+            filepath.write_text(new_content, encoding="utf-8")
             print(f"✓ {filepath}: {fixes} fixes")
             return fixes
         return 0
@@ -65,18 +65,18 @@ def main():
     total_fixes = 0
 
     # Process all Python files in api/ and apps/
-    for directory in ['api', 'apps']:
+    for directory in ["api", "apps"]:
         path = Path(directory)
         if not path.exists():
             continue
 
-        for py_file in path.rglob('*.py'):
-            if '__pycache__' in str(py_file):
+        for py_file in path.rglob("*.py"):
+            if "__pycache__" in str(py_file):
                 continue
             total_fixes += process_file(py_file)
 
     print(f"\n🎉 Total fixes: {total_fixes}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,16 +1,17 @@
 """Base agent class for all agents in the system."""
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
-from datetime import datetime
 import logging
+from abc import ABC, abstractmethod
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class AgentStatus(Enum):
     """Agent execution status."""
+
     IDLE = "idle"
     RUNNING = "running"
     SUCCESS = "success"
@@ -27,7 +28,7 @@ class AgentResult:
         output: Any,
         metrics: Optional[Dict[str, Any]] = None,
         errors: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         self.status = status
         self.output = output
@@ -39,12 +40,12 @@ class AgentResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert result to dictionary."""
         return {
-            'status': self.status.value,
-            'output': self.output,
-            'metrics': self.metrics,
-            'errors': self.errors,
-            'metadata': self.metadata,
-            'timestamp': self.timestamp.isoformat()
+            "status": self.status.value,
+            "output": self.output,
+            "metrics": self.metrics,
+            "errors": self.errors,
+            "metadata": self.metadata,
+            "timestamp": self.timestamp.isoformat(),
         }
 
     def is_success(self) -> bool:
@@ -60,12 +61,12 @@ class ValidationResult:
         self.errors = errors or []
 
     @classmethod
-    def success(cls) -> 'ValidationResult':
+    def success(cls) -> "ValidationResult":
         """Create successful validation result."""
         return cls(is_valid=True)
 
     @classmethod
-    def failure(cls, errors: List[str]) -> 'ValidationResult':
+    def failure(cls, errors: List[str]) -> "ValidationResult":
         """Create failed validation result."""
         return cls(is_valid=False, errors=errors)
 
@@ -84,7 +85,7 @@ class BaseAgent(ABC):
         name: str,
         description: str,
         tools: Optional[List[Any]] = None,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize base agent.
@@ -121,11 +122,13 @@ class BaseAgent(ABC):
             # Step 1: Validate inputs
             validation_result = self.validate_inputs(context)
             if not validation_result.is_valid:
-                logger.error(f"[{self.name}] Input validation failed: {validation_result.errors}")
+                logger.error(
+                    f"[{self.name}] Input validation failed: {validation_result.errors}"
+                )
                 result = AgentResult(
                     status=AgentStatus.FAILED,
                     output=None,
-                    errors=validation_result.errors
+                    errors=validation_result.errors,
                 )
                 self.status = AgentStatus.FAILED
                 self.execution_history.append(result)
@@ -139,10 +142,7 @@ class BaseAgent(ABC):
             result = AgentResult(
                 status=AgentStatus.SUCCESS,
                 output=output,
-                metadata={
-                    'agent_name': self.name,
-                    'context': context
-                }
+                metadata={"agent_name": self.name, "context": context},
             )
             self.status = AgentStatus.SUCCESS
             logger.info(f"[{self.name}] Execution completed successfully")
@@ -150,9 +150,7 @@ class BaseAgent(ABC):
         except Exception as e:
             logger.exception(f"[{self.name}] Execution failed: {str(e)}")
             result = AgentResult(
-                status=AgentStatus.FAILED,
-                output=None,
-                errors=[str(e)]
+                status=AgentStatus.FAILED, output=None, errors=[str(e)]
             )
             self.status = AgentStatus.FAILED
 

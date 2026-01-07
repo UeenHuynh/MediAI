@@ -3,10 +3,11 @@ Basic API tests
 Run with: pytest tests/test_api.py -v
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
 
 # Add api directory to path
 api_path = Path(__file__).parent.parent / "api"
@@ -51,8 +52,8 @@ def test_sepsis_prediction_invalid_input():
             "patient_id": "TEST",
             "features": {
                 "age": 200,  # Invalid: >120
-            }
-        }
+            },
+        },
     )
     assert response.status_code == 422  # Validation error
 
