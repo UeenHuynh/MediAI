@@ -27,13 +27,14 @@ router = APIRouter()
 # Passwords should be set via environment variables
 import os
 
+# Generate hash with: python -c "import bcrypt; print(bcrypt.hashpw(b'demo123', bcrypt.gensalt(12)).decode())"
 _DEMO_PASSWORD_HASH = os.getenv(
     "DEMO_USER_PASSWORD_HASH",
-    "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.OPVcKH1Y1kMfFS",  # Default: changeme
+    "$2b$12$8Zfhb7536dY3OaHbV5RS6uefmkTUM7I3AsatOzkoHOaTHumcl71c6",  # Default: demo123
 )
 _ADMIN_PASSWORD_HASH = os.getenv(
     "ADMIN_USER_PASSWORD_HASH",
-    "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.OPVcKH1Y1kMfFS",  # Default: changeme
+    "$2b$12$8Zfhb7536dY3OaHbV5RS6uefmkTUM7I3AsatOzkoHOaTHumcl71c6",  # Default: demo123
 )
 
 DEMO_USERS = {
