@@ -34,10 +34,17 @@ from tenacity import (
 )
 
 # Import callbacks
-from api.services.langchain_callbacks import (
-    get_callback_handler,
-    get_pii_callback,
-)
+try:
+    from api.services.langchain_callbacks import (
+        get_callback_handler,
+        get_pii_callback,
+    )
+except ImportError:
+    # When running from api/ directory
+    from services.langchain_callbacks import (
+        get_callback_handler,
+        get_pii_callback,
+    )
 
 # Configure logging
 logging.basicConfig(
