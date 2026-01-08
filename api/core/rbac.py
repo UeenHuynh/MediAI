@@ -65,6 +65,7 @@ class RolePermissions:
 class UserWithRole(User):
     """Extended user model with role information"""
 
+    id: int = 1  # Default user ID for demo users
     role: Role = Role.VIEWER
     permissions: List[str] = []
 
@@ -72,6 +73,7 @@ class UserWithRole(User):
 # Mock user database for demo (replace with real DB in production)
 DEMO_USERS = {
     "admin": UserWithRole(
+        id=1,
         username="admin",
         email="admin@mediai.com",
         full_name="System Administrator",
@@ -79,6 +81,7 @@ DEMO_USERS = {
         disabled=False,
     ),
     "demo": UserWithRole(
+        id=2,
         username="demo",
         email="demo@mediai.com",
         full_name="Demo Doctor",
@@ -86,6 +89,7 @@ DEMO_USERS = {
         disabled=False,
     ),
     "nurse": UserWithRole(
+        id=3,
         username="nurse",
         email="nurse@mediai.com",
         full_name="Demo Nurse",
@@ -93,6 +97,7 @@ DEMO_USERS = {
         disabled=False,
     ),
     "researcher": UserWithRole(
+        id=4,
         username="researcher",
         email="researcher@mediai.com",
         full_name="Demo Researcher",
@@ -112,6 +117,7 @@ async def get_user_with_role(user: User = Depends(get_current_user)) -> UserWith
 
     # Default to viewer role for unknown users
     return UserWithRole(
+        id=999,  # Default ID for unknown users
         username=user.username,
         email=user.email,
         full_name=user.full_name,
