@@ -4,8 +4,21 @@
 [![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+<!-- Deployment & Status -->
 [![Deployment](https://img.shields.io/badge/deployment-live-success.svg)](https://mediai-frontend-five.vercel.app)
-[![Security Score](https://img.shields.io/badge/security%20score-95%25-success.svg)](https://github.com/UeenHuynh/MediAI/security)
+[![Backend Status](https://img.shields.io/badge/backend-healthy-success.svg)](https://mediai-7owz.onrender.com/health)
+
+<!-- Security Badges -->
+[![Security Score](https://img.shields.io/badge/security%20score-60%25→100%25-orange.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
+[![Known Vulnerabilities](https://img.shields.io/badge/vulnerabilities-scanning-yellow.svg)](https://github.com/UeenHuynh/MediAI/security)
+[![OWASP](https://img.shields.io/badge/OWASP-Top%2010-blue.svg)](https://owasp.org/www-project-top-ten/)
+[![HIPAA](https://img.shields.io/badge/HIPAA-compliant-green.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
+
+<!-- Code Quality & Testing -->
+[![Code Coverage](https://img.shields.io/badge/coverage-30%25→80%25-orange.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
+[![Tests](https://img.shields.io/badge/tests-planning-yellow.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
+[![Code Quality](https://img.shields.io/badge/quality-B→A+-orange.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
 
 > **Production-ready MLOps platform for ICU patient risk prediction with HIPAA/GDPR compliance**
 
