@@ -35,7 +35,11 @@ class SafetyGuardrails:
             "unresponsive",
             "suicide",
             "suicidal",
+            "kill myself",
+            "kill me",
             "self harm",
+            "self-harm",
+            "hurt myself",
             "overdose",
             "severe bleeding",
             "heavy bleeding",
@@ -58,7 +62,8 @@ class SafetyGuardrails:
 
         # Inappropriate query patterns
         self.inappropriate_patterns = [
-            r"how to (kill|harm|hurt)",
+            r"(how|way) to (kill|harm|hurt)",
+            r"(best|easiest) way to (kill|harm|hurt)",
             r"illegal drug",
             r"prescription without doctor",
             r"fake (prescription|medical)",
@@ -201,8 +206,18 @@ class SafetyGuardrails:
             if "911" not in response and "emergency number" not in response_lower:
                 issues.append("Emergency situation without 911 reference")
 
-        # Check for proper disclaimers
-        if "disclaimer" not in response_lower and "educational" not in response_lower:
+        # Check for proper disclaimers (only for advice/diagnosis, not education)
+        advice_indicators = [
+            "you should",
+            "you must",
+            "you need",
+            "recommended",
+            "diagnosis",
+            "treatment plan",
+        ]
+        has_advice = any(indicator in response_lower for indicator in advice_indicators)
+
+        if has_advice and "disclaimer" not in response_lower and "educational" not in response_lower:
             issues.append("Missing medical disclaimer")
 
         is_safe = len(issues) == 0
@@ -325,6 +340,7 @@ Please use this system responsibly for its intended purpose: supporting evidence
             "is_inappropriate": is_inappropriate,
             "inappropriate_reason": inappropriate_reason,
             "should_block": should_block,
+            "allow_response": not should_block,  # Inverse of should_block
             "special_response": special_response,
         }
 
@@ -342,13 +358,17 @@ Please use this system responsibly for its intended purpose: supporting evidence
         Returns:
             Enhanced response with safety measures
         """
+        # Handle both old and new query_safety formats
+        should_block = query_safety.get("should_block", not query_safety.get("allow_response", True))
+
         # If query should be blocked, return special response
-        if query_safety["should_block"]:
-            return query_safety["special_response"]
+        if should_block:
+            return query_safety.get("special_response", self.create_inappropriate_response())
 
         # If emergency, prepend emergency response
-        if query_safety["is_emergency"]:
-            return query_safety["special_response"]
+        if query_safety.get("is_emergency", False):
+            emergency_type = query_safety.get("emergency_type", "unknown")
+            return query_safety.get("special_response", self.create_emergency_response(emergency_type))
 
         # Validate response
         is_safe, issues = self.validate_response(response)

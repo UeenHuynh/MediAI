@@ -218,6 +218,46 @@ class PIIRedactionService:
             f"Added {len(self.MEDICAL_PATTERNS)} medical recognizers + SSN/phone patterns"
         )
 
+    def _filter_medical_false_positives(
+        self, text: str, results: List[RecognizerResult]
+    ) -> List[RecognizerResult]:
+        """
+        Filter out false positive PII detections in medical contexts.
+
+        Args:
+            text: Original text being analyzed
+            results: List of RecognizerResult objects from analyzer
+
+        Returns:
+            Filtered list of RecognizerResult objects
+        """
+        # Medical abbreviations that indicate vital signs context
+        medical_abbreviations = [
+            "BP", "HR", "RR", "SpO2", "Temp", "SBP", "DBP",
+            "WBC", "Hgb", "Plt", "Cr", "BUN", "MAP"
+        ]
+
+        filtered_results = []
+        for result in results:
+            # Only filter DATE_TIME entities
+            if result.entity_type != "DATE_TIME":
+                filtered_results.append(result)
+                continue
+
+            # Check if there's a medical abbreviation within 10 chars before this entity
+            start_check = max(0, result.start - 10)
+            context_before = text[start_check:result.start]
+
+            # If we find a medical abbreviation, skip this DATE_TIME detection
+            is_medical_context = any(
+                abbr in context_before for abbr in medical_abbreviations
+            )
+
+            if not is_medical_context:
+                filtered_results.append(result)
+
+        return filtered_results
+
     def _build_operators_config(
         self, strategy: AnonymizationStrategy
     ) -> Dict[str, OperatorConfig]:
@@ -349,6 +389,9 @@ class PIIRedactionService:
         try:
             # Step 1: Analyze for PII
             analyzer_results = self.analyze_pii(text, entities)
+
+            # Step 1.5: Filter out medical false positives
+            analyzer_results = self._filter_medical_false_positives(text, analyzer_results)
 
             # Step 2: Build anonymization operators
             operators = self._build_operators_config(anonymization_strategy)

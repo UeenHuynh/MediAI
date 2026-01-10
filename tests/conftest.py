@@ -109,3 +109,23 @@ def high_risk_sepsis_features():
         "glucose": 250.0,
         "bun": 50.0,
     }
+
+
+@pytest.fixture
+def demo_user_credentials():
+    """Demo user credentials for testing (password: demo123)"""
+    return {
+        "username": "demo",
+        "password": "demo123",
+        "hashed_password": "$2b$12$8Zfhb7536dY3OaHbV5RS6uefmkTUM7I3AsatOzkoHOaTHumcl71c6"
+    }
+
+
+@pytest.fixture
+def admin_user_credentials():
+    """Admin user credentials for testing (password: demo123)"""
+    return {
+        "username": "admin",
+        "password": "demo123",
+        "hashed_password": "$2b$12$8Zfhb7536dY3OaHbV5RS6uefmkTUM7I3AsatOzkoHOaTHumcl71c6"
+    }

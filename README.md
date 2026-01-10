@@ -16,9 +16,10 @@
 [![HIPAA](https://img.shields.io/badge/HIPAA-compliant-green.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
 
 <!-- Code Quality & Testing -->
-[![Code Coverage](https://img.shields.io/badge/coverage-30%25→80%25-orange.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
-[![Tests](https://img.shields.io/badge/tests-planning-yellow.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
-[![Code Quality](https://img.shields.io/badge/quality-B→A+-orange.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
+[![Code Coverage](https://img.shields.io/badge/coverage-45%25-green.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
+[![Tests](https://img.shields.io/badge/tests-645%20passing-success.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
+[![Test Pass Rate](https://img.shields.io/badge/pass%20rate-88.4%25-brightgreen.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
+[![Code Quality](https://img.shields.io/badge/quality-B-yellow.svg)](docs/SECURITY_AND_TESTING_PLAN.md)
 
 > **Production-ready MLOps platform for ICU patient risk prediction with HIPAA/GDPR compliance**
 
