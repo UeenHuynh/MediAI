@@ -221,6 +221,311 @@ class TestMockResponse:
         assert 'sepsis' in answer.lower() or len(answer) > 0
 
 
+class TestSepsis85Response:
+    """Tests for 'với sepsis 85% thì cần thực hiện hành động gì' scenario"""
+
+    QUERY_VI = "với sepsis 85% thì cần thực hiện hành động gì"
+    QUERY_EN = "patient has sepsis 85% high risk, what action to take?"
+
+    # --- mock response path ---
+
+    def test_mock_response_sepsis_85_returns_high_risk_answer(self):
+        """High-risk sepsis query must return action-oriented answer."""
+        from api.routers.chat import get_mock_response
+
+        answer, citations = get_mock_response(self.QUERY_VI)
+
+        assert len(answer) > 0
+        assert any(
+            kw in answer.lower()
+            for kw in ["sepsis bundle", "kháng sinh", "antibiotic", "vasopressor", "icu", "lactate"]
+        ), f"Expected clinical action keywords, got: {answer[:200]}"
+
+    def test_mock_response_sepsis_85_has_two_citations(self):
+        """High-risk sepsis mock response must include at least 2 citations."""
+        from api.routers.chat import get_mock_response
+
+        _, citations = get_mock_response(self.QUERY_VI)
+
+        assert len(citations) >= 2
+
+    def test_mock_response_sepsis_85_citation_has_pubmed_source(self):
+        """At least one citation should reference a PubMed source."""
+        from api.routers.chat import get_mock_response
+
+        _, citations = get_mock_response(self.QUERY_VI)
+
+        pubmed_sources = [c for c in citations if c.pmid or "pubmed" in (c.url or "").lower()]
+        assert len(pubmed_sources) >= 1, "Expected at least one PubMed citation"
+
+    def test_mock_response_sepsis_85_citation_has_live_api_source_type(self):
+        """At least one citation should have source_type='live_api'."""
+        from api.routers.chat import get_mock_response
+
+        _, citations = get_mock_response(self.QUERY_VI)
+
+        live_citations = [c for c in citations if c.source_type == "live_api"]
+        assert len(live_citations) >= 1
+
+    def test_mock_response_sepsis_85_citation_number_sequence(self):
+        """Citations must be numbered starting at 1."""
+        from api.routers.chat import get_mock_response
+
+        _, citations = get_mock_response(self.QUERY_VI)
+
+        assert citations[0].number == 1
+
+    def test_mock_response_sepsis_85_citation_has_url(self):
+        """Citations must include a URL for UI linking."""
+        from api.routers.chat import get_mock_response
+
+        _, citations = get_mock_response(self.QUERY_VI)
+
+        for c in citations:
+            assert c.url, f"Citation {c.number} is missing a URL"
+
+    # --- RAG-wired endpoint path ---
+
+    @pytest.mark.asyncio
+    async def test_send_message_sepsis_85_passes_rag_context(self):
+        """send_message must wire RAG context when chatbot is active."""
+        from api.routers.chat import send_message, ChatRequest
+        from uuid import uuid4
+
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = 42
+        mock_session = MagicMock()
+        mock_session.session_id = uuid4()
+
+        mock_chatbot = MagicMock()
+        mock_chatbot.query.return_value = {
+            "answer": (
+                "Sepsis risk at 85% requires urgent clinical escalation. [1] "
+                "Initiate sepsis bundle: cultures, broad-spectrum antibiotics, "
+                "IV fluid resuscitation 30 mL/kg, monitor MAP ≥ 65 mmHg. [2] "
+                "Start norepinephrine if hypotension persists despite fluids."
+            ),
+            "citations": [
+                {
+                    "source": "PubMed (PMID: 34599691)",
+                    "title": "Surviving Sepsis Campaign 2021",
+                    "url": "https://pubmed.ncbi.nlm.nih.gov/34599691/",
+                    "pmid": "34599691",
+                    "tier": "pubmed",
+                    "source_type": "live_api",
+                },
+                {
+                    "source": "Semantic Scholar (Evans, 2021)",
+                    "title": "Hour-1 Sepsis Bundle Evidence",
+                    "url": "https://example.org/hour1-bundle",
+                    "tier": "scholar",
+                    "source_type": "live_api",
+                },
+            ],
+            "redacted_query": None,
+            "model_name": "llama-3.3-70b",
+            "disclaimer": "Educational purposes only.",
+        }
+
+        mock_rag = MagicMock()
+        mock_rag.build_retrieval_package.return_value = {
+            "retrieved_context": (
+                "[1] Surviving Sepsis Campaign 2021\n"
+                "Source: PubMed (PMID: 34599691)\n"
+                "Prompt antibiotics and 30 mL/kg fluid within 1 hour.\n\n"
+                "[2] Hour-1 Sepsis Bundle Evidence\n"
+                "Source: Semantic Scholar\n"
+                "Norepinephrine for MAP < 65 mmHg despite adequate fluids."
+            ),
+            "source_docs": [
+                {
+                    "source": "PubMed (PMID: 34599691)",
+                    "title": "Surviving Sepsis Campaign 2021",
+                    "url": "https://pubmed.ncbi.nlm.nih.gov/34599691/",
+                    "pmid": "34599691",
+                    "tier": "pubmed",
+                    "source_type": "live_api",
+                },
+                {
+                    "source": "Semantic Scholar (Evans, 2021)",
+                    "title": "Hour-1 Sepsis Bundle Evidence",
+                    "url": "https://example.org/hour1-bundle",
+                    "tier": "scholar",
+                    "source_type": "live_api",
+                },
+            ],
+            "retrieval_context": {
+                "search_query": self.QUERY_VI,
+                "documents_count": 2,
+                "documents": [
+                    {"tier": "pubmed", "source_type": "live_api"},
+                    {"tier": "scholar", "source_type": "live_api"},
+                ],
+            },
+        }
+
+        with patch("api.routers.chat.ChatService") as mock_svc:
+            with patch("api.routers.chat.get_chatbot", return_value=mock_chatbot):
+                with patch("api.routers.chat.get_chat_rag_service", return_value=mock_rag):
+                    mock_svc.get_or_create_session.return_value = (mock_session, True)
+                    mock_svc.get_recent_messages.return_value = []
+
+                    request = ChatRequest(
+                        message=self.QUERY_VI, include_sources=True
+                    )
+                    result = await send_message(request, mock_user, mock_db)
+
+        # Response content
+        assert "sepsis bundle" in result.answer.lower() or "norepinephrine" in result.answer.lower()
+        # Citations presence
+        assert len(result.citations) == 2
+        # First citation is PubMed live_api
+        assert result.citations[0].tier == "pubmed"
+        assert result.citations[0].source_type == "live_api"
+        assert result.citations[0].pmid == "34599691"
+        # Second citation is Scholar live_api
+        assert result.citations[1].tier == "scholar"
+        assert result.citations[1].source_type == "live_api"
+        # RAG context was forwarded to chatbot
+        call_kwargs = mock_chatbot.query.call_args.kwargs
+        assert "[1] Surviving Sepsis" in call_kwargs["retrieved_context"]
+        assert call_kwargs["source_docs"][0]["pmid"] == "34599691"
+
+    @pytest.mark.asyncio
+    async def test_send_message_sepsis_85_citation_urls_present_for_ui(self):
+        """All citations returned to UI must have a URL for clickable links."""
+        from api.routers.chat import send_message, ChatRequest
+        from uuid import uuid4
+
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = 42
+        mock_session = MagicMock()
+        mock_session.session_id = uuid4()
+
+        mock_chatbot = MagicMock()
+        mock_chatbot.query.return_value = {
+            "answer": "Immediate action required [1][2].",
+            "citations": [
+                {
+                    "source": "PubMed (PMID: 34599691)",
+                    "title": "Sepsis Guidelines",
+                    "url": "https://pubmed.ncbi.nlm.nih.gov/34599691/",
+                    "pmid": "34599691",
+                    "tier": "pubmed",
+                    "source_type": "live_api",
+                },
+                {
+                    "source": "Local KB",
+                    "title": "ICU Sepsis Protocol",
+                    "url": "",
+                    "tier": "cag",
+                    "source_type": "local",
+                },
+            ],
+            "redacted_query": None,
+            "model_name": "llama-3.3-70b",
+        }
+
+        mock_rag = MagicMock()
+        mock_rag.build_retrieval_package.return_value = {
+            "retrieved_context": "[1] Sepsis Guidelines\nContent.",
+            "source_docs": [],
+            "retrieval_context": {"documents_count": 1, "documents": []},
+        }
+
+        with patch("api.routers.chat.ChatService") as mock_svc:
+            with patch("api.routers.chat.get_chatbot", return_value=mock_chatbot):
+                with patch("api.routers.chat.get_chat_rag_service", return_value=mock_rag):
+                    mock_svc.get_or_create_session.return_value = (mock_session, True)
+                    mock_svc.get_recent_messages.return_value = []
+
+                    request = ChatRequest(
+                        message=self.QUERY_EN, include_sources=True
+                    )
+                    result = await send_message(request, mock_user, mock_db)
+
+        live_citations = [c for c in result.citations if c.source_type == "live_api"]
+        for c in live_citations:
+            assert c.url, f"Live API citation '{c.source}' missing URL for UI"
+
+
+class TestCitationUIRendering:
+    """Tests for citation badge logic (mirrors frontend getSourceBadge logic)."""
+
+    def _get_badge_label(self, source_type: str | None, tier: str | None) -> str:
+        """Python mirror of frontend getSourceBadge()."""
+        if source_type == "live_api":
+            if tier == "pubmed":
+                return "Live API: PubMed"
+            elif tier == "scholar":
+                return "Live API: Scholar"
+            return "Live API"
+        return "Local Knowledge"
+
+    def test_pubmed_live_api_shows_pubmed_label(self):
+        assert self._get_badge_label("live_api", "pubmed") == "Live API: PubMed"
+
+    def test_scholar_live_api_shows_scholar_label(self):
+        assert self._get_badge_label("live_api", "scholar") == "Live API: Scholar"
+
+    def test_cag_local_shows_local_knowledge(self):
+        assert self._get_badge_label("local", "cag") == "Local Knowledge"
+
+    def test_none_source_type_shows_local_knowledge(self):
+        assert self._get_badge_label(None, None) == "Local Knowledge"
+
+    def test_live_api_unknown_tier_shows_generic_label(self):
+        assert self._get_badge_label("live_api", "qdrant") == "Live API"
+
+    def test_citation_model_carries_tier_and_source_type(self):
+        """Citation Pydantic model must carry tier and source_type for UI rendering."""
+        from api.routers.chat import Citation
+
+        c = Citation(
+            number=1,
+            source="PubMed (PMID: 34599691)",
+            title="Surviving Sepsis Campaign",
+            url="https://pubmed.ncbi.nlm.nih.gov/34599691/",
+            pmid="34599691",
+            tier="pubmed",
+            source_type="live_api",
+        )
+
+        badge = self._get_badge_label(c.source_type, c.tier)
+        assert badge == "Live API: PubMed"
+
+    def test_scholar_citation_model_renders_correctly(self):
+        from api.routers.chat import Citation
+
+        c = Citation(
+            number=2,
+            source="Semantic Scholar (Evans, 2021)",
+            title="Hour-1 Bundle Evidence",
+            url="https://example.org/hour1",
+            tier="scholar",
+            source_type="live_api",
+        )
+
+        badge = self._get_badge_label(c.source_type, c.tier)
+        assert badge == "Live API: Scholar"
+
+    def test_local_citation_model_renders_local_knowledge(self):
+        from api.routers.chat import Citation
+
+        c = Citation(
+            number=3,
+            source="ICU Protocol KB",
+            title="Internal Sepsis Protocol",
+            tier="cag",
+            source_type="local",
+        )
+
+        badge = self._get_badge_label(c.source_type, c.tier)
+        assert badge == "Local Knowledge"
+
+
 class TestGetChatbot:
     """Tests for get_chatbot function"""
 

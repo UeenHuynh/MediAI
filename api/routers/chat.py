@@ -180,6 +180,38 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
     question_lower = question.lower()
 
     if "sepsis" in question_lower:
+        high_risk = any(
+            kw in question_lower
+            for kw in ["85%", "85 %", "nguy cơ cao", "high risk", "xác suất cao", "hành động", "action"]
+        )
+        if high_risk:
+            return (
+                "Với xác suất sepsis 85%, đây là tình trạng khẩn cấp lâm sàng. [1] "
+                "Cần thực hiện ngay gói can thiệp sepsis (Sepsis Bundle):\n"
+                "• Cấy máu trước khi dùng kháng sinh (nếu có thể trong 45 phút)\n"
+                "• Bắt đầu kháng sinh phổ rộng ngay lập tức\n"
+                "• Truyền dịch tinh thể 30 mL/kg trong 3 giờ đầu nếu có hạ huyết áp hoặc lactate ≥ 4 mmol/L\n"
+                "• Đo lactate máu và theo dõi huyết áp trung bình (MAP) ≥ 65 mmHg [2]\n"
+                "• Nếu MAP không đạt dù bù dịch đủ: dùng vasopressor (norepinephrine ưu tiên)\n"
+                "• Escalate lên ICU / hội chẩn cấp cứu ngay nếu có suy tạng",
+                [
+                    Citation(
+                        number=1,
+                        source="Surviving Sepsis Campaign Guidelines 2021",
+                        url="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8101533/",
+                        pmid="34599691",
+                        tier="pubmed",
+                        source_type="live_api",
+                    ),
+                    Citation(
+                        number=2,
+                        source="CDC Sepsis Clinical Guidelines",
+                        url="https://www.cdc.gov/sepsis",
+                        tier="cag",
+                        source_type="local",
+                    ),
+                ],
+            )
         return (
             "Sepsis is a life-threatening condition caused by the body's response to infection. "
             "Early signs include fever, increased heart rate, rapid breathing, and confusion. "
@@ -195,6 +227,70 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
                 Citation(number=2, source="Surviving Sepsis Campaign", pmid="34599691"),
             ],
         )
+
+    elif any(kw in question_lower for kw in ["sofa", "sequential organ failure", "apache", "saps", "scoring system", "thang điểm"]):
+        # Determine which scoring system is being asked about
+        if "apache" in question_lower:
+            return (
+                "APACHE II (Acute Physiology and Chronic Health Evaluation II) là thang điểm đánh giá "
+                "độ nặng bệnh trong ICU, được tính tại thời điểm nhập viện. [1]\n\n"
+                "Bao gồm 12 thông số sinh lý cấp tính (nhiệt độ, MAP, nhịp tim, nhịp thở, PaO₂/FiO₂, "
+                "pH máu, Na⁺, K⁺, creatinine, hematocrit, bạch cầu, Glasgow Coma Scale) "
+                "cộng với điểm tuổi và bệnh mãn tính. [2]\n\n"
+                "Thang điểm dao động 0–71; điểm càng cao, nguy cơ tử vong càng lớn. "
+                "APACHE II ≥ 25 thường tương ứng tử vong > 50%.",
+                [
+                    Citation(
+                        number=1,
+                        source="Knaus WA et al. – APACHE II (Critical Care Medicine, 1985)",
+                        url="https://pubmed.ncbi.nlm.nih.gov/3928249/",
+                        pmid="3928249",
+                        tier="pubmed",
+                        source_type="live_api",
+                    ),
+                    Citation(
+                        number=2,
+                        source="MDCalc – APACHE II Score Calculator",
+                        url="https://www.mdcalc.com/calc/1868/apache-ii-score",
+                        tier="cag",
+                        source_type="local",
+                    ),
+                ],
+            )
+        else:
+            # Default: SOFA
+            return (
+                "SOFA (Sequential Organ Failure Assessment) là thang điểm đánh giá suy tạng tuần tự, "
+                "được dùng rộng rãi trong ICU để theo dõi tiến triển bệnh và chẩn đoán sepsis. [1]\n\n"
+                "SOFA đánh giá 6 hệ cơ quan:\n"
+                "• Hô hấp: PaO₂/FiO₂ ratio\n"
+                "• Đông máu: Số lượng tiểu cầu\n"
+                "• Gan: Bilirubin huyết thanh\n"
+                "• Tim mạch: MAP hoặc nhu cầu vasopressor\n"
+                "• Thần kinh: Điểm Glasgow Coma Scale (GCS)\n"
+                "• Thận: Creatinine hoặc lượng nước tiểu [2]\n\n"
+                "Mỗi hệ cơ quan được chấm 0–4 điểm; tổng SOFA ≥ 2 điểm so với baseline "
+                "là tiêu chí chẩn đoán sepsis (theo định nghĩa Sepsis-3). "
+                "SOFA tăng ≥ 2 điểm trong 24h thường liên quan đến tỷ lệ tử vong > 10%.",
+                [
+                    Citation(
+                        number=1,
+                        source="Singer M et al. – Sepsis-3 Definition (JAMA, 2016)",
+                        url="https://pubmed.ncbi.nlm.nih.gov/26903338/",
+                        pmid="26903338",
+                        tier="pubmed",
+                        source_type="live_api",
+                    ),
+                    Citation(
+                        number=2,
+                        source="Vincent JL et al. – SOFA Score (Intensive Care Med, 1996)",
+                        url="https://pubmed.ncbi.nlm.nih.gov/8844239/",
+                        pmid="8844239",
+                        tier="pubmed",
+                        source_type="live_api",
+                    ),
+                ],
+            )
 
     elif "mortality" in question_lower or "death" in question_lower:
         return (

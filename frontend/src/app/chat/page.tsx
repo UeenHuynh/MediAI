@@ -33,8 +33,11 @@ interface Message {
 
 function getSourceBadge(sourceType?: string, tier?: string) {
     if (sourceType === "live_api") {
+        let label = "Live API";
+        if (tier === "pubmed") label = "Live API: PubMed";
+        else if (tier === "scholar") label = "Live API: Scholar";
         return {
-            label: tier === "pubmed" ? "Live API: PubMed" : "Live API",
+            label,
             className: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30",
         };
     }
