@@ -39,10 +39,22 @@ class TestAuthenticateUser:
     def test_authenticate_user_empty_credentials(self):
         """Test authentication with empty credentials"""
         from api.routers.auth import authenticate_user
-        
+
         result = authenticate_user("", "")
-        
+
         assert result is False
+
+    def test_authenticate_user_exception_during_verification(self):
+        """Test authentication handles exception during password verification"""
+        from api.routers.auth import authenticate_user
+
+        with patch('api.routers.auth.verify_password') as mock_verify:
+            mock_verify.side_effect = Exception("Verification error")
+
+            result = authenticate_user("demo", "password")
+
+            # Should return False when exception occurs
+            assert result is False
 
 
 class TestDemoUsers:
@@ -122,5 +134,245 @@ class TestRouterConfiguration:
         from api.routers.auth import router
         
         routes = [r.path for r in router.routes]
-        
+
         assert "/me" in routes
+
+
+class TestLoginEndpoint:
+    """Tests for /login endpoint"""
+
+    @pytest.mark.asyncio
+    async def test_login_success_with_valid_credentials(self):
+        """Test successful login with valid credentials"""
+        from api.routers.auth import login_for_access_token
+        from fastapi.security import OAuth2PasswordRequestForm
+        from unittest.mock import MagicMock
+
+        # Create mock form data
+        form_data = MagicMock(spec=OAuth2PasswordRequestForm)
+        form_data.username = "demo"
+        form_data.password = "demo123"
+
+        with patch('api.routers.auth.authenticate_user') as mock_auth:
+            mock_auth.return_value = {
+                "username": "demo",
+                "email": "demo@mediai.com",
+                "disabled": False
+            }
+
+            result = await login_for_access_token(form_data)
+
+            assert "access_token" in result
+            assert "refresh_token" in result
+            assert result["token_type"] == "bearer"
+            assert isinstance(result["access_token"], str)
+            assert isinstance(result["refresh_token"], str)
+
+    @pytest.mark.asyncio
+    async def test_login_failure_with_invalid_credentials(self):
+        """Test login failure with invalid credentials raises HTTPException"""
+        from api.routers.auth import login_for_access_token
+        from fastapi.security import OAuth2PasswordRequestForm
+        from fastapi import HTTPException
+        from unittest.mock import MagicMock
+
+        form_data = MagicMock(spec=OAuth2PasswordRequestForm)
+        form_data.username = "demo"
+        form_data.password = "wrong_password"
+
+        with patch('api.routers.auth.authenticate_user') as mock_auth:
+            mock_auth.return_value = False
+
+            with pytest.raises(HTTPException) as exc_info:
+                await login_for_access_token(form_data)
+
+            assert exc_info.value.status_code == 401
+            assert "Incorrect username or password" in exc_info.value.detail
+
+    @pytest.mark.asyncio
+    async def test_login_creates_access_token_with_username(self):
+        """Test login creates access token with username in payload"""
+        from api.routers.auth import login_for_access_token
+        from fastapi.security import OAuth2PasswordRequestForm
+        from unittest.mock import MagicMock
+
+        form_data = MagicMock(spec=OAuth2PasswordRequestForm)
+        form_data.username = "demo"
+        form_data.password = "demo123"
+
+        with patch('api.routers.auth.authenticate_user') as mock_auth:
+            with patch('api.routers.auth.create_access_token') as mock_create_access:
+                with patch('api.routers.auth.create_refresh_token') as mock_create_refresh:
+                    mock_auth.return_value = {"username": "demo"}
+                    mock_create_access.return_value = "fake_access_token"
+                    mock_create_refresh.return_value = "fake_refresh_token"
+
+                    result = await login_for_access_token(form_data)
+
+                    # Verify create_access_token was called with correct data
+                    mock_create_access.assert_called_once()
+                    call_kwargs = mock_create_access.call_args[1]
+                    assert call_kwargs["data"]["sub"] == "demo"
+
+                    assert result["access_token"] == "fake_access_token"
+                    assert result["refresh_token"] == "fake_refresh_token"
+
+
+class TestRefreshTokenEndpoint:
+    """Tests for /refresh endpoint"""
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_success_with_valid_token(self):
+        """Test successful token refresh with valid refresh token"""
+        from api.routers.auth import refresh_token
+        from jose import jwt
+        from datetime import datetime, timedelta
+
+        # Create a valid refresh token
+        with patch('api.routers.auth.SECRET_KEY', 'test_secret'):
+            with patch('api.routers.auth.ALGORITHM', 'HS256'):
+                with patch('api.routers.auth.jwt') as mock_jwt:
+                    # Mock JWT decode to return valid payload
+                    mock_jwt.decode.return_value = {
+                        "sub": "demo",
+                        "type": "refresh",
+                        "exp": (datetime.utcnow() + timedelta(days=7)).timestamp()
+                    }
+
+                    with patch('api.routers.auth.DEMO_USERS', {"demo": {"username": "demo"}}):
+                        with patch('api.routers.auth.create_access_token') as mock_create_access:
+                            with patch('api.routers.auth.create_refresh_token') as mock_create_refresh:
+                                mock_create_access.return_value = "new_access_token"
+                                mock_create_refresh.return_value = "new_refresh_token"
+
+                                result = await refresh_token("valid_refresh_token")
+
+                                assert "access_token" in result
+                                assert "refresh_token" in result
+                                assert result["token_type"] == "bearer"
+                                assert result["access_token"] == "new_access_token"
+                                assert result["refresh_token"] == "new_refresh_token"
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_failure_with_invalid_token(self):
+        """Test refresh failure with invalid token raises HTTPException"""
+        from api.routers.auth import refresh_token
+        from fastapi import HTTPException
+        from jose import JWTError
+
+        with patch('api.routers.auth.jwt') as mock_jwt:
+            mock_jwt.decode.side_effect = JWTError("Invalid token")
+
+            with pytest.raises(HTTPException) as exc_info:
+                await refresh_token("invalid_token")
+
+            assert exc_info.value.status_code == 401
+            assert "Could not validate credentials" in exc_info.value.detail
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_failure_with_access_token_type(self):
+        """Test refresh failure when using access token instead of refresh token"""
+        from api.routers.auth import refresh_token
+        from fastapi import HTTPException
+
+        with patch('api.routers.auth.jwt') as mock_jwt:
+            # Mock JWT decode to return access token payload
+            mock_jwt.decode.return_value = {
+                "sub": "demo",
+                "type": "access",  # Wrong type
+                "exp": 99999999999
+            }
+
+            with pytest.raises(HTTPException) as exc_info:
+                await refresh_token("access_token_instead_of_refresh")
+
+            assert exc_info.value.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_failure_with_no_username(self):
+        """Test refresh failure when token has no username"""
+        from api.routers.auth import refresh_token
+        from fastapi import HTTPException
+
+        with patch('api.routers.auth.jwt') as mock_jwt:
+            # Mock JWT decode to return payload without username
+            mock_jwt.decode.return_value = {
+                "type": "refresh",
+                "exp": 99999999999
+            }
+
+            with pytest.raises(HTTPException) as exc_info:
+                await refresh_token("token_without_username")
+
+            assert exc_info.value.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_failure_with_nonexistent_user(self):
+        """Test refresh failure when user no longer exists"""
+        from api.routers.auth import refresh_token
+        from fastapi import HTTPException
+
+        with patch('api.routers.auth.jwt') as mock_jwt:
+            mock_jwt.decode.return_value = {
+                "sub": "deleted_user",
+                "type": "refresh",
+                "exp": 99999999999
+            }
+
+            with patch('api.routers.auth.DEMO_USERS', {}):  # Empty users dict
+                with pytest.raises(HTTPException) as exc_info:
+                    await refresh_token("token_for_deleted_user")
+
+                assert exc_info.value.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_creates_new_tokens(self):
+        """Test refresh endpoint creates both new access and refresh tokens"""
+        from api.routers.auth import refresh_token
+
+        with patch('api.routers.auth.jwt') as mock_jwt:
+            mock_jwt.decode.return_value = {
+                "sub": "demo",
+                "type": "refresh",
+                "exp": 99999999999
+            }
+
+            with patch('api.routers.auth.DEMO_USERS', {"demo": {"username": "demo"}}):
+                with patch('api.routers.auth.create_access_token') as mock_create_access:
+                    with patch('api.routers.auth.create_refresh_token') as mock_create_refresh:
+                        mock_create_access.return_value = "new_access"
+                        mock_create_refresh.return_value = "new_refresh"
+
+                        result = await refresh_token("valid_token")
+
+                        # Both token creation methods should be called
+                        mock_create_access.assert_called_once()
+                        mock_create_refresh.assert_called_once()
+
+                        # Verify username is passed correctly
+                        access_call_kwargs = mock_create_access.call_args[1]
+                        assert access_call_kwargs["data"]["sub"] == "demo"
+
+
+class TestMeEndpoint:
+    """Tests for /me endpoint"""
+
+    @pytest.mark.asyncio
+    async def test_me_returns_current_user(self):
+        """Test /me endpoint returns current user info"""
+        from api.routers.auth import read_users_me
+        from core.security import User
+
+        # Create mock user
+        mock_user = User(
+            username="demo",
+            email="demo@mediai.com",
+            full_name="Demo User",
+            disabled=False
+        )
+
+        result = await read_users_me(mock_user)
+
+        assert result == mock_user
+        assert result.username == "demo"
+        assert result.email == "demo@mediai.com"

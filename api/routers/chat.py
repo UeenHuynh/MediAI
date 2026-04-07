@@ -6,7 +6,6 @@ Chat sessions and messages are persisted to database.
 """
 
 import logging
-import os
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
@@ -25,6 +24,44 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 # Initialize chatbot if enabled
 _chatbot_instance = None
+_chat_rag_service_instance = None
+
+
+def resolve_chatbot_provider() -> str:
+    """
+    Resolve a supported chatbot provider from settings.
+
+    The chatbot implementation currently supports only Groq, OpenAI, and
+    Bedrock. If the configured provider is unsupported for this code path
+    (for example `gemini`), fall back to the first supported provider with
+    credentials available in settings.
+    """
+    configured = (settings.LLM_PROVIDER or "groq").lower()
+    supported = {"groq", "openai", "bedrock"}
+
+    if configured in supported:
+        return configured
+
+    fallback_order = [
+        ("groq", settings.GROQ_API_KEY),
+        ("openai", settings.OPENAI_API_KEY),
+        ("bedrock", settings.AWS_ACCESS_KEY_ID),
+    ]
+
+    for provider, credential in fallback_order:
+        if credential:
+            logger.warning(
+                "Unsupported chatbot provider '%s'; falling back to '%s'",
+                configured,
+                provider,
+            )
+            return provider
+
+    logger.warning(
+        "Unsupported chatbot provider '%s' and no supported fallback credentials found; defaulting to 'groq'",
+        configured,
+    )
+    return "groq"
 
 
 def get_chatbot():
@@ -38,8 +75,7 @@ def get_chatbot():
         try:
             from services.langchain_medical_bot import ProductionMedicalChatbot
 
-            # Get LLM provider from env (default: groq)
-            provider = os.getenv("LLM_PROVIDER", "groq").lower()
+            provider = resolve_chatbot_provider()
 
             _chatbot_instance = ProductionMedicalChatbot(
                 provider=provider,
@@ -56,6 +92,23 @@ def get_chatbot():
     return _chatbot_instance
 
 
+def get_chat_rag_service():
+    """Get or create chat retrieval adapter."""
+    global _chat_rag_service_instance
+
+    if _chat_rag_service_instance is None:
+        try:
+            from services.chat_rag_service import ChatRAGService
+
+            _chat_rag_service_instance = ChatRAGService()
+            logger.info("✅ ChatRAGService initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize ChatRAGService: {e}")
+            _chat_rag_service_instance = None
+
+    return _chat_rag_service_instance
+
+
 # --- Pydantic Models ---
 
 
@@ -64,8 +117,11 @@ class Citation(BaseModel):
 
     number: int
     source: str
+    title: Optional[str] = None
     url: Optional[str] = None
     pmid: Optional[str] = None
+    tier: Optional[str] = None
+    source_type: Optional[str] = None
 
 
 class ChatMessage(BaseModel):
@@ -230,13 +286,27 @@ async def send_message(
 
         # Get chatbot instance
         chatbot = get_chatbot()
+        rag_result = {
+            "retrieved_context": "",
+            "source_docs": [],
+            "retrieval_context": None,
+        }
+        disclaimer = ChatResponse.model_fields["disclaimer"].default
 
         if chatbot is not None:
             # Use real ProductionMedicalChatbot
             try:
+                rag_service = get_chat_rag_service()
+                if rag_service is not None:
+                    rag_result = rag_service.build_retrieval_package(
+                        question=request.message,
+                        conversation_history=conversation_history,
+                    )
+
                 result = chatbot.query(
                     question=request.message,
-                    retrieved_context="",  # No RAG context for now
+                    retrieved_context=rag_result["retrieved_context"],
+                    source_docs=rag_result["source_docs"],
                     conversation_history=conversation_history,
                 )
 
@@ -252,14 +322,18 @@ async def send_message(
                         Citation(
                             number=i,
                             source=citation.get("source", "Unknown"),
+                            title=citation.get("title"),
                             url=citation.get("url"),
                             pmid=citation.get("pmid"),
+                            tier=citation.get("tier"),
+                            source_type=citation.get("source_type"),
                         )
                     )
 
                 redacted_query = result.get("redacted_query")
                 model_name = result.get("model_name", "unknown")
                 tokens_used = result.get("tokens_used")
+                disclaimer = result.get("disclaimer", disclaimer)
 
             except Exception as e:
                 logger.error(f"Chatbot error: {e}, falling back to mock")
@@ -276,6 +350,7 @@ async def send_message(
             tokens_used = None
 
         processing_time = int((time.time() - start_time) * 1000)
+        pii_redacted = redacted_query is not None and redacted_query != request.message
 
         # Save assistant message to database
         sources_dict = (
@@ -288,7 +363,11 @@ async def send_message(
             role="assistant",
             content=answer,
             sources=sources_dict,
-            pii_redacted=redacted_query is not None,
+            retrieval_context=rag_result["retrieval_context"],
+            pii_redacted=pii_redacted,
+            redaction_applied=(
+                {"redacted_query": redacted_query} if pii_redacted else None
+            ),
             model_name=model_name,
             tokens_used=tokens_used,
             processing_time_ms=processing_time,
@@ -297,6 +376,7 @@ async def send_message(
         return ChatResponse(
             answer=answer,
             citations=citations if request.include_sources else [],
+            disclaimer=disclaimer,
             session_id=session_id_str,
             redacted_query=redacted_query,
             processing_time_ms=processing_time,

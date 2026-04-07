@@ -81,3 +81,21 @@ class TestSettingsValidation:
         
         assert hasattr(settings, 'CSV_DATA_PATH')
         assert "sample_kaggle" in settings.CSV_DATA_PATH or "data" in settings.CSV_DATA_PATH
+
+    @patch.dict(os.environ, {"DEBUG": "release"}, clear=False)
+    def test_debug_release_string_parses_as_false(self):
+        """Test deployment-style DEBUG string is parsed safely."""
+        from api.core.config import Settings
+
+        settings = Settings(_env_file=None)
+
+        assert settings.DEBUG is False
+
+    @patch.dict(os.environ, {"DEBUG": "development"}, clear=False)
+    def test_debug_development_string_parses_as_true(self):
+        """Test development-style DEBUG string is parsed safely."""
+        from api.core.config import Settings
+
+        settings = Settings(_env_file=None)
+
+        assert settings.DEBUG is True

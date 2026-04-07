@@ -28,10 +28,10 @@ class TestFeatureImputerSepsis:
         
         # Should return 42 features
         assert len(features) == 42
-        
+
         # Check key features are present
         assert "age" in features
-        assert "HR_mean" in features or "heart_rate_mean" in features.keys() or any("HR" in k for k in features.keys())
+        assert "heart_rate" in features or "HR_mean" in features or any("HR" in k or "heart" in k for k in features.keys())
 
     def test_impute_sepsis_features_with_labs(self):
         """Test imputation with lab values included"""

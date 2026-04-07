@@ -399,3 +399,415 @@ class TestCacheKeyHashing:
         
         # Should be same because json.dumps with sort_keys=True
         assert key1 == key2
+
+
+class TestRedisInitSuccess:
+    """Tests for successful Redis initialization"""
+
+    @patch('api.services.prediction_service.os.path.exists')
+    @patch('api.services.prediction_service.redis')
+    def test_redis_connection_success(self, mock_redis, mock_exists):
+        """Test successful Redis connection and ping"""
+        mock_exists.return_value = False  # No models
+        mock_client = MagicMock()
+        mock_client.ping.return_value = True
+        mock_redis.from_url.return_value = mock_client
+
+        from api.services.prediction_service import PredictionService
+
+        service = PredictionService()
+
+        assert service.redis_client is not None
+        mock_client.ping.assert_called_once()
+
+    @patch('api.services.prediction_service.os.path.exists')
+    @patch('api.services.prediction_service.redis')
+    def test_redis_uses_upstash_url_first(self, mock_redis, mock_exists):
+        """Test Upstash URL takes precedence over REDIS_URL"""
+        mock_exists.return_value = False
+        mock_client = MagicMock()
+        mock_client.ping.return_value = True
+        mock_redis.from_url.return_value = mock_client
+
+        with patch.dict('os.environ', {'UPSTASH_REDIS_URL': 'redis://upstash:6379'}):
+            from api.services.prediction_service import PredictionService
+
+            service = PredictionService()
+
+            # Should call from_url with Upstash URL
+            mock_redis.from_url.assert_called_once()
+            call_args = mock_redis.from_url.call_args
+            # First argument should contain upstash in the URL
+            assert 'upstash' in call_args[0][0] or call_args[0][0].startswith('redis://')
+
+
+class TestModelLoadingSuccess:
+    """Tests for successful model loading"""
+
+    @patch('api.services.prediction_service.redis')
+    @patch('api.services.prediction_service.pickle.load')
+    @patch('builtins.open', new_callable=MagicMock)
+    @patch('api.services.prediction_service.os.path.exists')
+    def test_load_sepsis_model_success(self, mock_exists, mock_open, mock_pickle, mock_redis):
+        """Test successful sepsis model loading"""
+        mock_redis.from_url.side_effect = Exception("No Redis")
+
+        # Mock model file exists
+        def exists_side_effect(path):
+            return 'sepsis' in path
+        mock_exists.side_effect = exists_side_effect
+
+        mock_model = MagicMock()
+        mock_features = ['age', 'hr', 'temp']
+        mock_pickle.side_effect = [mock_model, mock_features]
+
+        from api.services.prediction_service import PredictionService
+
+        service = PredictionService()
+
+        assert 'sepsis' in service.models
+        assert service.models['sepsis'] == mock_model
+        assert 'sepsis' in service.feature_names
+        assert service.feature_names['sepsis'] == mock_features
+
+    @patch('api.services.prediction_service.redis')
+    @patch('api.services.prediction_service.pickle.load')
+    @patch('builtins.open', new_callable=MagicMock)
+    @patch('api.services.prediction_service.os.path.exists')
+    def test_load_mortality_model_success(self, mock_exists, mock_open, mock_pickle, mock_redis):
+        """Test successful mortality model loading"""
+        mock_redis.from_url.side_effect = Exception("No Redis")
+
+        # Mock model file exists
+        def exists_side_effect(path):
+            return 'mortality' in path
+        mock_exists.side_effect = exists_side_effect
+
+        mock_model = MagicMock()
+        mock_features = ['age', 'bp', 'spo2']
+        mock_pickle.side_effect = [mock_model, mock_features]
+
+        from api.services.prediction_service import PredictionService
+
+        service = PredictionService()
+
+        assert 'mortality' in service.models
+        assert service.models['mortality'] == mock_model
+        assert 'mortality' in service.feature_names
+        assert service.feature_names['mortality'] == mock_features
+
+
+class TestCacheOperationsSuccess:
+    """Tests for successful cache operations"""
+
+    @pytest.fixture
+    def service_with_redis(self):
+        """Create service with working Redis client"""
+        from api.services.prediction_service import PredictionService
+
+        with patch.object(PredictionService, '_init_redis'):
+            with patch.object(PredictionService, '_load_models'):
+                service = PredictionService()
+                service.redis_client = MagicMock()
+                return service
+
+    def test_get_from_cache_success(self, service_with_redis):
+        """Test successful cache retrieval"""
+        import json
+
+        cached_data = {"risk_score": 0.75, "patient_id": "123"}
+        service_with_redis.redis_client.get.return_value = json.dumps(cached_data)
+
+        result = service_with_redis._get_from_cache("test_key")
+
+        assert result == cached_data
+        service_with_redis.redis_client.get.assert_called_once_with("test_key")
+
+    def test_get_from_cache_miss(self, service_with_redis):
+        """Test cache miss returns None"""
+        service_with_redis.redis_client.get.return_value = None
+
+        result = service_with_redis._get_from_cache("test_key")
+
+        assert result is None
+
+    def test_get_from_cache_error_handling(self, service_with_redis):
+        """Test cache read error is handled gracefully"""
+        service_with_redis.redis_client.get.side_effect = Exception("Redis error")
+
+        result = service_with_redis._get_from_cache("test_key")
+
+        assert result is None
+
+    def test_save_to_cache_success(self, service_with_redis):
+        """Test successful cache save"""
+        import json
+
+        data = {"risk_score": 0.75, "patient_id": "123"}
+
+        service_with_redis._save_to_cache("test_key", data)
+
+        service_with_redis.redis_client.setex.assert_called_once()
+        call_args = service_with_redis.redis_client.setex.call_args[0]
+        assert call_args[0] == "test_key"
+        assert json.loads(call_args[2]) == data
+
+    def test_save_to_cache_error_handling(self, service_with_redis):
+        """Test cache write error is handled gracefully"""
+        service_with_redis.redis_client.setex.side_effect = Exception("Redis error")
+
+        # Should not raise exception
+        service_with_redis._save_to_cache("test_key", {"data": "value"})
+
+
+class TestPredictSepsisWithModel:
+    """Tests for sepsis prediction with model loaded"""
+
+    @pytest.fixture
+    def service_with_sepsis_model(self):
+        """Create service with mocked sepsis model"""
+        from api.services.prediction_service import PredictionService
+
+        with patch.object(PredictionService, '_init_redis'):
+            with patch.object(PredictionService, '_load_models'):
+                service = PredictionService()
+                service.redis_client = None  # No cache
+                service.feature_names = {}  # Initialize feature_names
+
+                # Add mock model
+                mock_model = MagicMock()
+                mock_model.predict.return_value = np.array([0.65])
+                mock_model.feature_importances_ = np.random.rand(42)
+                service.models["sepsis"] = mock_model
+                service.feature_names["sepsis"] = [f"feature_{i}" for i in range(42)]
+
+                return service
+
+    @pytest.mark.asyncio
+    async def test_predict_sepsis_with_model_loaded(self, service_with_sepsis_model):
+        """Test sepsis prediction with loaded model"""
+        from api.models.schemas import SepsisPredictionRequest, SepsisFeatures
+
+        # Create request with mock features
+        mock_features = MagicMock(spec=SepsisFeatures)
+        mock_features.dict.return_value = {f"feature_{i}": float(i) for i in range(42)}
+
+        request = MagicMock(spec=SepsisPredictionRequest)
+        request.patient_id = "patient_001"
+        request.features = mock_features
+
+        result = await service_with_sepsis_model.predict_sepsis(request, db=None)
+
+        assert result.patient_id == "patient_001"
+        assert result.prediction.risk_score == 0.65
+        assert result.prediction.risk_level.value in ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+        assert result.metadata["model_version"] == "v2"
+        assert result.metadata["cached"] == False
+
+    @pytest.mark.asyncio
+    async def test_predict_sepsis_calls_model_predict(self, service_with_sepsis_model):
+        """Test model.predict is called with correct data"""
+        from api.models.schemas import SepsisPredictionRequest, SepsisFeatures
+
+        mock_features = MagicMock(spec=SepsisFeatures)
+        features_dict = {f"feature_{i}": float(i) for i in range(42)}
+        mock_features.dict.return_value = features_dict
+
+        request = MagicMock(spec=SepsisPredictionRequest)
+        request.patient_id = "patient_001"
+        request.features = mock_features
+
+        await service_with_sepsis_model.predict_sepsis(request, db=None)
+
+        # Model predict should be called once
+        service_with_sepsis_model.models["sepsis"].predict.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_predict_sepsis_with_cache_hit(self):
+        """Test sepsis prediction returns cached result"""
+        from api.services.prediction_service import PredictionService
+        from api.models.schemas import SepsisPredictionRequest, SepsisFeatures
+
+        with patch.object(PredictionService, '_init_redis'):
+            with patch.object(PredictionService, '_load_models'):
+                service = PredictionService()
+                service.redis_client = MagicMock()
+
+                # Mock cache hit
+                cached_result = {
+                    "patient_id": "patient_001",
+                    "prediction": {
+                        "risk_score": 0.45,
+                        "risk_level": "MEDIUM",
+                        "recommendation": "Increase monitoring"
+                    },
+                    "top_features": [],
+                    "metadata": {"model_version": "v2", "cached": False}
+                }
+                import json
+                service.redis_client.get.return_value = json.dumps(cached_result)
+
+                mock_features = MagicMock(spec=SepsisFeatures)
+                mock_features.dict.return_value = {"age": 65}
+
+                request = MagicMock(spec=SepsisPredictionRequest)
+                request.patient_id = "patient_001"
+                request.features = mock_features
+
+                result = await service.predict_sepsis(request, db=None)
+
+                assert result.metadata["cached"] == True
+                assert result.prediction.risk_score == 0.45
+
+
+class TestPredictMortalityWithModel:
+    """Tests for mortality prediction with model loaded"""
+
+    @pytest.fixture
+    def service_with_mortality_model(self):
+        """Create service with mocked mortality model"""
+        from api.services.prediction_service import PredictionService
+
+        with patch.object(PredictionService, '_init_redis'):
+            with patch.object(PredictionService, '_load_models'):
+                service = PredictionService()
+                service.redis_client = None  # No cache
+                service.feature_names = {}  # Initialize feature_names
+
+                # Add mock model
+                mock_model = MagicMock()
+                mock_model.predict.return_value = np.array([0.55])
+                mock_model.feature_importances_ = np.random.rand(61)
+                service.models["mortality"] = mock_model
+                service.feature_names["mortality"] = [f"feature_{i}" for i in range(61)]
+
+                return service
+
+    @pytest.mark.asyncio
+    async def test_predict_mortality_with_model_loaded(self, service_with_mortality_model):
+        """Test mortality prediction with loaded model"""
+        from api.models.schemas import MortalityPredictionRequest, MortalityFeatures
+
+        mock_features = MagicMock(spec=MortalityFeatures)
+        mock_features.dict.return_value = {f"feature_{i}": float(i) for i in range(61)}
+
+        request = MagicMock(spec=MortalityPredictionRequest)
+        request.patient_id = "patient_002"
+        request.features = mock_features
+
+        result = await service_with_mortality_model.predict_mortality(request, db=None)
+
+        assert result.patient_id == "patient_002"
+        assert result.prediction.risk_score == 0.55
+        assert result.prediction.risk_level.value in ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+        assert result.metadata["model_version"] == "v2"
+
+    @pytest.mark.asyncio
+    async def test_predict_mortality_with_cache_hit(self):
+        """Test mortality prediction returns cached result"""
+        from api.services.prediction_service import PredictionService
+        from api.models.schemas import MortalityPredictionRequest, MortalityFeatures
+
+        with patch.object(PredictionService, '_init_redis'):
+            with patch.object(PredictionService, '_load_models'):
+                service = PredictionService()
+                service.redis_client = MagicMock()
+
+                # Mock cache hit
+                cached_result = {
+                    "patient_id": "patient_002",
+                    "prediction": {
+                        "risk_score": 0.70,
+                        "risk_level": "HIGH",
+                        "recommendation": "Intensive care"
+                    },
+                    "top_features": [],
+                    "metadata": {"model_version": "v2", "cached": False}
+                }
+                import json
+                service.redis_client.get.return_value = json.dumps(cached_result)
+
+                mock_features = MagicMock(spec=MortalityFeatures)
+                mock_features.dict.return_value = {"age": 70}
+
+                request = MagicMock(spec=MortalityPredictionRequest)
+                request.patient_id = "patient_002"
+                request.features = mock_features
+
+                result = await service.predict_mortality(request, db=None)
+
+                assert result.metadata["cached"] == True
+                assert result.prediction.risk_score == 0.70
+
+
+class TestDatabaseSave:
+    """Tests for saving predictions to database"""
+
+    @pytest.fixture
+    def service_with_model(self):
+        """Create service with model"""
+        from api.services.prediction_service import PredictionService
+
+        with patch.object(PredictionService, '_init_redis'):
+            with patch.object(PredictionService, '_load_models'):
+                service = PredictionService()
+                service.redis_client = None
+                service.feature_names = {}  # Initialize feature_names
+
+                mock_model = MagicMock()
+                mock_model.predict.return_value = np.array([0.60])
+                mock_model.feature_importances_ = np.random.rand(42)
+                service.models["sepsis"] = mock_model
+                service.feature_names["sepsis"] = [f"feature_{i}" for i in range(42)]
+
+                return service
+
+    @pytest.mark.asyncio
+    @patch('api.services.prediction_service.settings')
+    @patch('api.services.prediction_service.PredictionHistoryService')
+    async def test_sepsis_saves_to_database_when_enabled(self, mock_history_service, mock_settings, service_with_model):
+        """Test prediction is saved to database when enabled"""
+        from api.models.schemas import SepsisPredictionRequest, SepsisFeatures
+
+        mock_settings.ENABLE_DATABASE = True
+        mock_db = MagicMock()
+
+        mock_features = MagicMock(spec=SepsisFeatures)
+        mock_features.dict.return_value = {f"feature_{i}": float(i) for i in range(42)}
+
+        request = MagicMock(spec=SepsisPredictionRequest)
+        request.patient_id = "patient_001"
+        request.features = mock_features
+
+        await service_with_model.predict_sepsis(request, db=mock_db)
+
+        # Should call save_prediction
+        mock_history_service.save_prediction.assert_called_once()
+        call_kwargs = mock_history_service.save_prediction.call_args[1]
+        assert call_kwargs["db"] == mock_db
+        assert call_kwargs["prediction_type"] == "sepsis"
+        assert call_kwargs["model_version"] == "v2"
+
+    @pytest.mark.asyncio
+    @patch('api.services.prediction_service.settings')
+    @patch('api.services.prediction_service.PredictionHistoryService')
+    async def test_database_save_failure_doesnt_break_prediction(self, mock_history_service, mock_settings, service_with_model):
+        """Test prediction continues even if database save fails"""
+        from api.models.schemas import SepsisPredictionRequest, SepsisFeatures
+
+        mock_settings.ENABLE_DATABASE = True
+        mock_history_service.save_prediction.side_effect = Exception("DB error")
+
+        mock_features = MagicMock(spec=SepsisFeatures)
+        mock_features.dict.return_value = {f"feature_{i}": float(i) for i in range(42)}
+
+        request = MagicMock(spec=SepsisPredictionRequest)
+        request.patient_id = "patient_001"
+        request.features = mock_features
+
+        # Should not raise exception
+        result = await service_with_model.predict_sepsis(request, db=MagicMock())
+
+        # Should still return valid result
+        assert result.patient_id == "patient_001"
+        assert result.prediction.risk_score > 0

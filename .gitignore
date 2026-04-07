@@ -106,3 +106,35 @@ secrets.json
 # Debug files
 debug_openapi.json
 .vercel
+
+# ============================================
+# FOLDERS NOT USED IN PRODUCTION DEPLOYMENTS
+# ============================================
+# Vercel: frontend/
+# Render: api/, models/, data/
+# ============================================
+
+# Development/Demo only (not deployed)
+agents/
+apps/
+notebooks/
+results/
+streaming/
+
+# Development tools
+monitoring/
+scripts/
+
+# Database init scripts (run manually, not deployed)
+database/
+
+# Generated/Output folders
+logs/
+htmlcov/
+api/logs/
+api/model_binaries/
+
+# Frontend build artifacts (rebuilt on deploy)
+frontend/node_modules/
+frontend/.next/
+frontend/test-results/

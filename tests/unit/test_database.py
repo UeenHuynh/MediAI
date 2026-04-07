@@ -120,3 +120,133 @@ class TestEngineConfiguration:
             assert engine is not None or engine is None
         except ImportError:
             pytest.skip("Database module not available")
+
+
+class TestInitDb:
+    """Tests for init_db function"""
+
+    @patch('api.core.database.engine')
+    def test_init_db_success(self, mock_engine):
+        """Test init_db creates schemas successfully"""
+        from api.core.database import init_db
+
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        init_db()
+
+        # Should execute CREATE SCHEMA commands
+        assert mock_conn.execute.call_count == 3
+        mock_conn.commit.assert_called_once()
+
+    @patch('api.core.database.engine')
+    def test_init_db_calls_execute_three_times(self, mock_engine):
+        """Test init_db executes three CREATE SCHEMA commands"""
+        from api.core.database import init_db
+
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        init_db()
+
+        # Should call execute 3 times (raw, staging, analytics)
+        assert mock_conn.execute.call_count == 3
+
+    @patch('api.core.database.engine')
+    def test_init_db_commits_transaction(self, mock_engine):
+        """Test init_db commits transaction"""
+        from api.core.database import init_db
+
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        init_db()
+
+        mock_conn.commit.assert_called_once()
+
+    @patch('api.core.database.engine')
+    def test_init_db_uses_text_clauses(self, mock_engine):
+        """Test init_db uses SQLAlchemy text clauses"""
+        from api.core.database import init_db
+        from sqlalchemy.sql.elements import TextClause
+
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        init_db()
+
+        # Each call should use a TextClause
+        for call in mock_conn.execute.call_args_list:
+            args = call[0]
+            assert len(args) > 0
+            assert isinstance(args[0], TextClause)
+
+    @patch('api.core.database.engine')
+    def test_init_db_raises_on_error(self, mock_engine):
+        """Test init_db raises exception on error"""
+        from api.core.database import init_db
+
+        mock_conn = MagicMock()
+        mock_conn.execute.side_effect = Exception("Schema creation failed")
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        with pytest.raises(Exception) as exc_info:
+            init_db()
+
+        assert "Schema creation failed" in str(exc_info.value)
+
+
+class TestTestConnection:
+    """Tests for test_connection function"""
+
+    @patch('api.core.database.engine')
+    def test_connection_success(self, mock_engine):
+        """Test test_connection returns True on success"""
+        from api.core.database import test_connection
+
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = test_connection()
+
+        assert result is True
+        mock_conn.execute.assert_called_once()
+
+    @patch('api.core.database.engine')
+    def test_connection_failure(self, mock_engine):
+        """Test test_connection returns False on failure"""
+        from api.core.database import test_connection
+
+        mock_conn = MagicMock()
+        mock_conn.execute.side_effect = Exception("Connection refused")
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = test_connection()
+
+        assert result is False
+
+    @patch('api.core.database.engine')
+    def test_connection_executes_query(self, mock_engine):
+        """Test test_connection executes a database query"""
+        from api.core.database import test_connection
+        from sqlalchemy.sql.elements import TextClause
+
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        test_connection()
+
+        # Should execute exactly one query
+        mock_conn.execute.assert_called_once()
+        # And the argument should be a TextClause
+        args = mock_conn.execute.call_args[0]
+        assert len(args) > 0
+        assert isinstance(args[0], TextClause)

@@ -190,7 +190,7 @@ INFO  [alembic.runtime.migration] Running upgrade  -> xxxxx, Add patient, vital,
    SELECT table_name
    FROM information_schema.tables
    WHERE table_schema = 'public'
-   ORDER BY table_name;
+   ORDER BY table_name; 
    ```
 
 **Expected result:**

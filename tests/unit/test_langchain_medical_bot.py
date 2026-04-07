@@ -229,15 +229,25 @@ class TestProductionMedicalChatbot:
         response = "Study [1] shows effectiveness."
 
         source_docs = [
-            {"source": "PubMed", "url": "https://pubmed.com/123", "pmid": "123"}
+            {
+                "source": "PubMed",
+                "title": "Paper title",
+                "url": "https://pubmed.com/123",
+                "pmid": "123",
+                "tier": "pubmed",
+                "source_type": "live_api",
+            }
         ]
 
         citations = chatbot._extract_citations(response, source_docs)
 
         assert len(citations) == 1
         assert citations[0].source == "PubMed"
+        assert citations[0].title == "Paper title"
         assert citations[0].url == "https://pubmed.com/123"
         assert citations[0].pmid == "123"
+        assert citations[0].tier == "pubmed"
+        assert citations[0].source_type == "live_api"
 
     def test_extract_citations_no_duplicates(self, chatbot):
         """Test citation extraction removes duplicates."""

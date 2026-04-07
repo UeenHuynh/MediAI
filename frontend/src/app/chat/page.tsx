@@ -21,8 +21,28 @@ interface Message {
     id: string;
     role: "user" | "assistant";
     content: string;
-    sources?: { title: string; url: string; pmid?: string }[];
+    sources?: {
+        title: string;
+        url: string;
+        pmid?: string;
+        tier?: string;
+        sourceType?: "live_api" | "local" | string;
+    }[];
     timestamp: Date;
+}
+
+function getSourceBadge(sourceType?: string, tier?: string) {
+    if (sourceType === "live_api") {
+        return {
+            label: tier === "pubmed" ? "Live API: PubMed" : "Live API",
+            className: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30",
+        };
+    }
+
+    return {
+        label: "Local Knowledge",
+        className: "bg-slate-500/15 text-slate-300 border border-slate-500/30",
+    };
 }
 
 export default function ChatbotPage() {
@@ -73,9 +93,11 @@ export default function ChatbotPage() {
                 role: "assistant",
                 content: response.data.answer,
                 sources: response.data.citations?.map((c: any) => ({
-                    title: c.source,
+                    title: c.title || c.source,
                     url: c.url || "",
                     pmid: c.pmid,
+                    tier: c.tier,
+                    sourceType: c.source_type,
                 })),
                 timestamp: new Date(),
             };
@@ -154,21 +176,38 @@ export default function ChatbotPage() {
                                             <p className="text-xs text-gray-400 mb-2">Sources:</p>
                                             <div className="space-y-1">
                                                 {message.sources.map((source, idx) => (
-                                                    <a
-                                                        key={idx}
-                                                        href={source.url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
-                                                    >
-                                                        <ExternalLink className="w-3 h-3" />
-                                                        {source.title}
-                                                        {source.pmid && (
-                                                            <span className="text-gray-500">
-                                                                (PMID: {source.pmid})
+                                                    <div key={idx} className="flex items-start gap-2">
+                                                        <span
+                                                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${getSourceBadge(source.sourceType, source.tier).className}`}
+                                                        >
+                                                            {getSourceBadge(source.sourceType, source.tier).label}
+                                                        </span>
+                                                        {source.url ? (
+                                                            <a
+                                                                href={source.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+                                                            >
+                                                                <ExternalLink className="w-3 h-3" />
+                                                                {source.title}
+                                                                {source.pmid && (
+                                                                    <span className="text-gray-500">
+                                                                        (PMID: {source.pmid})
+                                                                    </span>
+                                                                )}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-300">
+                                                                {source.title}
+                                                                {source.pmid && (
+                                                                    <span className="text-gray-500">
+                                                                        {" "}(PMID: {source.pmid})
+                                                                    </span>
+                                                                )}
                                                             </span>
                                                         )}
-                                                    </a>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>

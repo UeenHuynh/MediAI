@@ -17,6 +17,11 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+try:
+    from api.core.config import settings
+except ImportError:
+    from core.config import settings
+
 from langchain_aws import ChatBedrock
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.output_parsers import StrOutputParser
@@ -58,8 +63,13 @@ class Citation(BaseModel):
 
     number: str = Field(..., description="Citation number (e.g., '1', '2')")
     source: str = Field(..., description="Source name/identifier")
+    title: Optional[str] = Field(None, description="Human-readable title")
     url: Optional[str] = Field(None, description="URL to the source")
     pmid: Optional[str] = Field(None, description="PubMed ID if applicable")
+    tier: Optional[str] = Field(None, description="Retrieval tier identifier")
+    source_type: Optional[str] = Field(
+        None, description="Source classification such as 'live_api' or 'local'"
+    )
 
 
 class MedicalResponse(BaseModel):
@@ -159,6 +169,9 @@ class ProductionMedicalChatbot:
         # Initialize LLM (vendor-agnostic)
         try:
             self.llm = self._init_llm(provider, temperature)
+        except ValueError as e:
+            logger.error(f"Failed to initialize LLM: {e}")
+            raise
         except Exception as e:
             logger.error(f"Failed to initialize LLM: {e}")
             raise RuntimeError(f"LLM initialization failed: {e}") from e
@@ -176,6 +189,7 @@ class ProductionMedicalChatbot:
         # Initialize conversation memory (simple message history for now)
         self.memory_max_tokens = memory_max_tokens
         self.message_history = ChatMessageHistory()
+        self.memory = self.message_history
 
         # Create structured prompt template
         self.prompt = ChatPromptTemplate.from_messages(
@@ -211,7 +225,7 @@ class ProductionMedicalChatbot:
             ValueError: If provider is unsupported
         """
         if provider == "groq":
-            api_key = os.getenv("GROQ_API_KEY")
+            api_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")
             if not api_key:
                 raise ValueError("GROQ_API_KEY not found in environment")
 
@@ -223,7 +237,7 @@ class ProductionMedicalChatbot:
             )
 
         elif provider == "openai":
-            api_key = os.getenv("OPENAI_API_KEY")
+            api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
             if not api_key:
                 raise ValueError("OPENAI_API_KEY not found in environment")
 
@@ -335,9 +349,40 @@ class ProductionMedicalChatbot:
         return """Retrieved Context:
 {context}
 
+Conversation History:
+{chat_history}
+
 User Question: {question}
 
 Provide a structured response following the system guidelines with proper citations."""
+
+    def _format_chat_history(
+        self, conversation_history: Optional[List[Tuple[str, str]]] = None
+    ) -> str:
+        """
+        Format recent conversation into a prompt-safe transcript.
+
+        Args:
+            conversation_history: Optional external conversation history
+
+        Returns:
+            Formatted transcript or a short placeholder
+        """
+        if conversation_history:
+            history_items = conversation_history[-5:]
+        else:
+            history_items = [
+                (getattr(message, "type", "unknown"), getattr(message, "content", ""))
+                for message in self.message_history.messages[-10:]
+            ]
+
+        lines = [
+            f"{role.title()}: {content.strip()}"
+            for role, content in history_items
+            if content and content.strip()
+        ]
+
+        return "\n".join(lines) if lines else "No prior conversation."
 
     def _check_token_budget(self, context: str) -> str:
         """
@@ -392,8 +437,11 @@ Provide a structured response following the system guidelines with proper citati
                     Citation(
                         number=num,
                         source=doc.get("source", f"Source {num}"),
+                        title=doc.get("title"),
                         url=doc.get("url"),
                         pmid=doc.get("pmid"),
+                        tier=doc.get("tier"),
+                        source_type=doc.get("source_type"),
                     )
                 )
             else:
@@ -413,7 +461,7 @@ Provide a structured response following the system guidelines with proper citati
         wait=wait_exponential(multiplier=1, min=2, max=10),
         reraise=True,
     )
-    def _generate_with_retry(self, question: str, context: str) -> str:
+    def _generate_with_retry(self, question: str, context: str, chat_history: str) -> str:
         """
         Generate response with retry logic.
 
@@ -432,14 +480,24 @@ Provide a structured response following the system guidelines with proper citati
             {
                 "question": question,
                 "context": context,
+                "chat_history": chat_history,
             }
         )
+
+    def _get_model_name(self) -> str:
+        """Best-effort extraction of the active model name for persistence."""
+        for attr_name in ("model_name", "model", "model_id"):
+            value = getattr(self.llm, attr_name, None)
+            if value:
+                return str(value)
+        return self.provider
 
     def query(
         self,
         question: str,
         retrieved_context: str = "",
         source_docs: Optional[List[Dict[str, Any]]] = None,
+        conversation_history: Optional[List[Tuple[str, str]]] = None,
     ) -> Dict[str, Any]:
         """
         Main query function with PII protection and error handling.
@@ -485,12 +543,17 @@ Provide a structured response following the system guidelines with proper citati
 
             # Step 2: Check token budget
             safe_context = self._check_token_budget(retrieved_context)
+            chat_history = self._format_chat_history(conversation_history)
 
             # Step 3: Generate response with retry logic
             response = self._generate_with_retry(
                 question=redacted_question,
                 context=safe_context,
+                chat_history=chat_history,
             )
+
+            self.message_history.add_user_message(redacted_question)
+            self.message_history.add_ai_message(response)
 
             # Step 4: Extract citations with metadata
             citations = self._extract_citations(response, source_docs)
@@ -498,10 +561,11 @@ Provide a structured response following the system guidelines with proper citati
             # Step 5: Build structured response
             return {
                 "answer": response,
-                "citations": [c.dict() for c in citations],
+                "citations": [c.model_dump() for c in citations],
                 "redacted_query": redacted_question,
                 "pii_detected": pii_entities,
                 "disclaimer": "⚠️ Privacy Notice: Personal information redacted. For educational purposes only.",
+                "model_name": self._get_model_name(),
                 "error": None,
             }
 
@@ -513,6 +577,7 @@ Provide a structured response following the system guidelines with proper citati
                 "redacted_query": question,
                 "pii_detected": [],
                 "disclaimer": "⚠️ System error. Consult healthcare provider.",
+                "model_name": self._get_model_name(),
                 "error": str(e),
             }
 
@@ -593,11 +658,11 @@ def create_medical_chatbot(
     """
     # Auto-detect provider based on available API keys
     if provider is None:
-        if os.getenv("GROQ_API_KEY"):
+        if settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY"):
             provider = "groq"
-        elif os.getenv("OPENAI_API_KEY"):
+        elif settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY"):
             provider = "openai"
-        elif os.getenv("AWS_ACCESS_KEY_ID"):
+        elif settings.AWS_ACCESS_KEY_ID or os.getenv("AWS_ACCESS_KEY_ID"):
             provider = "bedrock"
         else:
             raise ValueError("No LLM API key found in environment")
