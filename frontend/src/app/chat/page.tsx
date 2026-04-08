@@ -16,6 +16,7 @@ import {
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import apiClient from "@/lib/api-client";
+import { useAuthStore } from "@/stores/auth-store";
 
 interface Message {
     id: string;
@@ -50,6 +51,7 @@ function getSourceBadge(sourceType?: string, tier?: string) {
 
 export default function ChatbotPage() {
     const router = useRouter();
+    const { isAuthenticated } = useAuthStore();
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "welcome",
@@ -63,6 +65,13 @@ export default function ChatbotPage() {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.push("/login");
+        }
+    }, [isAuthenticated, router]);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -70,6 +79,9 @@ export default function ChatbotPage() {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Show nothing while redirecting
+    if (!isAuthenticated) return null;
 
     const sendMessage = async () => {
         if (!input.trim() || isLoading) return;
@@ -107,14 +119,19 @@ export default function ChatbotPage() {
 
             setMessages((prev) => [...prev, assistantMessage]);
         } catch (error: any) {
+            const is401 = error?.response?.status === 401;
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content:
-                    "I apologize, but I'm having trouble processing your request. Please try again later.",
+                content: is401
+                    ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+                    : "Xin lỗi, hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
                 timestamp: new Date(),
             };
             setMessages((prev) => [...prev, errorMessage]);
+            if (is401) {
+                setTimeout(() => router.push("/login"), 1500);
+            }
         } finally {
             setIsLoading(false);
         }
