@@ -46,9 +46,13 @@ class EmbeddingService:
                     f"Loaded sentence-transformers model: {self.model_name} (dim={self.embedding_dim})"
                 )
             except ImportError:
-                raise ImportError(
-                    "sentence-transformers not installed. Install with: pip install sentence-transformers"
+                logger.warning(
+                    "sentence-transformers not installed — vector search (Qdrant) disabled. "
+                    "PubMed and Scholar retrieval still available."
                 )
+                self.model_name = model_name or "all-MiniLM-L6-v2"
+                self.model = None
+                self.embedding_dim = 384  # default dim, not used when model is None
 
         elif provider == "openai":
             # OpenAI embeddings (high quality, cloud-based)
@@ -87,7 +91,11 @@ class EmbeddingService:
             self.embedding_dim = self.model.get_sentence_embedding_dimension()
             logger.info(f"Fallback to sentence-transformers: {self.model_name}")
         except ImportError:
-            raise ImportError("sentence-transformers required for fallback")
+            logger.warning("sentence-transformers not installed — vector search disabled.")
+            self.provider = "sentence-transformers"
+            self.model_name = model_name or "all-MiniLM-L6-v2"
+            self.model = None
+            self.embedding_dim = 384
 
     def embed(self, text: str) -> np.ndarray:
         """
@@ -103,6 +111,8 @@ class EmbeddingService:
             raise ValueError("Text cannot be empty")
 
         if self.provider == "sentence-transformers":
+            if self.model is None:
+                return None
             embedding = self.model.encode(text, convert_to_numpy=True)
             return embedding
 
@@ -145,6 +155,8 @@ class EmbeddingService:
             return []
 
         if self.provider == "sentence-transformers":
+            if self.model is None:
+                return []
             embeddings = self.model.encode(
                 valid_texts,
                 batch_size=batch_size,
