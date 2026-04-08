@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: Optional[str] = None
     AWS_ACCESS_KEY_ID: Optional[str] = None
 
+    # External research API keys
+    SEMANTIC_SCHOLAR_API_KEY: Optional[str] = None
+
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
 

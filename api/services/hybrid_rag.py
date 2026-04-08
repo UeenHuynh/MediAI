@@ -11,9 +11,16 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from api.core.cag_cache import CAGCache
-from api.core.qdrant_store import QdrantVectorStore
-from api.services.embedding_service import EmbeddingService
+try:
+    from api.core.config import settings
+    from api.core.cag_cache import CAGCache
+    from api.core.qdrant_store import QdrantVectorStore
+    from api.services.embedding_service import EmbeddingService
+except ImportError:
+    from core.config import settings
+    from core.cag_cache import CAGCache
+    from core.qdrant_store import QdrantVectorStore
+    from services.embedding_service import EmbeddingService
 
 logger = logging.getLogger(__name__)
 
@@ -323,7 +330,7 @@ class HybridRAGPipeline:
 
             # Optional API key for higher rate limits
             headers = {}
-            api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
+            api_key = settings.SEMANTIC_SCHOLAR_API_KEY or os.getenv("SEMANTIC_SCHOLAR_API_KEY")
             if api_key:
                 headers["x-api-key"] = api_key
                 logger.info("✓ Using Semantic Scholar API key")
