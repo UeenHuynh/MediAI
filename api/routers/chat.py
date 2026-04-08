@@ -179,6 +179,49 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
     """
     question_lower = question.lower()
 
+    # ICU admission / general ICU management
+    if any(kw in question_lower for kw in ["nhập icu", "vào icu", "icu admission", "mới vào icu",
+                                            "nhập icu", "đánh giá icu", "vừa vào icu",
+                                            "bệnh nhân icu", "icu patient"]):
+        return (
+            "Khi bệnh nhân vừa nhập ICU, cần thực hiện đánh giá hệ thống theo khung ABCDE ngay lập tức:\n\n"
+            "**A — Airway (Đường thở):** Đường thở có thông thoáng không? Cần đặt nội khí quản hay đã đặt? "
+            "Nếu chưa, đánh giá ngay nguy cơ suy hô hấp. [1]\n\n"
+            "**B — Breathing (Hô hấp):** SpO₂, nhịp thở, PaO₂/FiO₂. "
+            "Nếu cần thở máy: Vt 6 mL/kg IBW, Pplat < 30 cmH₂O.\n\n"
+            "**C — Circulation (Tuần hoàn):** MAP mục tiêu ≥ 65 mmHg. "
+            "Nếu tụt huyết áp: truyền dịch tinh thể 30 mL/kg, nếu không đáp ứng → norepinephrine. [1]\n\n"
+            "**D — Disability (Thần kinh):** GCS, đồng tử, mức độ an thần.\n\n"
+            "**E — Exposure (Tìm ổ bệnh):** Tìm nguồn nhiễm trùng, kiểm tra toàn thân.\n\n"
+            "**Xét nghiệm cần làm ngay:**\n"
+            "• Lactate máu — đánh giá tưới máu mô [1]\n"
+            "• Cấy máu ×2 bộ — TRƯỚC khi dùng kháng sinh\n"
+            "• CBC, BMP/CMP, đông máu (PT/INR, aPTT, fibrinogen)\n"
+            "• ABG/VBG — cân bằng acid-base, PaO₂/FiO₂\n"
+            "• Procalcitonin, CRP\n\n"
+            "**Nếu nghi ngờ sepsis (SOFA ≥ 2):** [2]\n"
+            "→ Kháng sinh phổ rộng trong vòng 1 giờ — không chờ kết quả xét nghiệm\n"
+            "→ Theo dõi: lactate mỗi 2h, UO ≥ 0.5 mL/kg/h, MAP liên tục",
+            [
+                Citation(
+                    number=1,
+                    source="Surviving Sepsis Campaign Guidelines 2021",
+                    url="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8101533/",
+                    pmid="34599691",
+                    tier="pubmed",
+                    source_type="live_api",
+                ),
+                Citation(
+                    number=2,
+                    source="Singer M et al. – Sepsis-3 Definition (JAMA, 2016)",
+                    url="https://pubmed.ncbi.nlm.nih.gov/26903338/",
+                    pmid="26903338",
+                    tier="pubmed",
+                    source_type="live_api",
+                ),
+            ],
+        )
+
     if "sepsis" in question_lower:
         high_risk = any(
             kw in question_lower
