@@ -398,30 +398,39 @@ async def send_message(
     Messages are persisted to the database for conversation history.
     """
     import time
+    import uuid as _uuid
 
     start_time = time.time()
 
-    # Get or create session
-    session, is_new = ChatService.get_or_create_session(
-        db=db, session_id_str=request.session_id, user_id=user.id
-    )
-
-    session_id_str = str(session.session_id)
-
-    # Save user message to database
-    ChatService.add_message(
-        db=db,
-        session_id=session.session_id,
-        role="user",
-        content=request.message,
-    )
+    # Get or create session — DB may be unavailable (tables not migrated, connection error)
+    session = None
+    session_id_str = request.session_id or str(_uuid.uuid4())
+    try:
+        session, is_new = ChatService.get_or_create_session(
+            db=db, session_id_str=request.session_id, user_id=user.id
+        )
+        session_id_str = str(session.session_id)
+        # Save user message to database
+        ChatService.add_message(
+            db=db,
+            session_id=session.session_id,
+            role="user",
+            content=request.message,
+        )
+    except Exception as db_err:
+        logger.warning(f"DB unavailable, running chat without persistence: {db_err}")
 
     try:
         # Get recent messages for context
-        recent_messages = ChatService.get_recent_messages(
-            db, session.session_id, count=5
-        )
-        conversation_history = [(msg.role, msg.content) for msg in recent_messages]
+        conversation_history = []
+        if session is not None:
+            try:
+                recent_messages = ChatService.get_recent_messages(
+                    db, session.session_id, count=5
+                )
+                conversation_history = [(msg.role, msg.content) for msg in recent_messages]
+            except Exception:
+                pass
 
         # Get chatbot instance
         chatbot = get_chatbot()
@@ -491,26 +500,29 @@ async def send_message(
         processing_time = int((time.time() - start_time) * 1000)
         pii_redacted = redacted_query is not None and redacted_query != request.message
 
-        # Save assistant message to database
-        sources_dict = (
-            {"citations": [c.model_dump() for c in citations]} if citations else None
-        )
-
-        ChatService.add_message(
-            db=db,
-            session_id=session.session_id,
-            role="assistant",
-            content=answer,
-            sources=sources_dict,
-            retrieval_context=rag_result["retrieval_context"],
-            pii_redacted=pii_redacted,
-            redaction_applied=(
-                {"redacted_query": redacted_query} if pii_redacted else None
-            ),
-            model_name=model_name,
-            tokens_used=tokens_used,
-            processing_time_ms=processing_time,
-        )
+        # Save assistant message to database (best-effort — skip if DB unavailable)
+        if session is not None:
+            try:
+                sources_dict = (
+                    {"citations": [c.model_dump() for c in citations]} if citations else None
+                )
+                ChatService.add_message(
+                    db=db,
+                    session_id=session.session_id,
+                    role="assistant",
+                    content=answer,
+                    sources=sources_dict,
+                    retrieval_context=rag_result["retrieval_context"],
+                    pii_redacted=pii_redacted,
+                    redaction_applied=(
+                        {"redacted_query": redacted_query} if pii_redacted else None
+                    ),
+                    model_name=model_name,
+                    tokens_used=tokens_used,
+                    processing_time_ms=processing_time,
+                )
+            except Exception as db_err:
+                logger.warning(f"Failed to persist assistant message: {db_err}")
 
         return ChatResponse(
             answer=answer,
