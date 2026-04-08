@@ -21,6 +21,10 @@ services:
         value: true
       - key: SECRET_KEY
         generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: LLM_PROVIDER
+        value: groq
       - key: API_HOST
         value: 0.0.0.0
       - key: ENVIRONMENT
