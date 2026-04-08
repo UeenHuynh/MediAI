@@ -1,5 +1,5 @@
 # Production Dependencies for Render.com
-# Optimized for cloud deployment
+# Optimized for cloud deployment - pinned to LangChain 1.x family
 
 # Core
 python-dotenv==1.0.0
@@ -36,19 +36,18 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
 # Utilities
-requests==2.31.0
+requests>=2.32.5
 click==8.1.7
 
 # Monitoring (Optional)
 prometheus-client==0.19.0
 
-# LangChain + LLM (Chatbot)
-langchain>=0.3.0
-langchain-core>=0.3.0
-langchain-community>=0.3.0
+# LangChain 1.x family (all packages must be from the same generation)
+langchain>=1.0.0
+langchain-core>=1.0.0
+langchain-community>=0.4.0
 langchain-groq>=1.1.2
-langchain-openai>=0.2.0
-groq>=0.30.0,<1.0.0
+langchain-openai>=1.0.0
 
 # PII Redaction (Presidio) - optional
 presidio-analyzer>=2.2.33
