@@ -169,10 +169,8 @@ class ConversationHistory(BaseModel):
     last_updated: datetime
 
 
-# --- Mock implementation (fallback when chatbot is disabled) ---
-
-
 def get_mock_response(question: str) -> tuple[str, List[Citation]]:
+    """Kept for backward-compatibility with existing tests only. Not used in production."""
     """
     Generate a mock medical response.
     In production, this would call ProductionMedicalChatbot.query()
@@ -494,70 +492,55 @@ async def send_message(
             except Exception:
                 pass
 
-        # Get chatbot instance
+        # Get chatbot — must be initialized, no mock fallback
         chatbot = get_chatbot()
-        rag_result = {
-            "retrieved_context": "",
-            "source_docs": [],
-            "retrieval_context": None,
-        }
-        disclaimer = ChatResponse.model_fields["disclaimer"].default
+        if chatbot is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Chatbot service unavailable. Check GROQ_API_KEY and ENABLE_CHATBOT settings.",
+            )
 
-        if chatbot is not None:
-            # Use real ProductionMedicalChatbot
+        rag_result = {"retrieved_context": "", "source_docs": [], "retrieval_context": None}
+
+        rag_service = get_chat_rag_service()
+        if rag_service is not None:
             try:
-                rag_service = get_chat_rag_service()
-                if rag_service is not None:
-                    rag_result = rag_service.build_retrieval_package(
-                        question=request.message,
-                        conversation_history=conversation_history,
-                    )
-
-                result = chatbot.query(
+                rag_result = rag_service.build_retrieval_package(
                     question=request.message,
-                    retrieved_context=rag_result["retrieved_context"],
-                    source_docs=rag_result["source_docs"],
                     conversation_history=conversation_history,
                 )
-
-                answer = result.get(
-                    "answer",
-                    "I apologize, but I'm unable to generate a response at this time.",
-                )
-
-                # Convert citations format
-                citations = []
-                for i, citation in enumerate(result.get("citations", []), 1):
-                    citations.append(
-                        Citation(
-                            number=i,
-                            source=citation.get("source", "Unknown"),
-                            title=citation.get("title"),
-                            url=citation.get("url"),
-                            pmid=citation.get("pmid"),
-                            tier=citation.get("tier"),
-                            source_type=citation.get("source_type"),
-                        )
-                    )
-
-                redacted_query = result.get("redacted_query")
-                model_name = result.get("model_name", "unknown")
-                tokens_used = result.get("tokens_used")
-                disclaimer = result.get("disclaimer", disclaimer)
-
             except Exception as e:
-                logger.error(f"Chatbot error: {e}, falling back to mock")
-                # Fallback to mock if chatbot fails
-                answer, citations = get_mock_response(request.message)
-                redacted_query = None
-                model_name = "mock"
-                tokens_used = None
-        else:
-            # Use mock response if chatbot not enabled
-            answer, citations = get_mock_response(request.message)
-            redacted_query = None
-            model_name = "mock"
-            tokens_used = None
+                logger.warning(f"RAG retrieval failed (continuing without context): {e}")
+
+        result = chatbot.query(
+            question=request.message,
+            retrieved_context=rag_result["retrieved_context"],
+            source_docs=rag_result["source_docs"],
+            conversation_history=conversation_history,
+        )
+
+        answer = result.get("answer", "")
+        if not answer:
+            raise HTTPException(status_code=500, detail="LLM returned empty response.")
+
+        citations = []
+        for i, citation in enumerate(result.get("citations", []), 1):
+            citations.append(
+                Citation(
+                    number=i,
+                    source=citation.get("source", "Unknown"),
+                    title=citation.get("title"),
+                    url=citation.get("url"),
+                    pmid=citation.get("pmid"),
+                    tier=citation.get("tier"),
+                    source_type=citation.get("source_type"),
+                )
+            )
+
+        redacted_query = result.get("redacted_query")
+        model_name = result.get("model_name", "groq")
+        tokens_used = result.get("tokens_used")
+        disclaimer = result.get("disclaimer", ChatResponse.model_fields["disclaimer"].default)
 
         processing_time = int((time.time() - start_time) * 1000)
         pii_redacted = redacted_query is not None and redacted_query != request.message
