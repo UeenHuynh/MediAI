@@ -398,7 +398,7 @@ Instructions:
 - If this describes a patient scenario with multiple variables, apply the ABCDE → Syndrome Recognition → Immediate Actions → Missing Data → Monitoring framework.
 - If data is missing (e.g., labs not done yet), explicitly flag what is needed and why, but do NOT delay action recommendations.
 - Cite context documents as [1], [2], [3].
-- Respond in the same language as the question (Vietnamese or English).
+- Respond ENTIRELY in the same language as the question. If the question is in Vietnamese, answer 100% in Vietnamese — do NOT mix in any other language characters (no Chinese, no Japanese, no Korean).
 - Be specific and actionable — a clinician should be able to act on your response immediately."""
 
     def _format_chat_history(
