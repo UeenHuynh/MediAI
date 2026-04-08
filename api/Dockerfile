@@ -15,6 +15,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Download spacy model required by Presidio PII redaction
+RUN python -m spacy download en_core_web_sm
+
 # Copy application code
 COPY . .
 

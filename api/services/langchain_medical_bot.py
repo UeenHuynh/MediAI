@@ -22,14 +22,11 @@ try:
 except ImportError:
     from core.config import settings
 
-from langchain_aws import ChatBedrock
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
-from presidio_analyzer import AnalyzerEngine
-from presidio_anonymizer import AnonymizerEngine
 from pydantic import BaseModel, Field
 from tenacity import (
     retry,
@@ -37,6 +34,24 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
+
+# Optional AWS Bedrock (only if package available)
+try:
+    from langchain_aws import ChatBedrock
+    _BEDROCK_AVAILABLE = True
+except ImportError:
+    _BEDROCK_AVAILABLE = False
+    ChatBedrock = None  # type: ignore
+
+# Optional PII redaction (requires presidio + spacy model)
+try:
+    from presidio_analyzer import AnalyzerEngine
+    from presidio_anonymizer import AnonymizerEngine
+    _PRESIDIO_AVAILABLE = True
+except ImportError:
+    _PRESIDIO_AVAILABLE = False
+    AnalyzerEngine = None  # type: ignore
+    AnonymizerEngine = None  # type: ignore
 
 # Import callbacks
 try:
@@ -178,13 +193,17 @@ class ProductionMedicalChatbot:
 
         # Initialize PII protection
         if self.enable_pii_redaction:
-            try:
-                self.analyzer = AnalyzerEngine()
-                self.anonymizer = AnonymizerEngine()
-                logger.info("PII redaction enabled with Presidio")
-            except Exception as e:
-                logger.warning(f"PII redaction initialization failed: {e}")
+            if not _PRESIDIO_AVAILABLE:
+                logger.warning("Presidio not available — PII redaction disabled")
                 self.enable_pii_redaction = False
+            else:
+                try:
+                    self.analyzer = AnalyzerEngine()
+                    self.anonymizer = AnonymizerEngine()
+                    logger.info("PII redaction enabled with Presidio")
+                except Exception as e:
+                    logger.warning(f"PII redaction initialization failed: {e}")
+                    self.enable_pii_redaction = False
 
         # Initialize conversation memory (simple message history for now)
         self.memory_max_tokens = memory_max_tokens
@@ -248,7 +267,8 @@ class ProductionMedicalChatbot:
             )
 
         elif provider == "bedrock":
-            # AWS credentials from environment or IAM role
+            if not _BEDROCK_AVAILABLE:
+                raise ValueError("langchain-aws not installed; cannot use bedrock provider")
             return ChatBedrock(
                 model_id="anthropic.claude-3-sonnet-20240229-v1:0",
                 model_kwargs={"temperature": temperature},
