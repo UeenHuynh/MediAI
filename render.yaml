@@ -6,7 +6,7 @@ services:
     region: oregon
     plan: free
     branch: main
-    buildCommand: pip install -r requirements-prod.txt && python -m spacy download en_core_web_sm
+    buildCommand: pip install -r requirements-prod.txt
     startCommand: cd api && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
