@@ -138,3 +138,6 @@ api/model_binaries/
 frontend/node_modules/
 frontend/.next/
 frontend/test-results/
+
+# Internal bug logs (not for public repo)
+CHATBOT_BUGS.md
