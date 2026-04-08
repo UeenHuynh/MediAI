@@ -222,6 +222,68 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
             ],
         )
 
+    # Septic shock / vasopressor
+    if any(kw in question_lower for kw in ["shock nhiem khuan", "shock nhiễm khuẩn", "septic shock",
+                                            "vasopressor", "norepinephrine", "van mach",
+                                            "map 5", "map 6", "huyet ap thap", "huyết áp thấp"]):
+        return (
+            "🚨 Shock nhiễm khuẩn — MAP không đạt sau bù dịch: cần vasopressor ngay.\n\n"
+            "**Bước 1 — Xác nhận chỉ định vasopressor:**\n"
+            "MAP < 65 mmHg sau khi đã truyền dịch tinh thể 30 mL/kg → bắt đầu vasopressor. [1]\n\n"
+            "**Bước 2 — Lựa chọn thuốc (theo thứ tự ưu tiên):**\n"
+            "• **Norepinephrine** (first-line): 0.01–0.5 mcg/kg/min IV truyền liên tục [1]\n"
+            "• Nếu norepinephrine chưa đủ: thêm **vasopressin** 0.03 units/min (tiết kiệm NE) [1]\n"
+            "• Nếu vẫn refractory: thêm **epinephrine** hoặc xem xét **hydrocortisone** 200mg/ngày [2]\n\n"
+            "**Bước 3 — Mục tiêu điều trị:**\n"
+            "• MAP ≥ 65 mmHg (hoặc cao hơn nếu có tiền sử tăng huyết áp mạn)\n"
+            "• UO ≥ 0.5 mL/kg/h\n"
+            "• Lactate clearance ≥ 10% mỗi 2 giờ\n\n"
+            "**Đồng thời:**\n"
+            "• Cấy máu ×2 → kháng sinh phổ rộng trong vòng 1 giờ\n"
+            "• Theo dõi lactate mỗi 2h — lactate > 4 mmol/L cần escalate\n"
+            "• Đặt catheter động mạch để theo dõi MAP xâm lấn liên tục\n\n"
+            "⚠️ Thông tin này chỉ mang tính hỗ trợ lâm sàng. Mọi quyết định điều trị phải do bác sĩ có thẩm quyền thực hiện.",
+            [
+                Citation(number=1, source="Surviving Sepsis Campaign Guidelines 2021",
+                         url="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8101533/",
+                         pmid="34599691", tier="pubmed", source_type="live_api"),
+                Citation(number=2, source="Rhodes A et al. – SSC Guidelines (Crit Care Med, 2017)",
+                         url="https://pubmed.ncbi.nlm.nih.gov/28101605/",
+                         pmid="28101605", tier="pubmed", source_type="live_api"),
+            ],
+        )
+
+    # ARDS / mechanical ventilation / PEEP
+    if any(kw in question_lower for kw in ["ards", "peep", "fio2", "pf ratio", "p/f",
+                                            "tho may", "thở máy", "ventilat",
+                                            "pao2", "lung protective", "ardsnet"]):
+        return (
+            "**ARDS — Chiến lược thở máy bảo vệ phổi (ARDSNet):** [1]\n\n"
+            "**Phân loại theo Berlin (PaO₂/FiO₂):**\n"
+            "• Nhẹ: 200–300 mmHg | Trung bình: 100–200 mmHg | Nặng: < 100 mmHg\n\n"
+            "**Cài đặt thở máy mục tiêu:**\n"
+            "• Vt: **6 mL/kg IBW** (tối đa 8 mL/kg nếu Pplat không đạt)\n"
+            "• Pplat ≤ **30 cmH₂O**\n"
+            "• Driving pressure (**ΔP = Pplat − PEEP**) ≤ 15 cmH₂O [2]\n"
+            "• SpO₂ mục tiêu: 88–95% | PaO₂: 55–80 mmHg\n\n"
+            "**PEEP/FiO₂ theo bảng ARDSNet (FiO₂ → PEEP):**\n"
+            "• FiO₂ 40% → PEEP 5 | 50% → PEEP 8 | 60% → PEEP 10\n"
+            "• FiO₂ 70% → PEEP 12 | 80% → PEEP 14 | ≥90% → PEEP 18–24 [1]\n\n"
+            "**Nếu ARDS nặng (PF < 150):** [2]\n"
+            "• Prone positioning ≥ 16 giờ/ngày\n"
+            "• Neuromuscular blockade sớm (cisatracurium) trong 48h\n"
+            "• Xem xét ECMO nếu refractory hypoxemia\n\n"
+            "⚠️ Thông tin này chỉ mang tính hỗ trợ lâm sàng. Mọi quyết định điều trị phải do bác sĩ có thẩm quyền thực hiện.",
+            [
+                Citation(number=1, source="ARDSNet ARMA Trial (NEJM, 2000)",
+                         url="https://pubmed.ncbi.nlm.nih.gov/10872408/",
+                         pmid="10872408", tier="pubmed", source_type="live_api"),
+                Citation(number=2, source="Papazian L et al. – ACURASYS (NEJM, 2010) + Amato MB (NEJM, 2015)",
+                         url="https://pubmed.ncbi.nlm.nih.gov/20843245/",
+                         pmid="20843245", tier="pubmed", source_type="live_api"),
+            ],
+        )
+
     if "sepsis" in question_lower:
         high_risk = any(
             kw in question_lower
