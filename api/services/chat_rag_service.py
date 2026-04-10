@@ -46,14 +46,15 @@ class ChatRAGService:
         """
         search_query = self._build_search_query(question, conversation_history)
 
+        wants_live = self._query_prefers_live_sources(question)
         try:
             documents = self.hybrid_rag.retrieve(
                 query=search_query,
                 top_k=max(self.top_k * 3, 6),
                 use_cag=True,
                 use_qdrant=True,
-                use_pubmed=True,
-                use_scholar=True,
+                use_pubmed=wants_live,
+                use_scholar=wants_live,
                 score_threshold=0.5,
             )
         except Exception as exc:

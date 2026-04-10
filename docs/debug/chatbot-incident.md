@@ -174,3 +174,34 @@ Transient errors (e.g. `RuntimeError`) are still retried up to 3 times.
 
 **Result: CONFIRMED ✅**
 Auth failures now fail fast. Latency on bad credentials drops from ~11 s to <100 ms.
+
+---
+
+## H3 — use_pubmed=True too aggressive for main chat path — 2026-04-10
+
+**Hypothesis:** `chat_rag_service.py:build_retrieval_package` called `hybrid_rag.retrieve(use_pubmed=True, use_scholar=True)` unconditionally on every request. `hybrid_rag.py` documents PubMed as "~1-2 s" per call and defaults `use_pubmed=False` by design. Every routine clinical query therefore paid an external-API round-trip even when CAG/Qdrant alone could satisfy it.
+
+**Files changed:** `api/services/chat_rag_service.py`
+- Added `wants_live = self._query_prefers_live_sources(question)` (one line) before the `try` block.
+- Changed `use_pubmed=True` → `use_pubmed=wants_live`.
+- Changed `use_scholar=True` → `use_scholar=wants_live`.
+
+`_query_prefers_live_sources()` already existed in the class; it returns `True` only when the
+query contains freshness terms ("latest", "recent", "2026", etc.).
+
+**Verification:**
+```
+Generic query  → use_pubmed=False, use_scholar=False  ✅
+Freshness query → use_pubmed=True,  use_scholar=True   ✅
+ALL ASSERTIONS PASSED
+```
+
+**Latency before:** every request paid PubMed + Semantic Scholar round-trips (~1-2 s each
+under ideal conditions; potentially 45+ s when NCBI is slow, even after the max_tries=1 fix).
+
+**Latency after:** routine queries hit only CAG + Qdrant (~50-200 ms total); PubMed/Scholar
+are invoked only for freshness-oriented queries (e.g. "latest guidelines 2026").
+
+**Result: CONFIRMED ✅**
+All three hypotheses (H1 PubMed timeout amplification, H2 GroqAuthError retry, H3 unconditional
+PubMed/Scholar) have been confirmed and fixed. Incident considered resolved.
