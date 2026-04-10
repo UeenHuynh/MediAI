@@ -9,6 +9,7 @@ Combines three retrieval strategies:
 
 import logging
 import os
+import urllib.error
 from typing import Any, Dict, List, Optional
 
 try:
@@ -220,29 +221,37 @@ class HybridRAGPipeline:
                 f"✓ Entrez configured - Email: {Entrez.email}, API key: {'SET' if Entrez.api_key else 'NOT SET'}"
             )
 
-            # Search PubMed
-            handle = Entrez.esearch(
-                db="pubmed", term=query, retmax=max_results, sort="relevance"
-            )
-            search_results = Entrez.read(handle)
-            handle.close()
+            # Limit to 1 attempt so a slow/unreachable NCBI endpoint does not
+            # amplify the wait via the library's built-in retry loop (default:
+            # max_tries=3, sleep_between_tries=15 s → up to 45 s of sleeps).
+            # Restored in the finally block so other Entrez callers are unaffected.
+            _prev_tries = Entrez.max_tries
+            try:
+                Entrez.max_tries = 1
+                handle = Entrez.esearch(
+                    db="pubmed", term=query, retmax=max_results, sort="relevance"
+                )
+                search_results = Entrez.read(handle)
+                handle.close()
 
-            # Get article IDs
-            id_list = search_results["IdList"]
-            logger.info(
-                f"✓ PubMed search returned {len(id_list)} article IDs: {id_list[:3]}..."
-            )
+                # Get article IDs
+                id_list = search_results["IdList"]
+                logger.info(
+                    f"✓ PubMed search returned {len(id_list)} article IDs: {id_list[:3]}..."
+                )
 
-            if not id_list:
-                logger.warning("No PubMed articles found for query")
-                return []
+                if not id_list:
+                    logger.warning("No PubMed articles found for query")
+                    return []
 
-            # Fetch article details
-            handle = Entrez.efetch(
-                db="pubmed", id=id_list, rettype="abstract", retmode="xml"
-            )
-            articles = Entrez.read(handle)
-            handle.close()
+                # Fetch article details
+                handle = Entrez.efetch(
+                    db="pubmed", id=id_list, rettype="abstract", retmode="xml"
+                )
+                articles = Entrez.read(handle)
+                handle.close()
+            finally:
+                Entrez.max_tries = _prev_tries
 
             # Format results
             pubmed_results = []
@@ -288,6 +297,10 @@ class HybridRAGPipeline:
 
         except ImportError:
             logger.warning("❌ Biopython not installed. PubMed search disabled.")
+            return []
+
+        except (urllib.error.URLError, OSError) as net_err:
+            logger.warning("PubMed network error — degrading gracefully: %s", net_err)
             return []
 
         except Exception as e:

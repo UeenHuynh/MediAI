@@ -31,9 +31,17 @@ from pydantic import BaseModel, Field
 from tenacity import (
     retry,
     retry_if_exception_type,
+    retry_if_not_exception_type,
     stop_after_attempt,
     wait_exponential,
 )
+
+# Groq auth error — fail fast, never retry
+try:
+    from groq import AuthenticationError as GroqAuthError
+except ImportError:
+    class GroqAuthError(Exception):  # type: ignore
+        pass
 
 # Optional AWS Bedrock (only if package available)
 try:
@@ -521,7 +529,7 @@ Instructions:
         return citations
 
     @retry(
-        retry=retry_if_exception_type((Exception,)),
+        retry=retry_if_not_exception_type(GroqAuthError),
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         reraise=True,
