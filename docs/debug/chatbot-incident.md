@@ -249,9 +249,51 @@ does not expose it to HTTP clients. No structured log existed.
 | Invalid JWT | 401 | 309 ms | — | — | Auth guard correct; no LLM call |
 | Gibberish query (fail-open) | 200 | 3430 ms | 1 | None | No 500; LLM answered gracefully |
 
-**Known limitations:**
-- `tier=None` will persist until CAGCache is populated with documents that match real queries.
+**Known limitations (as diagnosed at time of test):**
+- `tier=None` on all citations was a symptom of V2 not being deployed, NOT of CAGCache being empty.
+  See next incident entry for root cause and fix.
 - PubMed retrieval is permanently disabled in the Docker build because `biopython` is not in
-  `requirements-prod.txt`. Scholar is enabled (pure `requests`) but currently returns empty
-  for non-freshness queries.
+  `requirements-prod.txt`. Scholar is enabled (pure `requests`) but only triggers for freshness queries.
 - Trace logs are server-side only; HTTP responses do not expose `model_name` or tier summary.
+
+---
+
+## V2 stack never deployed — missing `__init__.py` and `factory.py` — 2026-04-11
+
+**Symptom:** All citations had `tier=None`, `source='Source 1'`. CAGCache was blamed
+initially, but local test confirmed CAGCache works (`'sepsis management'` → 2 hits, tier="cag").
+
+**True root cause:**
+`api/services/chatbot_v2/__init__.py` and `api/services/chatbot_v2/factory.py` were never
+committed to git (status `??`). Previous observability commit (`e5c70eb`) staged only
+`chatbot.py` and `retrieval.py`, leaving the package unimportable on Render.
+
+**Cascade from missing files:**
+1. `from services.chatbot_v2.factory import create_chatbot_v2` → `ModuleNotFoundError`
+   → V2 chatbot init fails → falls back to V1 `ProductionMedicalChatbot`
+2. `create_retrieval_v2()` → same error → falls back to `ChatRAGService`
+3. `ChatRAGService.__init__()` → `HybridRAGPipeline` imports `QdrantVectorStore` (top-level
+   `from qdrant_client import QdrantClient`) → `ModuleNotFoundError` (no qdrant-client in prod)
+   → `rag_service = None`
+4. `source_docs = []` on every request → `_extract_citations(response, [])` stubs
+   `Citation(source="Source N")` with no tier/metadata
+
+**Files changed:**
+- `api/services/chatbot_v2/__init__.py` — committed (`727e1d8`)
+- `api/services/chatbot_v2/factory.py` — committed (`727e1d8`)
+
+**Local verification (pre-deploy):**
+```
+CAGCache.search('sepsis management', top_k=3)
+→ hits=2  tiers=['cag', 'cag']
+  - [cag] Sepsis-3 Consensus (JAMA 2016)  score=0.167
+  - [cag] Surviving Sepsis Campaign Guidelines 2021  score=0.167
+
+CAGCache.search('latest sepsis guidelines 2026', top_k=3)
+→ hits=1  tiers=['cag']
+  - [cag] Sepsis-3 Consensus (JAMA 2016)  score=0.167
+```
+
+**Expected post-deploy behavior:**
+- "sepsis management" → 2 CAG docs; `len < top_k=3` so Scholar also called; citations have `tier="cag"`
+- "latest sepsis guidelines 2026" → 1 CAG doc + Scholar results; `wants_live=True`; citations have `tier="cag"` and/or `tier="scholar"`
