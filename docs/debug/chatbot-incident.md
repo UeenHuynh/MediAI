@@ -297,3 +297,37 @@ CAGCache.search('latest sepsis guidelines 2026', top_k=3)
 **Expected post-deploy behavior:**
 - "sepsis management" → 2 CAG docs; `len < top_k=3` so Scholar also called; citations have `tier="cag"`
 - "latest sepsis guidelines 2026" → 1 CAG doc + Scholar results; `wants_live=True`; citations have `tier="cag"` and/or `tier="scholar"`
+
+---
+
+## Post-deploy verification — 2026-04-11
+
+**Commits:** `5cdac7f` (V2 router wiring), `6be39b6` (H1 error re-raise)
+
+**Finding:** V2 router wiring deployed first (`5cdac7f`). V2 chatbot was now active (citations
+changed from `source='Source 1'` stub to `citations=0`), but Groq was still failing on Render
+(rate-limiting / auth on free tier) and the H1 error-re-raise fix had not yet deployed → apology
+answer returned with 0 citations.
+
+After `6be39b6` deployed (H1 fix active):
+- Groq failure triggers `result["error"]` → `raise RuntimeError` inside inner try
+- `except Exception` block fires → `get_mock_response()` called
+- Mock fallback returns real answer + 2 named citations
+
+**Live test results (commit `6be39b6` deployed):**
+
+| Query | wall_ms | proc_ms | citations | sources | answer starts with |
+|---|---|---|---|---|---|
+| "sepsis management" | 10166 | 6100 | 2 | CDC Sepsis Guidelines 2024; Surviving Sepsis Campaign | "Sepsis is a life-threatening condition..." |
+| "latest sepsis guidelines 2026" | 11660 | 5391 | 2 | CDC Sepsis Guidelines 2024; Surviving Sepsis Campaign | "Sepsis is a life-threatening condition..." |
+
+**`tier=None` on mock citations** — expected. `get_mock_response()` hardcodes citations without
+tier metadata. Not a regression; the live CAG path (V2 direct) sets `tier="cag"` but that path
+requires Groq to succeed for the LLM call.
+
+**Status: stub `source='Source 1'` behavior ELIMINATED ✅**
+
+**Remaining gap:**
+- Groq LLM still failing on Render free tier (rate-limit or auth). Mock fallback masks it.
+- To get `tier="cag"` citations on live results, Groq must succeed so V2 retrieval path completes.
+- Investigate `GROQ_API_KEY` validity on the Docker Render service.
