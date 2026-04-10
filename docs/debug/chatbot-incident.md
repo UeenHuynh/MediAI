@@ -205,3 +205,53 @@ are invoked only for freshness-oriented queries (e.g. "latest guidelines 2026").
 **Result: CONFIRMED ✅**
 All three hypotheses (H1 PubMed timeout amplification, H2 GroqAuthError retry, H3 unconditional
 PubMed/Scholar) have been confirmed and fixed. Incident considered resolved.
+
+---
+
+## Observability gap — 2026-04-11
+
+**Symptom:** HTTP responses carried `tier=None`, `source_type=None` on all citations.
+No server log showed which retrieval path (legacy ChatRAGService vs direct fallback)
+or which LLM provider was actually used.
+
+**Root cause (retrieval):**
+`ChatbotV2Retrieval._init_legacy_service()` tries to create `ChatRAGService`, which
+instantiates `HybridRAGPipeline`. `hybrid_rag.py` imports `QdrantVectorStore` and
+`EmbeddingService` at module level. In production (`requirements-prod.txt`), neither
+`qdrant-client` nor `sentence-transformers` is installed → import fails →
+`legacy_service = None` → direct fallback path runs.
+
+In the direct path, `_search_cag()` delegates to `CAGCache.search()`. CAGCache does set
+`"tier": "cag"` on its results (confirmed at `cag_cache.py:608`). The `tier=None` in
+HTTP responses is therefore caused by the LLM citing `[1]` where `source_docs[0]` has no
+tier — meaning the direct path produced 0 documents (CAGCache returned empty for the query
+at hand) and `_extract_citations()` fell through to the stub `Citation(number=num,
+source=f"Source {num}")` path with no metadata.
+
+**Root cause (LLM trace):**
+`model_name` is extracted in `chat.py` from `result.get("model_name")` but `ChatResponse`
+does not expose it to HTTP clients. No structured log existed.
+
+**Files changed:**
+- `api/services/chatbot_v2/retrieval.py`
+  - Removed early `return` from legacy-service path; replaced with `result =`
+  - Added `_log_retrieval_trace()` helper — single `logger.info` call showing all six flags
+- `api/services/chatbot_v2/chatbot.py`
+  - Added `LLM_TRACE` log on cache-hit path
+  - Added `LLM_TRACE` log after every `legacy_bot.query()` call
+
+**Verification (live smoke tests vs https://mediai-7owz.onrender.com):**
+
+| Test | HTTP status | Latency | citations | tier | Notes |
+|------|-------------|---------|-----------|------|-------|
+| "sepsis management" | 200 | 3438 ms | 1 | None | LLM live; tier gap = CAGCache returned empty |
+| "latest sepsis guidelines 2026" | 200 | 3297 ms | 1 | None | Same; Scholar/PubMed disabled (biopython absent) |
+| Invalid JWT | 401 | 309 ms | — | — | Auth guard correct; no LLM call |
+| Gibberish query (fail-open) | 200 | 3430 ms | 1 | None | No 500; LLM answered gracefully |
+
+**Known limitations:**
+- `tier=None` will persist until CAGCache is populated with documents that match real queries.
+- PubMed retrieval is permanently disabled in the Docker build because `biopython` is not in
+  `requirements-prod.txt`. Scholar is enabled (pure `requests`) but currently returns empty
+  for non-freshness queries.
+- Trace logs are server-side only; HTTP responses do not expose `model_name` or tier summary.
