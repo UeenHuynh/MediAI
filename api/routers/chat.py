@@ -564,6 +564,9 @@ async def send_message(
                     conversation_history=conversation_history,
                 )
 
+                if result.get("error"):
+                    raise RuntimeError(result["error"])
+
                 answer = result.get(
                     "answer",
                     "I apologize, but I'm unable to generate a response at this time.",
