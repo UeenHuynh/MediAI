@@ -73,18 +73,43 @@ def get_chatbot():
 
     if _chatbot_instance is None:
         try:
-            from services.langchain_medical_bot import ProductionMedicalChatbot
-
             provider = resolve_chatbot_provider()
+            if getattr(settings, "ENABLE_CHATBOT_V2", False):
+                try:
+                    try:
+                        from api.services.chatbot_v2.factory import create_chatbot_v2
+                    except ImportError:
+                        from services.chatbot_v2.factory import create_chatbot_v2
 
-            _chatbot_instance = ProductionMedicalChatbot(
-                provider=provider,
-                enable_pii_redaction=True,
-                enable_callbacks=True,
-            )
-            logger.info(
-                f"✅ ProductionMedicalChatbot initialized with provider={provider}"
-            )
+                    _chatbot_instance = create_chatbot_v2(
+                        provider=provider,
+                        enable_pii_redaction=True,
+                        enable_callbacks=True,
+                    )
+                    logger.info(
+                        "✅ Chatbot V2 initialized with provider=%s",
+                        provider,
+                    )
+                except Exception as v2_error:
+                    logger.warning(
+                        "Chatbot V2 init failed, falling back to V1: %s",
+                        v2_error,
+                    )
+
+            if _chatbot_instance is None:
+                try:
+                    from api.services.langchain_medical_bot import ProductionMedicalChatbot
+                except ImportError:
+                    from services.langchain_medical_bot import ProductionMedicalChatbot
+
+                _chatbot_instance = ProductionMedicalChatbot(
+                    provider=provider,
+                    enable_pii_redaction=True,
+                    enable_callbacks=True,
+                )
+                logger.info(
+                    f"✅ ProductionMedicalChatbot initialized with provider={provider}"
+                )
         except Exception as e:
             logger.error(f"❌ Failed to initialize chatbot: {e}")
             _chatbot_instance = None
@@ -98,10 +123,29 @@ def get_chat_rag_service():
 
     if _chat_rag_service_instance is None:
         try:
-            from services.chat_rag_service import ChatRAGService
+            if getattr(settings, "ENABLE_CHATBOT_V2", False):
+                try:
+                    try:
+                        from api.services.chatbot_v2.factory import create_retrieval_v2
+                    except ImportError:
+                        from services.chatbot_v2.factory import create_retrieval_v2
 
-            _chat_rag_service_instance = ChatRAGService()
-            logger.info("✅ ChatRAGService initialized")
+                    _chat_rag_service_instance = create_retrieval_v2()
+                    logger.info("✅ Chatbot V2 retrieval initialized")
+                except Exception as v2_error:
+                    logger.warning(
+                        "Chatbot V2 retrieval init failed, falling back to legacy RAG: %s",
+                        v2_error,
+                    )
+
+            if _chat_rag_service_instance is None:
+                try:
+                    from api.services.chat_rag_service import ChatRAGService
+                except ImportError:
+                    from services.chat_rag_service import ChatRAGService
+
+                _chat_rag_service_instance = ChatRAGService()
+                logger.info("✅ ChatRAGService initialized")
         except Exception as e:
             logger.error(f"❌ Failed to initialize ChatRAGService: {e}")
             _chat_rag_service_instance = None

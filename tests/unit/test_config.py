@@ -20,6 +20,7 @@ class TestSettings:
         assert hasattr(settings, 'REDIS_URL')
         assert hasattr(settings, 'CACHE_TTL_SECONDS')
         assert hasattr(settings, 'DATA_SOURCE')
+        assert hasattr(settings, 'ENABLE_CHATBOT_V2')
 
     def test_settings_default_data_source(self):
         """Test default data source is csv"""

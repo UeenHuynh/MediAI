@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     ENABLE_DATABASE: bool = False
     ENABLE_PREDICTIONS: bool = True
     ENABLE_CHATBOT: bool = False
+    ENABLE_CHATBOT_V2: bool = False
     LLM_PROVIDER: str = "groq"
 
     # LLM API keys
