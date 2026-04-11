@@ -331,3 +331,76 @@ requires Groq to succeed for the LLM call.
 - Groq LLM still failing on Render free tier (rate-limit or auth). Mock fallback masks it.
 - To get `tier="cag"` citations on live results, Groq must succeed so V2 retrieval path completes.
 - Investigate `GROQ_API_KEY` validity on the Docker Render service.
+
+---
+
+## Cross-session context contamination — 2026-04-11
+
+**Symptom:** A generic query "sepsis management" returned the same patient-specific ICU shock
+answer as a prior request in a different session. All fresh sessions returned identical answers.
+UI showed "Local Knowledge / Source 1 / Source 2".
+
+**Reproduction:**
+```python
+# Request A: ICU shock case (fresh session)
+POST /api/v1/chat {"message": "Patient 65yo ICU septic shock MAP 58..."}
+# Request B: Generic query (fresh session, no session_id link to A)
+POST /api/v1/chat {"message": "sepsis management"}
+# Result: answers A and B were identical (contaminated)
+```
+
+**Root cause:**
+`ProductionMedicalChatbot._format_chat_history()` in `langchain_medical_bot.py`:
+```python
+if conversation_history:       # BUG: [] is falsy in Python
+    history_items = conversation_history[-5:]
+else:
+    history_items = [...]      # falls back to self.message_history (PROCESS-LEVEL SINGLETON)
+```
+
+`self.message_history = ChatMessageHistory()` is created once at chatbot init time and shared
+across ALL requests. Lines 628-629 append every request's question and answer:
+```python
+self.message_history.add_user_message(redacted_question)
+self.message_history.add_ai_message(response)
+```
+
+When Request B arrives in a fresh session:
+- DB returns `conversation_history = []`
+- `if []:` → False → falls through to singleton `self.message_history`
+- Singleton contains Request A's ICU patient data
+- LLM generates an ICU-contaminated answer for "sepsis management"
+
+**File changed:** `api/services/langchain_medical_bot.py:444`
+```python
+# Before (bug):
+if conversation_history:
+# After (fix):
+if conversation_history is not None:
+```
+
+`[]` is `not None` → uses empty history. `None` still uses singleton (standalone SDK use preserved).
+
+**Commit:** `389353e`
+
+**Verification (live, post-deploy):**
+
+| Query | wall_ms | sources | answer[:80] |
+|---|---|---|---|
+| A: ICU septic shock | 16395 | Source 1, Source 2 | "Bệnh nhân 65 tuổi đang trong tình trạng sốc..." |
+| B: sepsis management | 3444 | Source 1, Source 2 | "Để quản lý sốc nhiễm khuẩn, chúng ta cần..." |
+| C: hypertension | 5944 | AHA Hypertension Guidelines | "Normal blood pressure is typically..." |
+| D: blood glucose | 5867 | (none) | "Thank you for your question..." |
+
+- A ≠ B ≠ C ≠ D — **cross-session contamination eliminated ✅**
+- B was Groq-generated (Vietnamese), C and D were mock fallback (English)
+- B still shows "Source 1"/"Source 2" — separate issue, see below
+
+**Remaining gap (stub citations):**
+When Groq succeeds, the LLM may include `[1]`/`[2]` citation markers in its response. V1's
+`_extract_citations()` should map them to the CAG source_docs (`tier="cag"`,
+`source="Surviving Sepsis Campaign Guidelines 2021"`). The live test still shows stubs "Source 1",
+"Source 2" on some Groq-successful responses. Likely cause: Groq response format from LLM doesn't
+include `[N]` markers OR response references more citations than source_docs has entries.
+Source_docs pipeline verified correct end-to-end in Render-simulated env (2 CAG docs, proper names).
+Investigate further if Groq API key becomes stable enough for consistent successful calls.
