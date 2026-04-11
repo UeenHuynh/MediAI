@@ -441,7 +441,7 @@ Instructions:
         Returns:
             Formatted transcript or a short placeholder
         """
-        if conversation_history:
+        if conversation_history is not None:
             history_items = conversation_history[-5:]
         else:
             history_items = [
