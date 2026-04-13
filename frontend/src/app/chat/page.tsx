@@ -76,6 +76,24 @@ function stripInlineReferences(text: string): string {
     return lines.slice(0, headingIdx).join("\n").trimEnd();
 }
 
+/**
+ * Strip orphaned [N] citation markers from the answer body when there are no
+ * corresponding live sources to display.
+ *
+ * Called only when getLiveSources() returns an empty array.  In that case every
+ * [N] marker in the text is a stub (no real URL / title) so showing it would
+ * mislead the reader into thinking there is a citable source.
+ *
+ * When live sources DO exist we leave the markers in place so the numbered
+ * references still correspond to the Sources section below.
+ */
+function stripOrphanedMarkers(text: string): string {
+    return text
+        .replace(/\s*\[\d+\]/g, "")   // remove markers and any preceding space
+        .replace(/ {2,}/g, " ")        // collapse double-spaces left behind
+        .trimEnd();
+}
+
 /** Return only sources that have a real public URL and come from a live API tier. */
 function getLiveSources(sources: Message["sources"]) {
     if (!sources || sources.length === 0) return [];
@@ -237,39 +255,51 @@ export default function ChatbotPage() {
                                             : "bg-white/10 text-gray-100"
                                         }`}
                                 >
-                                    <p className="whitespace-pre-wrap">{stripInlineReferences(message.content)}</p>
-
-                                    {/* Sources — live/academic only; local/placeholder sources are hidden */}
+                                    {/* Answer body + Sources share the same liveSources computation */}
                                     {(() => {
                                         const liveSources = getLiveSources(message.sources);
-                                        if (liveSources.length === 0) return null;
+
+                                        // 1. Strip trailing bibliography block (References: / Tham khảo: …)
+                                        // 2. If no live sources exist, also strip orphaned [N] markers from prose
+                                        let displayContent = stripInlineReferences(message.content);
+                                        if (liveSources.length === 0) {
+                                            displayContent = stripOrphanedMarkers(displayContent);
+                                        }
+
                                         return (
-                                            <div className="mt-3 pt-3 border-t border-white/10">
-                                                <p className="text-xs text-gray-400 mb-2">Sources:</p>
-                                                <div className="space-y-1">
-                                                    {liveSources.map((source, idx) => (
-                                                        <div key={idx} className="flex items-start gap-2">
-                                                            <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                                                                Live Source
-                                                            </span>
-                                                            <a
-                                                                href={source.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
-                                                            >
-                                                                <ExternalLink className="w-3 h-3" />
-                                                                {source.title}
-                                                                {source.pmid && (
-                                                                    <span className="text-gray-500">
-                                                                        (PMID: {source.pmid})
+                                            <>
+                                                <p className="whitespace-pre-wrap">{displayContent}</p>
+
+                                                {/* Sources — live/academic only; hidden when none qualify */}
+                                                {liveSources.length > 0 && (
+                                                    <div className="mt-3 pt-3 border-t border-white/10">
+                                                        <p className="text-xs text-gray-400 mb-2">Sources:</p>
+                                                        <div className="space-y-1">
+                                                            {liveSources.map((source, idx) => (
+                                                                <div key={idx} className="flex items-start gap-2">
+                                                                    <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                                                        Live Source
                                                                     </span>
-                                                                )}
-                                                            </a>
+                                                                    <a
+                                                                        href={source.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+                                                                    >
+                                                                        <ExternalLink className="w-3 h-3" />
+                                                                        {source.title}
+                                                                        {source.pmid && (
+                                                                            <span className="text-gray-500">
+                                                                                (PMID: {source.pmid})
+                                                                            </span>
+                                                                        )}
+                                                                    </a>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                                    </div>
+                                                )}
+                                            </>
                                         );
                                     })()}
 
