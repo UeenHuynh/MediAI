@@ -32,21 +32,26 @@ interface Message {
     timestamp: Date;
 }
 
-function getSourceBadge(sourceType?: string, tier?: string) {
-    if (sourceType === "live_api") {
-        let label = "Live API";
-        if (tier === "pubmed") label = "Live API: PubMed";
-        else if (tier === "scholar") label = "Live API: Scholar";
-        return {
-            label,
-            className: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30",
-        };
-    }
+/** Return only sources that have a real public URL and come from a live API tier. */
+function getLiveSources(sources: Message["sources"]) {
+    if (!sources || sources.length === 0) return [];
 
-    return {
-        label: "Local Knowledge",
-        className: "bg-slate-500/15 text-slate-300 border border-slate-500/30",
-    };
+    const live = sources.filter(
+        (s) =>
+            s.sourceType === "live_api" &&
+            s.url &&
+            s.url.startsWith("http") &&
+            !/^Source \d+$/i.test(s.title)
+    );
+
+    // Deduplicate: first by URL, then by title
+    const seen = new Set<string>();
+    return live.filter((s) => {
+        const key = s.url || s.title;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 export default function ChatbotPage() {
@@ -190,19 +195,19 @@ export default function ChatbotPage() {
                                 >
                                     <p className="whitespace-pre-wrap">{message.content}</p>
 
-                                    {/* Sources */}
-                                    {message.sources && message.sources.length > 0 && (
-                                        <div className="mt-3 pt-3 border-t border-white/10">
-                                            <p className="text-xs text-gray-400 mb-2">Sources:</p>
-                                            <div className="space-y-1">
-                                                {message.sources.map((source, idx) => (
-                                                    <div key={idx} className="flex items-start gap-2">
-                                                        <span
-                                                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${getSourceBadge(source.sourceType, source.tier).className}`}
-                                                        >
-                                                            {getSourceBadge(source.sourceType, source.tier).label}
-                                                        </span>
-                                                        {source.url ? (
+                                    {/* Sources — live/academic only; local/placeholder sources are hidden */}
+                                    {(() => {
+                                        const liveSources = getLiveSources(message.sources);
+                                        if (liveSources.length === 0) return null;
+                                        return (
+                                            <div className="mt-3 pt-3 border-t border-white/10">
+                                                <p className="text-xs text-gray-400 mb-2">Sources:</p>
+                                                <div className="space-y-1">
+                                                    {liveSources.map((source, idx) => (
+                                                        <div key={idx} className="flex items-start gap-2">
+                                                            <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                                                Live Source
+                                                            </span>
                                                             <a
                                                                 href={source.url}
                                                                 target="_blank"
@@ -217,21 +222,12 @@ export default function ChatbotPage() {
                                                                     </span>
                                                                 )}
                                                             </a>
-                                                        ) : (
-                                                            <span className="text-xs text-gray-300">
-                                                                {source.title}
-                                                                {source.pmid && (
-                                                                    <span className="text-gray-500">
-                                                                        {" "}(PMID: {source.pmid})
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
 
                                     <p className="text-xs text-gray-500 mt-2">
                                         {message.timestamp.toLocaleTimeString()}
