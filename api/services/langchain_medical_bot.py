@@ -423,7 +423,8 @@ G. Sai lầm dễ mắc nếu xử trí theo hướng khác
 
 ## CITATION RULES
 - Cite all sources using context documents as [1], [2], [3] etc.
-- If context is insufficient for a point, state "Per clinical guidelines..." without inventing citations
+- Every factual clinical statement must have an inline [N] citation.
+- If context is provided but a point is not covered, use the closest relevant document and note the gap — do NOT omit the citation marker.
 
 ## SAFETY RULES
 - Never provide specific medication dosages without caveats
@@ -454,7 +455,7 @@ Clinical Question / Scenario:
 Instructions:
 - If this describes a patient scenario with multiple variables, apply the ABCDE → Syndrome Recognition → Immediate Actions → Missing Data → Monitoring framework.
 - If data is missing (e.g., labs not done yet), explicitly flag what is needed and why, but do NOT delay action recommendations.
-- Cite context documents as [1], [2], [3].
+- CITATIONS ARE MANDATORY: Every clinical recommendation or factual statement MUST end with an inline citation [N] using the numbered context documents above. If no [N] marker appears in a sentence, add one before finalising. Never write a medical claim without citing its source document.
 - Respond ENTIRELY in the same language as the question. If the question is in Vietnamese, answer 100% in Vietnamese — do NOT mix in any other language characters (no Chinese, no Japanese, no Korean).
 - Be specific and actionable — a clinician should be able to act on your response immediately."""
 

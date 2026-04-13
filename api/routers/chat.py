@@ -6,6 +6,7 @@ Chat sessions and messages are persisted to database.
 """
 
 import logging
+import re
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
@@ -267,9 +268,11 @@ def get_mock_response(question: str) -> tuple[str, List[Citation]]:
         )
 
     # Septic shock / vasopressor
-    if any(kw in question_lower for kw in ["shock nhiem khuan", "shock nhiễm khuẩn", "septic shock",
-                                            "vasopressor", "norepinephrine", "van mach",
-                                            "map 5", "map 6", "huyet ap thap", "huyết áp thấp"]):
+    # Note: use regex for MAP to avoid "map 58" false-matching "map 5" (substring trap)
+    _map_low = bool(re.search(r"\bmap\s*[56]\d\b", question_lower))
+    if _map_low or any(kw in question_lower for kw in ["shock nhiem khuan", "shock nhiễm khuẩn", "septic shock",
+                                                        "vasopressor", "norepinephrine", "van mach",
+                                                        "huyet ap thap", "huyết áp thấp"]):
         return (
             "🚨 Shock nhiễm khuẩn — MAP không đạt sau bù dịch: cần vasopressor ngay.\n\n"
             "**Bước 1 — Xác nhận chỉ định vasopressor:**\n"
