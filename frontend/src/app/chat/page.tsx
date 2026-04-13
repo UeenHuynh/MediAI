@@ -32,6 +32,50 @@ interface Message {
     timestamp: Date;
 }
 
+/**
+ * Strip a trailing bibliography block from the model answer before display.
+ *
+ * Removes a block when ALL of the following are true:
+ *  1. A line matching a known reference heading exists
+ *     (References / Tham khảo / Nguồn tham khảo / Bibliography,
+ *      optionally wrapped in ** markdown bold)
+ *  2. Every non-blank line after that heading is a [N] numbered entry
+ *  3. The block is therefore at the trailing end of the text
+ *
+ * Does NOT remove [N] markers that appear inside normal prose sentences.
+ */
+function stripInlineReferences(text: string): string {
+    const lines = text.split("\n");
+
+    // Strip markdown bold markers before matching the heading so that
+    // "**References:**", "**References**:", and "References:" all match.
+    const headingRe =
+        /^\s*(?:References|Tham\s+kh[aả]o|Ngu[oồ]n\s+tham\s+kh[aả]o|Bibliography):?\s*$/i;
+    const entryRe = /^\s*\*{0,2}\[\d+\]/;
+
+    // Scan backwards for the last reference-heading line
+    let headingIdx = -1;
+    for (let i = lines.length - 1; i >= 0; i--) {
+        if (headingRe.test(lines[i].replace(/\*/g, ""))) {
+            headingIdx = i;
+            break;
+        }
+    }
+
+    if (headingIdx === -1) return text;
+
+    // Only strip when everything after the heading is [N] entries or blank lines
+    const afterHeading = lines.slice(headingIdx + 1);
+    const hasEntries = afterHeading.some((l) => entryRe.test(l));
+    const allEntryOrBlank = afterHeading.every(
+        (l) => l.trim() === "" || entryRe.test(l)
+    );
+
+    if (!hasEntries || !allEntryOrBlank) return text;
+
+    return lines.slice(0, headingIdx).join("\n").trimEnd();
+}
+
 /** Return only sources that have a real public URL and come from a live API tier. */
 function getLiveSources(sources: Message["sources"]) {
     if (!sources || sources.length === 0) return [];
@@ -193,7 +237,7 @@ export default function ChatbotPage() {
                                             : "bg-white/10 text-gray-100"
                                         }`}
                                 >
-                                    <p className="whitespace-pre-wrap">{message.content}</p>
+                                    <p className="whitespace-pre-wrap">{stripInlineReferences(message.content)}</p>
 
                                     {/* Sources — live/academic only; local/placeholder sources are hidden */}
                                     {(() => {
