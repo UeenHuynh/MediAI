@@ -532,28 +532,38 @@ Instructions:
 
         citations = []
 
-        for num in unique_citations:
-            idx = int(num) - 1  # Convert to 0-indexed
-
-            if source_docs and idx < len(source_docs):
-                doc = source_docs[idx]
+        if unique_citations:
+            # LLM included [N] markers — map them to source_docs
+            for num in unique_citations:
+                idx = int(num) - 1
+                if source_docs and idx < len(source_docs):
+                    doc = source_docs[idx]
+                    citations.append(
+                        Citation(
+                            number=num,
+                            source=doc.get("source", f"Source {num}"),
+                            title=doc.get("title"),
+                            url=doc.get("url"),
+                            pmid=doc.get("pmid"),
+                            tier=doc.get("tier"),
+                            source_type=doc.get("source_type"),
+                        )
+                    )
+                else:
+                    citations.append(Citation(number=num, source=f"Source {num}"))
+        elif source_docs:
+            # LLM answered without [N] markers but context was provided —
+            # attach retrieved docs so the user knows what sources informed the answer.
+            for i, doc in enumerate(source_docs, 1):
                 citations.append(
                     Citation(
-                        number=num,
-                        source=doc.get("source", f"Source {num}"),
+                        number=str(i),
+                        source=doc.get("source", f"Source {i}"),
                         title=doc.get("title"),
                         url=doc.get("url"),
                         pmid=doc.get("pmid"),
                         tier=doc.get("tier"),
                         source_type=doc.get("source_type"),
-                    )
-                )
-            else:
-                # Fallback if source metadata not available
-                citations.append(
-                    Citation(
-                        number=num,
-                        source=f"Source {num}",
                     )
                 )
 
