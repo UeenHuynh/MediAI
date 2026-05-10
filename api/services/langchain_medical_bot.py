@@ -257,7 +257,7 @@ class ProductionMedicalChatbot:
                 raise ValueError("GROQ_API_KEY not found in environment")
 
             return ChatGroq(
-                model="llama-3.3-70b-versatile",
+                model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
                 temperature=temperature,
                 api_key=api_key,
                 max_tokens=2048,
