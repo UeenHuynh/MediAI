@@ -590,6 +590,22 @@ async def send_message(
                         )
                     )
 
+                # Fallback: if LLM returned no citations but retrieval found docs,
+                # attach the retrieved source_docs so users see what informed the answer.
+                if not citations and rag_result.get("source_docs"):
+                    for i, doc in enumerate(rag_result["source_docs"], 1):
+                        citations.append(
+                            Citation(
+                                number=i,
+                                source=doc.get("source", f"Source {i}"),
+                                title=doc.get("title"),
+                                url=doc.get("url"),
+                                pmid=doc.get("pmid"),
+                                tier=doc.get("tier"),
+                                source_type=doc.get("source_type"),
+                            )
+                        )
+
                 redacted_query = result.get("redacted_query")
                 model_name = result.get("model_name", "unknown")
                 tokens_used = result.get("tokens_used")
