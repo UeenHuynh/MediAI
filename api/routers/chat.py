@@ -26,6 +26,21 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 # Initialize chatbot if enabled
 _chatbot_instance = None
 _chat_rag_service_instance = None
+_cag_cache_instance = None
+
+
+def get_cag_cache():
+    global _cag_cache_instance
+    if _cag_cache_instance is None:
+        try:
+            try:
+                from api.core.cag_cache import CAGCache
+            except ImportError:
+                from core.cag_cache import CAGCache
+            _cag_cache_instance = CAGCache()
+        except Exception as e:
+            logger.warning("CAGCache init failed: %s", e)
+    return _cag_cache_instance
 
 
 def resolve_chatbot_provider() -> str:
@@ -590,21 +605,21 @@ async def send_message(
                         )
                     )
 
-                # Fallback: if LLM returned no citations but retrieval found docs,
-                # attach the retrieved source_docs so users see what informed the answer.
-                if not citations and rag_result.get("source_docs"):
-                    for i, doc in enumerate(rag_result["source_docs"], 1):
-                        citations.append(
-                            Citation(
-                                number=i,
-                                source=doc.get("source", f"Source {i}"),
-                                title=doc.get("title"),
-                                url=doc.get("url"),
-                                pmid=doc.get("pmid"),
-                                tier=doc.get("tier"),
-                                source_type=doc.get("source_type"),
+                # Fallback: if LLM returned no citations, query CAGCache directly
+                # so users always see what knowledge informed the answer.
+                if not citations:
+                    cag = get_cag_cache()
+                    if cag:
+                        cag_docs = cag.search(request.message, top_k=3)
+                        for i, doc in enumerate(cag_docs, 1):
+                            citations.append(
+                                Citation(
+                                    number=i,
+                                    source=doc.get("source", f"Source {i}"),
+                                    tier="cag",
+                                    source_type="local",
+                                )
                             )
-                        )
 
                 redacted_query = result.get("redacted_query")
                 model_name = result.get("model_name", "unknown")
