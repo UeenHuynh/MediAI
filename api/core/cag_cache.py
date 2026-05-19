@@ -23,6 +23,28 @@ class CAGCache:
     - Version controlled with code
     """
 
+    # Reference URLs for each knowledge entry
+    REFERENCE_URLS = {
+        "sepsis_definition": "https://jamanetwork.com/journals/jama/fullarticle/2492881",
+        "sepsis_management": "https://journals.lww.com/ccmjournal/fulltext/2021/11000/surviving_sepsis_campaign__international.21.aspx",
+        "sofa_score": "https://jamanetwork.com/journals/jama/fullarticle/2492881",
+        "aki_kdigo": "https://kdigo.org/guidelines/acute-kidney-injury/",
+        "ards_management": "https://www.nejm.org/doi/full/10.1056/NEJMoa1214103",
+        "norepinephrine": "https://journals.lww.com/ccmjournal/fulltext/2021/11000/surviving_sepsis_campaign__international.21.aspx",
+        "vasopressin": "https://www.nejm.org/doi/full/10.1056/NEJMoa067373",
+        "mortality_risk_factors": "https://pubmed.ncbi.nlm.nih.gov/15312219/",
+        "shock_classification": "https://doi.org/10.1007/s00134-014-3525-z",
+        "mechanical_ventilation": "https://www.nejm.org/doi/full/10.1056/NEJMoa1214103",
+        "postop_complications": "https://www.east.org/education-resources/practice-management-guidelines",
+        "copd_exacerbation": "https://goldcopd.org/2024-gold-report/",
+        "heart_failure_icu": "https://doi.org/10.1093/eurheartj/ehad195",
+        "end_of_life_icu": "https://www.ama-assn.org/delivering-care/ethics/code-medical-ethics-overview",
+        "fluid_resuscitation": "https://journals.lww.com/ccmjournal/fulltext/2021/11000/surviving_sepsis_campaign__international.21.aspx",
+        "acid_base": "https://pubmed.ncbi.nlm.nih.gov/10650234/",
+        "sedation_analgesia": "https://journals.lww.com/ccmjournal/fulltext/2018/09000/clinical_practice_guidelines_for_the_prevention.29.aspx",
+        "antibiotic_icu": "https://journals.lww.com/ccmjournal/fulltext/2021/11000/surviving_sepsis_campaign__international.21.aspx",
+    }
+
     # Static medical knowledge cache
     MEDICAL_KNOWLEDGE = {
         # ==================== SEPSIS ====================
@@ -1008,6 +1030,10 @@ Dosing in Critical Illness:
                         "keywords": data["keywords"],
                         "score": score,
                         "tier": "cag",
+                        "metadata": {
+                            "title": data["source"],
+                            "url": self.REFERENCE_URLS.get(key),
+                        },
                     }
                 )
 

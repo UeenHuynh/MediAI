@@ -92,18 +92,7 @@ class ChatbotV2Retrieval:
     ) -> Dict[str, Any]:
         """Build prompt context and citation metadata for the chat router."""
         result: Optional[Dict[str, Any]] = None
-        if self.legacy_service is not None:
-            try:
-                result = self.legacy_service.build_retrieval_package(
-                    question=question,
-                    conversation_history=conversation_history,
-                )
-            except Exception as exc:
-                logger.warning(
-                    "Legacy RAG service failed inside chatbot v2, using fallback: %s",
-                    exc,
-                )
-
+        # Always use direct retrieval path (CAG + Scholar) for better citations
         if result is None:
             search_query = self._build_search_query(question, conversation_history)
             documents: List[Dict[str, Any]] = []
@@ -112,7 +101,7 @@ class ChatbotV2Retrieval:
 
             if self._query_prefers_live_sources(question) or len(documents) < self.top_k:
                 documents.extend(self._search_pubmed(search_query, max_results=2))
-                documents.extend(self._search_scholar(search_query, max_results=2))
+            documents.extend(self._search_scholar(search_query, max_results=2))
 
             documents = self._deduplicate_results(documents)
             documents = self._rank_results(documents, search_query)
