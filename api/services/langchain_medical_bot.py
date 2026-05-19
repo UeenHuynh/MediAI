@@ -268,7 +268,7 @@ class ProductionMedicalChatbot:
                 model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
                 temperature=temperature,
                 api_key=api_key,
-                max_tokens=4096,
+                max_tokens=8192,
             )
 
         elif provider == "openai":
