@@ -265,10 +265,10 @@ class ProductionMedicalChatbot:
                 raise ValueError("GROQ_API_KEY not found in environment")
 
             return ChatGroq(
-                model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+                model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
                 temperature=temperature,
                 api_key=api_key,
-                max_tokens=8192,
+                max_tokens=4096,
             )
 
         elif provider == "openai":

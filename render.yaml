@@ -28,7 +28,7 @@ services:
       - key: ENABLE_CHATBOT_V2
         value: true
       - key: GROQ_MODEL
-        value: openai/gpt-oss-120b
+        value: llama-3.3-70b-versatile
       - key: API_HOST
         value: 0.0.0.0
       - key: ENVIRONMENT
