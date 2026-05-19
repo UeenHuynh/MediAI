@@ -167,7 +167,7 @@ export default function ChatbotPage() {
             const response = await apiClient.post("/chat", {
                 message: userMessage.content,
                 include_sources: true,
-            });
+            }, { timeout: 90000 });
 
             const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),
