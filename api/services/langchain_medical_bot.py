@@ -685,6 +685,10 @@ Instructions:
                 chat_history=chat_history,
             )
 
+            # Step 3b: Strip markdown formatting for clean display
+            response = re.sub(r'\*\*(.+?)\*\*', r'\1', response)
+            response = re.sub(r'\*(.+?)\*', r'\1', response)
+
             self.message_history.add_user_message(redacted_question)
             self.message_history.add_ai_message(response)
 
