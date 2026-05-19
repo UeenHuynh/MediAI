@@ -94,13 +94,12 @@ function stripOrphanedMarkers(text: string): string {
         .trimEnd();
 }
 
-/** Return only sources that have a real public URL and come from a live API tier. */
+/** Return only sources that have a real public URL. */
 function getLiveSources(sources: Message["sources"]) {
     if (!sources || sources.length === 0) return [];
 
     const live = sources.filter(
         (s) =>
-            s.sourceType === "live_api" &&
             s.url &&
             s.url.startsWith("http") &&
             !/^Source \d+$/i.test(s.title)
