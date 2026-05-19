@@ -51,6 +51,14 @@ except ImportError:
     _BEDROCK_AVAILABLE = False
     ChatBedrock = None  # type: ignore
 
+# Optional Ollama (local/remote via langchain-ollama)
+try:
+    from langchain_ollama import ChatOllama
+    _OLLAMA_AVAILABLE = True
+except ImportError:
+    _OLLAMA_AVAILABLE = False
+    ChatOllama = None  # type: ignore
+
 # Optional PII redaction (requires presidio + spacy model)
 try:
     from presidio_analyzer import AnalyzerEngine
@@ -257,10 +265,10 @@ class ProductionMedicalChatbot:
                 raise ValueError("GROQ_API_KEY not found in environment")
 
             return ChatGroq(
-                model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+                model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
                 temperature=temperature,
                 api_key=api_key,
-                max_tokens=2048,
+                max_tokens=4096,
             )
 
         elif provider == "openai":
@@ -282,10 +290,21 @@ class ProductionMedicalChatbot:
                 model_kwargs={"temperature": temperature},
             )
 
+        elif provider == "ollama":
+            if not _OLLAMA_AVAILABLE:
+                raise ValueError(
+                    "langchain-ollama not installed. Run: pip install langchain-ollama"
+                )
+            return ChatOllama(
+                model=os.getenv("OLLAMA_MODEL", "medgemma-4b-profile"),
+                base_url=os.getenv("OLLAMA_BASE_URL", "http://100.72.177.48:11434"),
+                temperature=temperature,
+            )
+
         else:
             raise ValueError(
                 f"Unsupported provider: {provider}. "
-                "Supported: 'groq', 'openai', 'bedrock'"
+                "Supported: 'groq', 'openai', 'bedrock', 'ollama'"
             )
 
     def _redact_pii(self, text: str) -> Tuple[str, List[Dict[str, Any]]]:
@@ -772,7 +791,9 @@ def create_medical_chatbot(
     """
     # Auto-detect provider based on available API keys
     if provider is None:
-        if settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY"):
+        if os.getenv("OLLAMA_BASE_URL"):
+            provider = "ollama"
+        elif settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY"):
             provider = "groq"
         elif settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY"):
             provider = "openai"
