@@ -63,6 +63,29 @@ async def liveness_check():
     return {"alive": True}
 
 
+@router.get("/health/chatbot")
+async def chatbot_status():
+    """Debug: check chatbot initialization status"""
+    import os
+    result = {
+        "ENABLE_CHATBOT": os.getenv("ENABLE_CHATBOT", "not set"),
+        "ENABLE_CHATBOT_V2": os.getenv("ENABLE_CHATBOT_V2", "not set"),
+        "GROQ_MODEL": os.getenv("GROQ_MODEL", "not set"),
+        "GROQ_API_KEY_SET": bool(os.getenv("GROQ_API_KEY")),
+        "LLM_PROVIDER": os.getenv("LLM_PROVIDER", "not set"),
+    }
+    try:
+        from routers.chat import get_chatbot, get_chat_rag_service
+        chatbot = get_chatbot()
+        result["chatbot_instance"] = type(chatbot).__name__ if chatbot else None
+        result["chatbot_error"] = None
+        rag = get_chat_rag_service()
+        result["rag_instance"] = type(rag).__name__ if rag else None
+    except Exception as e:
+        result["chatbot_error"] = str(e)
+    return result
+
+
 @router.get("/metrics/json")
 async def json_metrics():
     """

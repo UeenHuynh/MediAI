@@ -92,7 +92,7 @@ class ChatbotV2Retrieval:
     ) -> Dict[str, Any]:
         """Build prompt context and citation metadata for the chat router."""
         result: Optional[Dict[str, Any]] = None
-        # Always use direct retrieval path (CAG + Scholar) for better citations
+        # Direct retrieval path (CAG + Scholar) for better citations with URLs
         if result is None:
             search_query = self._build_search_query(question, conversation_history)
             documents: List[Dict[str, Any]] = []
