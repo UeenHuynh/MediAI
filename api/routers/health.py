@@ -83,6 +83,21 @@ async def chatbot_status():
         result["rag_instance"] = type(rag).__name__ if rag else None
     except Exception as e:
         result["chatbot_error"] = str(e)
+
+    # Try a quick LLM call
+    try:
+        if chatbot:
+            test_result = chatbot.query(
+                question="test",
+                retrieved_context="",
+                source_docs=[],
+            )
+            result["llm_test"] = "ok" if not test_result.get("error") else test_result["error"]
+        else:
+            result["llm_test"] = "chatbot is None"
+    except Exception as e:
+        result["llm_test"] = f"{type(e).__name__}: {str(e)[:200]}"
+
     return result
 
 
