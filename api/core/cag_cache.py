@@ -565,6 +565,408 @@ Used to assess organ dysfunction in ICU patients. Score 0-4 for each system.
             "source": "Emergency Medicine Guidelines",
             "priority": 10,
         },
+        # ==================== SHOCK ====================
+        "shock_classification": {
+            "content": """Shock Classification & ICU Management
+
+Types of Shock:
+1. Distributive (septic, anaphylactic, neurogenic) - low SVR, high/normal CO
+2. Cardiogenic - low CO, high SVR, high filling pressures
+3. Hypovolemic (hemorrhagic, dehydration) - low CO, low filling pressures
+4. Obstructive (PE, tamponade, tension pneumothorax) - low CO, mechanical obstruction
+
+Mixed Shock: Common in ICU. Example: septic + cardiogenic in patient with pre-existing HF.
+
+Key Hemodynamic Parameters:
+- MAP target ≥65 mmHg (higher in chronic hypertension)
+- CVP: low in hypovolemic, high in cardiogenic/obstructive
+- ScvO2: <70% suggests inadequate DO2 (low CO or high extraction)
+- Lactate: >2 mmol/L indicates tissue hypoperfusion
+- Cardiac index: <2.2 L/min/m2 = cardiogenic
+
+POCUS Assessment (5-point):
+1. Heart: LV/RV function, pericardial effusion
+2. IVC: collapsibility (volume status)
+3. Lungs: B-lines (pulmonary edema), pleural effusion
+4. Abdomen: free fluid
+5. DVT: femoral/popliteal veins
+
+Vasopressor Selection:
+- Norepinephrine: first-line for most shock
+- Vasopressin: add if NE >0.25-0.5 mcg/kg/min
+- Epinephrine: anaphylaxis, or add for low CO
+- Dobutamine/Milrinone: cardiogenic shock (inotrope)
+- Phenylephrine: pure vasoconstriction (avoid in low CO)""",
+            "keywords": [
+                "shock", "sốc", "cardiogenic", "distributive", "hypovolemic",
+                "obstructive", "mixed shock", "sốc hỗn hợp", "hemodynamic",
+                "huyết động", "vasopressor", "MAP", "CVP", "ScvO2", "POCUS",
+                "cardiac output", "tamponade", "PE",
+            ],
+            "category": "critical_care",
+            "source": "Surviving Sepsis Campaign 2021; ESICM Consensus on Circulatory Shock 2014",
+            "priority": 9,
+        },
+        # ==================== MECHANICAL VENTILATION ====================
+        "mechanical_ventilation": {
+            "content": """Mechanical Ventilation in ICU
+
+Indications for Intubation:
+- Failure to protect airway (GCS ≤8)
+- Refractory hypoxemia (PaO2/FiO2 <150 despite NIV/HFNC)
+- Severe respiratory acidosis (pH <7.20, PaCO2 rising)
+- Respiratory fatigue, accessory muscle use
+- Hemodynamic instability requiring airway control
+
+Lung-Protective Ventilation (ARDS Network):
+- Tidal volume: 6 mL/kg predicted body weight
+- Plateau pressure: <30 cmH2O
+- Driving pressure: <15 cmH2O
+- PEEP: titrate per FiO2/PEEP table or best compliance
+- Target: pH 7.25-7.45, PaO2 55-80, SpO2 88-95%
+
+HFNC vs NIV vs Intubation:
+- HFNC: hypoxemic failure, post-extubation, comfort. Does NOT reduce PaCO2.
+- NIV (BiPAP): COPD exacerbation (reduces PaCO2), cardiogenic pulmonary edema, immunocompromised.
+- Intubation: failure of above, GCS drop, hemodynamic instability, unable to protect airway.
+
+NIV Failure Criteria (consider intubation):
+- No improvement in pH/PaCO2 within 1-2 hours
+- Worsening mental status
+- Inability to clear secretions
+- Hemodynamic instability
+- PaO2/FiO2 <150 despite FiO2 >60%
+
+Ventilator-Associated Complications:
+- VILI (barotrauma, volutrauma, atelectrauma)
+- VAP (ventilator-associated pneumonia)
+- Auto-PEEP (air trapping in COPD/asthma)
+- Hemodynamic compromise (reduced venous return with high PEEP)""",
+            "keywords": [
+                "ventilation", "thở máy", "intubation", "NKQ", "nội khí quản",
+                "HFNC", "NIV", "BiPAP", "ARDS", "PEEP", "tidal volume",
+                "lung protective", "extubation", "FiO2", "PaO2", "respiratory failure",
+                "suy hô hấp", "khó thở", "COPD", "auto-PEEP",
+            ],
+            "category": "critical_care",
+            "source": "ARDS Network Protocol; BTS/ICS Guidelines for NIV 2016",
+            "priority": 9,
+        },
+        # ==================== POST-OPERATIVE COMPLICATIONS ====================
+        "postop_complications": {
+            "content": """Post-Operative ICU Complications
+
+Life-Threatening Complications (first 72h):
+1. Hemorrhage: tachycardia, hypotension, dropping Hb, drain output >200mL/h
+2. Anastomotic leak: fever, tachycardia, peritonitis, drain output change (day 3-7)
+3. Pulmonary embolism: sudden dyspnea, hypoxia, tachycardia, RV strain on echo
+4. Cardiac event (MI/arrhythmia): chest pain, ECG changes, troponin rise
+5. Abdominal compartment syndrome: tense abdomen, oliguria, high airway pressures
+
+Post-Colectomy Specific:
+- Anastomotic leak rate: 3-6% (higher in low anterior resection)
+- Presents day 3-7: fever, tachycardia, peritonitis, feculent drain
+- CT with oral contrast for diagnosis
+- Management: NPO, antibiotics, percutaneous drainage vs reoperation
+
+Massive Transfusion Protocol (MTP):
+- Trigger: anticipated need for >10 units RBC in 24h, or >4 units in 1h
+- Ratio: 1:1:1 (RBC:FFP:Platelets)
+- Targets: Hb >7, platelets >50K, fibrinogen >1.5, INR <1.5
+- Calcium replacement (citrate toxicity)
+- Permissive hypotension (MAP 50-60) until surgical control
+
+Sepsis Post-Op:
+- Source control is priority (drain abscess, reoperate if needed)
+- Broad-spectrum antibiotics covering anaerobes
+- Common sources: wound, intra-abdominal, UTI, line infection, pneumonia""",
+            "keywords": [
+                "post-op", "hậu phẫu", "surgery", "phẫu thuật", "colectomy",
+                "anastomotic leak", "hemorrhage", "chảy máu", "bleeding",
+                "PE", "pulmonary embolism", "thuyên tắc phổi",
+                "abdominal compartment", "MTP", "massive transfusion",
+                "drain", "peritonitis",
+            ],
+            "category": "critical_care",
+            "source": "ERAS Society Guidelines; Eastern Association for Surgery of Trauma (EAST)",
+            "priority": 8,
+        },
+        # ==================== COPD EXACERBATION ====================
+        "copd_exacerbation": {
+            "content": """COPD Acute Exacerbation in ICU
+
+Severity Assessment:
+- Mild: increased dyspnea, no respiratory failure
+- Moderate: pH 7.25-7.35, PaCO2 45-70
+- Severe: pH <7.25, PaCO2 >70, altered mental status
+
+Management Stepwise:
+1. Bronchodilators: salbutamol + ipratropium nebulized q20min x3, then q4-6h
+2. Systemic corticosteroids: methylprednisolone 40mg IV or prednisone 40mg PO x5 days
+3. Antibiotics: if purulent sputum or requiring ventilation (amoxicillin-clavulanate or azithromycin)
+4. Oxygen: target SpO2 88-92% (avoid hyperoxia → CO2 retention)
+5. NIV (BiPAP): FIRST-LINE for pH <7.35 with hypercapnia. IPAP 10-20, EPAP 4-8 cmH2O
+6. Intubation: if NIV fails (no pH improvement in 1-2h), GCS drop, hemodynamic instability
+
+Key Pitfalls:
+- HFNC does NOT reduce PaCO2 — not a substitute for NIV in hypercapnic failure
+- SpO2 97% with PaCO2 85 = oxygen-induced hypercapnia (Haldane effect)
+- High FiO2 suppresses hypoxic drive → worsens CO2 retention
+- Auto-PEEP: set extrinsic PEEP at 80% of measured auto-PEEP
+
+ABG Interpretation in COPD:
+- Acute on chronic: expected HCO3 rise = 1 mEq/L per 10 mmHg PaCO2 (acute) or 3.5 (chronic)
+- pH <7.25 with high PaCO2 despite NIV → intubation threshold
+- Mixed disorder: if HCO3 32 with pH 7.15 and PaCO2 85 → acute-on-chronic with inadequate compensation""",
+            "keywords": [
+                "COPD", "copd", "exacerbation", "đợt cấp", "hypercapnia",
+                "CO2", "PaCO2", "BiPAP", "NIV", "bronchodilator",
+                "respiratory acidosis", "toan hô hấp", "auto-PEEP",
+                "oxygen therapy", "SpO2",
+            ],
+            "category": "critical_care",
+            "source": "GOLD 2024 Guidelines; BTS/ICS Acute Hypercapnic Respiratory Failure Guidelines",
+            "priority": 9,
+        },
+        # ==================== CARDIAC / HEART FAILURE ====================
+        "heart_failure_icu": {
+            "content": """Heart Failure in ICU - Acute Decompensation
+
+Classification:
+- HFrEF (EF <40%): systolic failure, reduced contractility
+- HFpEF (EF ≥50%): diastolic failure, impaired relaxation
+- Cardiogenic shock: CI <2.2, PCWP >18, SBP <90 despite volume
+
+Acute Management:
+1. Warm & Wet (most common): vasodilators (nitroglycerin, nitroprusside) + diuretics
+2. Cold & Wet (cardiogenic shock): inotropes (dobutamine, milrinone) ± vasopressors
+3. Cold & Dry: cautious fluid challenge, inotropes
+4. Warm & Dry: optimize oral medications
+
+Inotrope Selection:
+- Dobutamine: β1 agonist, increases CO, may cause hypotension (β2 vasodilation)
+- Milrinone: PDE3 inhibitor, increases CO + vasodilation, good for RV failure and pulmonary HTN
+- Levosimendan: calcium sensitizer, no increase in O2 demand
+
+Key Considerations in ICU:
+- Fluid restriction: avoid bolus >250mL without reassessment
+- PEEP interaction: positive pressure reduces preload (beneficial in pulmonary edema) but may worsen RV failure
+- Beta-blockers: do NOT stop abruptly in chronic HF; hold if cardiogenic shock
+- ACEi/ARB: hold if SBP <90 or AKI
+- Target MAP 60-65 (not higher — reduces afterload)
+
+Monitoring:
+- Echocardiography: EF, RV function, valvular disease
+- PA catheter (Swan-Ganz): if unclear hemodynamics
+- Lactate, ScvO2, urine output as perfusion markers""",
+            "keywords": [
+                "heart failure", "suy tim", "EF", "cardiogenic shock",
+                "sốc tim", "dobutamine", "milrinone", "inotrope",
+                "pulmonary edema", "phù phổi", "PCWP", "cardiac index",
+                "decompensation", "beta-blocker", "RV failure",
+            ],
+            "category": "critical_care",
+            "source": "ESC Heart Failure Guidelines 2023; SCAI Cardiogenic Shock Classification",
+            "priority": 9,
+        },
+        # ==================== END-OF-LIFE / PALLIATIVE ====================
+        "end_of_life_icu": {
+            "content": """End-of-Life & Palliative Care in ICU
+
+Advance Directives:
+- DNR (Do Not Resuscitate): no CPR/defibrillation if cardiac arrest
+- DNI (Do Not Intubate): no endotracheal intubation
+- DNR ≠ DNI: patient may accept intubation but not CPR, or vice versa
+- AND (Allow Natural Death): comfort measures only
+
+Patient Autonomy:
+- Competent patient's wishes override family requests
+- Capacity assessment: can patient understand, appreciate, reason, and communicate?
+- If patient has capacity and refuses intervention → must respect even if family disagrees
+- Document capacity assessment clearly in chart
+
+Symptom Management (comfort):
+- Dyspnea: morphine 2-4mg IV q2-4h (reduces air hunger without hastening death)
+- Anxiety: midazolam 1-2mg IV, or lorazepam 0.5-1mg
+- Secretions: glycopyrrolate 0.2mg IV q4h
+- Oxygen: for comfort (nasal cannula, HFNC), not to target SpO2
+
+Communication Framework (SPIKES):
+1. Setting: private, sit down, family present
+2. Perception: what does family understand?
+3. Invitation: how much do they want to know?
+4. Knowledge: deliver information clearly
+5. Emotions: acknowledge and validate
+6. Strategy/Summary: plan next steps
+
+Conflict Resolution (patient vs family):
+- Reaffirm patient's documented wishes
+- Ethics consultation if unresolved
+- Palliative care team involvement
+- Family meeting with multidisciplinary team""",
+            "keywords": [
+                "DNR", "DNI", "palliative", "end of life", "comfort care",
+                "withdrawal", "rút ống", "ngừng hồi sức", "gia đình",
+                "autonomy", "capacity", "morphine", "dyspnea", "terminal",
+                "ung thư", "cancer", "prognosis",
+            ],
+            "category": "ethics",
+            "source": "AMA Code of Medical Ethics; AAHPM Palliative Care Guidelines",
+            "priority": 8,
+        },
+        # ==================== FLUID RESUSCITATION ====================
+        "fluid_resuscitation": {
+            "content": """Fluid Resuscitation in ICU
+
+Fluid Responsiveness Assessment:
+- Passive Leg Raise (PLR): raise legs 45° for 1 min → if CO increases >10% = fluid responsive
+- Pulse Pressure Variation (PPV): >13% on mechanical ventilation = fluid responsive
+- IVC collapsibility: >50% (spontaneous breathing) or >18% distensibility (ventilated)
+- Mini fluid challenge: 100mL over 1 min, assess stroke volume change
+
+When NOT to Give Fluid:
+- CVP >12-15 cmH2O with no improvement after prior bolus
+- B-lines on lung ultrasound (pulmonary edema)
+- IVC plethoric and non-collapsible
+- Known EF <30% without evidence of hypovolemia
+- Positive fluid balance >5L in first 72h (associated with worse outcomes)
+
+Fluid Types:
+- Balanced crystalloid (Ringer's Lactate, Plasmalyte): preferred over NS
+- Normal saline: hyperchloremic acidosis risk, avoid in AKI
+- Albumin 4-5%: consider in sepsis after 30mL/kg crystalloid
+- Avoid: HES (renal injury), gelatin (anaphylaxis risk)
+
+SSC 2021 Recommendation:
+- Initial: 30 mL/kg crystalloid within first 3 hours for sepsis-induced hypoperfusion
+- BUT: individualize in heart failure, ESRD, fluid overload
+- Reassess after each 250-500mL bolus
+- Dynamic measures preferred over static (CVP alone is poor predictor)""",
+            "keywords": [
+                "fluid", "dịch", "resuscitation", "hồi sức", "bolus",
+                "crystalloid", "PLR", "passive leg raise", "IVC",
+                "fluid responsive", "CVP", "overload", "quá tải",
+                "albumin", "Ringer", "normal saline",
+            ],
+            "category": "critical_care",
+            "source": "Surviving Sepsis Campaign 2021; ESICM FENICE Study",
+            "priority": 8,
+        },
+        # ==================== ACID-BASE ====================
+        "acid_base": {
+            "content": """Acid-Base Disorders in ICU
+
+Systematic Approach:
+1. Look at pH: <7.35 = acidemia, >7.45 = alkalemia
+2. Primary disorder: PaCO2 (respiratory) or HCO3 (metabolic)
+3. Compensation: expected vs actual
+4. Anion gap: Na - (Cl + HCO3), normal 8-12
+5. Delta-delta: if AG elevated, (ΔAG)/(ΔHCO3) — detects hidden disorders
+
+Common ICU Patterns:
+- Lactic acidosis (AG metabolic acidosis): shock, sepsis, mesenteric ischemia
+- Respiratory acidosis: COPD, sedation, neuromuscular disease, ARDS
+- Mixed respiratory + metabolic acidosis: cardiac arrest, severe sepsis
+- Metabolic alkalosis: vomiting, diuretics, contraction alkalosis
+
+Life-Threatening Acid-Base:
+- pH <7.10: cardiac arrest risk, consider bicarbonate if pH <7.10 with hemodynamic instability
+- pH <7.20 with respiratory cause: intubation threshold
+- Severe hyperkalemia + acidosis: calcium, insulin/glucose, bicarbonate, dialysis
+
+Lactate Interpretation:
+- Type A (hypoperfusion): shock, cardiac arrest, mesenteric ischemia
+- Type B (non-hypoperfusion): liver failure, medications (metformin, epinephrine), seizures
+- Clearance >10% in 2h = good prognostic sign
+- Persistent lactate >4 despite resuscitation = high mortality""",
+            "keywords": [
+                "acid-base", "toan kiềm", "pH", "acidosis", "alkalosis",
+                "lactate", "anion gap", "HCO3", "bicarbonate",
+                "metabolic acidosis", "respiratory acidosis",
+                "hyperkalemia", "tăng kali",
+            ],
+            "category": "critical_care",
+            "source": "Stewart Approach to Acid-Base; Kellum JA Critical Care 2000",
+            "priority": 8,
+        },
+        # ==================== SEDATION & ANALGESIA ====================
+        "sedation_analgesia": {
+            "content": """ICU Sedation & Analgesia (PADIS Guidelines 2018)
+
+Pain First (Analgesia-First Approach):
+- Assess pain before sedation (BPS or CPOT scale for intubated patients)
+- Fentanyl: 25-100 mcg IV bolus, infusion 25-200 mcg/h
+- Morphine: 2-4 mg IV q2-4h
+- Ketamine: 0.1-0.5 mg/kg/h (opioid-sparing, bronchodilator)
+
+Sedation:
+- Target light sedation (RASS 0 to -2) unless specific indication for deep
+- Propofol: 5-50 mcg/kg/min (short-acting, daily wake-up)
+- Dexmedetomidine: 0.2-1.5 mcg/kg/h (no respiratory depression, delirium prevention)
+- Midazolam: avoid if possible (delirium risk, accumulation)
+
+Daily Sedation Interruption (DSI):
+- Stop sedation daily, assess neurological status
+- Paired with spontaneous breathing trial (SBT)
+- Reduces ventilator days and ICU LOS
+
+Delirium (CAM-ICU):
+- Prevention: early mobilization, sleep hygiene, avoid benzodiazepines
+- Treatment: address underlying cause, dexmedetomidine, avoid haloperidol in QTc >500ms
+- Risk factors: age, pre-existing dementia, sepsis, benzodiazepines, immobility
+
+Neuromuscular Blockade:
+- Indication: severe ARDS (PaO2/FiO2 <150), refractory ICP, shivering in TTM
+- Cisatracurium: 1-3 mcg/kg/min (organ-independent metabolism)
+- Always ensure adequate sedation + analgesia before paralysis
+- Train-of-four monitoring""",
+            "keywords": [
+                "sedation", "an thần", "analgesia", "giảm đau", "pain",
+                "fentanyl", "propofol", "dexmedetomidine", "midazolam",
+                "delirium", "RASS", "CAM-ICU", "paralysis",
+                "neuromuscular blockade", "ketamine",
+            ],
+            "category": "critical_care",
+            "source": "PADIS Guidelines 2018 (SCCM); ICU Liberation Bundle (A2F)",
+            "priority": 7,
+        },
+        # ==================== ANTIBIOTIC THERAPY ====================
+        "antibiotic_icu": {
+            "content": """Empiric Antibiotic Therapy in ICU
+
+Principles:
+- Administer within 1 hour of sepsis recognition (each hour delay = 7% mortality increase)
+- Broad-spectrum initially, de-escalate based on cultures at 48-72h
+- Source control is equally important as antibiotics
+
+Common ICU Infections & Empiric Coverage:
+1. Community-acquired pneumonia (severe): ceftriaxone + azithromycin (or respiratory FQ)
+2. Hospital-acquired/VAP: piperacillin-tazobactam or meropenem + vancomycin (if MRSA risk)
+3. Intra-abdominal: piperacillin-tazobactam or meropenem (covers anaerobes)
+4. Urosepsis: ceftriaxone or piperacillin-tazobactam
+5. Skin/soft tissue (necrotizing): meropenem + vancomycin + clindamycin
+6. Meningitis: ceftriaxone + vancomycin + ampicillin (if >50yo or immunocompromised)
+7. Line infection: vancomycin + cefepime; remove line if possible
+
+De-escalation:
+- Narrow spectrum based on culture & sensitivity at 48-72h
+- Procalcitonin-guided discontinuation (PCT <0.5 or >80% decrease)
+- Duration: 7 days for most infections (shorter is better if responding)
+
+Dosing in Critical Illness:
+- Augmented renal clearance (ARC): may need higher doses of renally-cleared drugs
+- Continuous/extended infusion beta-lactams: better PK/PD in sepsis
+- Therapeutic drug monitoring: vancomycin (AUC/MIC), aminoglycosides""",
+            "keywords": [
+                "antibiotic", "kháng sinh", "empiric", "sepsis",
+                "pneumonia", "viêm phổi", "VAP", "MRSA",
+                "meropenem", "vancomycin", "piperacillin",
+                "de-escalation", "procalcitonin", "infection", "nhiễm trùng",
+            ],
+            "category": "critical_care",
+            "source": "Surviving Sepsis Campaign 2021; IDSA Guidelines",
+            "priority": 9,
+        },
     }
 
     def __init__(self):
