@@ -12,11 +12,12 @@ import { AppShell } from "@/components/ui/AppShell";
 const containerVariants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
-};
+} as const;
+
 const itemVariants = {
   hidden: { opacity: 0, y: 16 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
-};
+  show:   { opacity: 1, y: 0 },
+} as const;
 
 const statsData = [
   { title: "Predictions Today", value: "142", change: "+12%", up: true,  icon: Brain,          color: "from-blue-500 to-cyan-500" },
@@ -75,7 +76,7 @@ export default function DashboardPage() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
         >
           {statsData.map((stat) => (
-            <motion.div key={stat.title} variants={itemVariants}>
+            <motion.div key={stat.title} variants={itemVariants} transition={{ duration: 0.35, ease: "easeOut" }}>
               <GlassCard className="p-5" glow hover>
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -110,7 +111,7 @@ export default function DashboardPage() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
           >
             {quickActions.map((action) => (
-              <motion.div key={action.title} variants={itemVariants}>
+              <motion.div key={action.title} variants={itemVariants} transition={{ duration: 0.35, ease: "easeOut" }}>
                 <GlassCard className="cursor-pointer group" glow hover onClick={() => router.push(action.href)}>
                   <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg`}>
                     <action.icon className="w-5 h-5 text-white" />
