@@ -76,7 +76,7 @@ export default function DashboardPage() {
         >
           {statsData.map((stat) => (
             <motion.div key={stat.title} variants={itemVariants}>
-              <GlassCard className="p-5" glow>
+              <GlassCard className="p-5" glow hover>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <p className="text-xs text-gray-400 mb-1">{stat.title}</p>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
           >
             {quickActions.map((action) => (
               <motion.div key={action.title} variants={itemVariants}>
-                <GlassCard className="cursor-pointer group" glow onClick={() => router.push(action.href)}>
+                <GlassCard className="cursor-pointer group" glow hover onClick={() => router.push(action.href)}>
                   <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg`}>
                     <action.icon className="w-5 h-5 text-white" />
                   </div>
