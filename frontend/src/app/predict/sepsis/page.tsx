@@ -113,8 +113,8 @@ export default function SepsisPredictionPage() {
                       {fields.map((f) => (
                         <div key={f.name}>
                           <label className="block text-xs text-gray-400 mb-1">{f.label}</label>
-                          <div className="relative flex items-center bg-white/[0.05] border border-white/[0.1] rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/40 transition-all">
-                            <f.icon className="absolute left-2.5 w-3.5 h-3.5 text-gray-500" />
+                          <div className="relative flex items-center bg-white/[0.05] border border-white/[0.1] rounded-xl overflow-hidden focus-within:border-blue-500/50">
+                            <f.icon className="absolute left-2.5 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
                             <input
                               {...register(f.name as keyof SepsisFormData)}
                               type="number" step="any"

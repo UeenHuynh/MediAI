@@ -3,8 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Loader2, ExternalLink, AlertCircle } from "lucide-react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { Send, Bot, User, Loader2, ExternalLink, AlertCircle } from "lucide-react";import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { AppShell } from "@/components/ui/AppShell";
 import apiClient from "@/lib/api-client";
@@ -136,11 +135,7 @@ export default function ChatbotPage() {
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             <AnimatePresence>
               {messages.map((msg) => (
-                <motion.div key={msg.id}
-                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 22 }}
+                <div key={msg.id}
                   className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.role === "assistant" && (
@@ -181,12 +176,12 @@ export default function ChatbotPage() {
                       <User className="w-4 h-4 text-white" />
                     </div>
                   )}
-                </motion.div>
+                </div>
               ))}
             </AnimatePresence>
 
             {isLoading && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
+              <div className="flex gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
@@ -194,7 +189,7 @@ export default function ChatbotPage() {
                   <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
                   <span className="text-gray-400 text-sm">Thinking...</span>
                 </div>
-              </motion.div>
+              </div>
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -226,7 +221,7 @@ export default function ChatbotPage() {
             <div className="flex gap-3 items-end">
               <textarea value={input} onChange={(e) => { setInput(e.target.value); if (e.target.value) setShowSuggestions(false); }}
                 onKeyDown={handleKey} placeholder="Ask a medical question..." rows={1}
-                className="flex-1 px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none transition-all" />
+                className="flex-1 px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 resize-none" />
               <Button onClick={() => sendMessage()} disabled={!input.trim() || isLoading} icon={<Send className="w-4 h-4" />}>
                 Send
               </Button>

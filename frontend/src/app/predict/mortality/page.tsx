@@ -64,7 +64,7 @@ export default function MortalityPredictionPage() {
   const riskPct = result ? Math.round(result.risk_score * 100) : 0;
   const gaugeCirc = 194;
 
-  const inputCls = "w-full px-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all";
+  const inputCls = "w-full px-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:border-blue-500/50";
   const selectCls = `${inputCls} cursor-pointer`;
 
   return (
@@ -90,7 +90,7 @@ export default function MortalityPredictionPage() {
                     <label className="block text-xs text-gray-400 mb-1">Age</label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-                      <input {...register("age")} type="number" className="w-full pl-8 pr-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all" />
+                      <input {...register("age")} type="number" className="w-full pl-8 pr-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:border-blue-500/50" />
                     </div>
                   </div>
                   <div>
@@ -120,14 +120,14 @@ export default function MortalityPredictionPage() {
                       <label className="block text-xs text-gray-400 mb-1">LOS (hours)</label>
                       <div className="relative">
                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-                        <input {...register("los_hours")} type="number" className="w-full pl-8 pr-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all" />
+                        <input {...register("los_hours")} type="number" className="w-full pl-8 pr-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:border-blue-500/50" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs text-gray-400 mb-1">SOFA Score</label>
                       <div className="relative">
                         <Activity className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-                        <input {...register("sofa_score")} type="number" min="0" max="24" className="w-full pl-8 pr-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all" />
+                        <input {...register("sofa_score")} type="number" min="0" max="24" className="w-full pl-8 pr-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:border-blue-500/50" />
                       </div>
                     </div>
                   </div>

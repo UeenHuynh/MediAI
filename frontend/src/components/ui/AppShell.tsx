@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "@/stores/auth-store";
 import { Sidebar } from "./Sidebar";
 
@@ -21,19 +20,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
+      {/* Bỏ AnimatePresence/motion ở đây — mỗi page tự animate nội dung của mình
+          tránh double-animation gây giật */}
       <main className="flex-1 overflow-auto">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={typeof window !== "undefined" ? window.location.pathname : ""}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="p-6 min-h-full"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+        <div className="p-6 min-h-full">
+          {children}
+        </div>
       </main>
     </div>
   );

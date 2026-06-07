@@ -8,6 +8,16 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { AppShell } from "@/components/ui/AppShell";
 
+// Variants dùng chung — stagger từ parent thay vì mỗi item tự delay
+const containerVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
+};
+
 const statsData = [
   { title: "Predictions Today", value: "142", change: "+12%", up: true,  icon: Brain,          color: "from-blue-500 to-cyan-500" },
   { title: "High Risk Alerts",  value: "8",   change: "-3%",  up: false, icon: AlertTriangle,  color: "from-red-500 to-pink-500" },
@@ -58,9 +68,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statsData.map((stat, i) => (
-            <motion.div key={stat.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+        >
+          {statsData.map((stat) => (
+            <motion.div key={stat.title} variants={itemVariants}>
               <GlassCard className="p-5" glow>
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -83,14 +98,19 @@ export default function DashboardPage() {
               </GlassCard>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Quick Actions */}
         <div>
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action, i) => (
-              <motion.div key={action.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.08 }}>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            {quickActions.map((action) => (
+              <motion.div key={action.title} variants={itemVariants}>
                 <GlassCard className="cursor-pointer group" glow onClick={() => router.push(action.href)}>
                   <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg`}>
                     <action.icon className="w-5 h-5 text-white" />
@@ -100,7 +120,7 @@ export default function DashboardPage() {
                 </GlassCard>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
     </AppShell>
